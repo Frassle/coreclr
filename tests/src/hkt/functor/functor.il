@@ -10,18 +10,18 @@
 {
 }
 
-.class interface abstract Functor
+.class interface abstract Functor`1<T>
 {
   .method public newslot abstract virtual instance 
-    class [mscorlib]System.Collections.Generic.List`1<!!B> fmap<A, B> (
+    !T<!!B> fmap<A, B> (
       class [mscorlib]System.Func`2<!!A, !!B> mapper, 
-      class [mscorlib]System.Collections.Generic.List`1<!!A> v
+      !T<!!A> v
     ) cil managed
   {
   }
 }
 
-.class public ListFunctor implements Functor
+.class public ListFunctor implements class Functor`1<class [mscorlib]System.Collections.Generic.List`1>
 {
   .method public specialname rtspecialname instance void .ctor () cil managed
   {
@@ -79,8 +79,7 @@
   ret
 }
 
-.method private static class [mscorlib]System.Collections.Generic.List`1<float64> MapDouble<.ctor (Functor) F>(
-  class [mscorlib]System.Collections.Generic.List`1<int32> v) cil managed 
+.method private static !!T<float64> MapDouble<T, .ctor (class Functor`1<!!T>) F>(!!T<int32> v) cil managed 
 {
   .maxstack 8
   .locals init (
@@ -95,10 +94,9 @@
   newobj instance void class [mscorlib]System.Func`2<int32, float64>::.ctor(object, native int)
   ldarg.0
   constrained. !!F
-  callvirt instance class 
-    [mscorlib]System.Collections.Generic.List`1<!!1> Functor::fmap<int32, float64>(
+  callvirt instance !0<!!1> class Functor`1<!!T>::fmap<int32, float64>(
       class [mscorlib]System.Func`2<!!0, !!1>,
-      class [mscorlib]System.Collections.Generic.List`1<!!0>)
+      !0<!!0>)
   ret
 }
 
@@ -121,7 +119,7 @@
   ldc.i4.3
   callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
 
-  call class [mscorlib]System.Collections.Generic.List`1<float64> MapDouble<class ListFunctor>(class [mscorlib]System.Collections.Generic.List`1<int32>)
+  call !!0<float64> MapDouble<class [mscorlib]System.Collections.Generic.List`1, class ListFunctor>(!!0<int32>)
 
   pop
   ldc.i4     100
