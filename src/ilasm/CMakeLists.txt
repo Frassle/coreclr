@@ -1,5 +1,13 @@
 project(ilasm)
 
+add_custom_command(
+  COMMENT "Generating IL Asssembly Parser"
+  OUTPUT asmparse.cpp
+  COMMAND btyacc -b asmparse.cpp ${PROJECT_SOURCE_DIR}/asmparse.y
+  COMMAND mv asmparse.cpp.tab.c asmparse.cpp
+  DEPENDS ${PROJECT_SOURCE_DIR}/asmparse.y
+)
+
 add_definitions(-DUNICODE)
 add_definitions(-D_UNICODE)
 add_definitions(-D_FEATURE_NO_HOST)
@@ -22,7 +30,7 @@ set(ILASM_SOURCES
   asmman.cpp
   main.cpp
   assembler.cpp
-  prebuilt/asmparse.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/asmparse.cpp
 )
 
 set(ILASM_HEADERS
@@ -48,14 +56,10 @@ endif(WIN32)
 
 
 if(CLR_CMAKE_PLATFORM_UNIX)
-  # Need generate a right form of asmparse.cpp to avoid the following options.
-  # Clang also produces a bad-codegen on this prebuilt file with optimization.
-  # https://github.com/dotnet/coreclr/issues/2305
   add_compile_options(-Wno-delete-non-virtual-dtor)
   add_compile_options(-Wno-deprecated-register)
   add_compile_options(-Wno-array-bounds)
   add_compile_options(-Wno-unused-label)
-  set_source_files_properties( prebuilt/asmparse.cpp PROPERTIES COMPILE_FLAGS "-O0" )
 endif(CLR_CMAKE_PLATFORM_UNIX)
 
 _add_executable(ilasm
