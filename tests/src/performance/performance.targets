@@ -3,6 +3,6 @@
   <PropertyGroup>
     <CLRTestKind>BuildOnly</CLRTestKind>
   </PropertyGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.targets))\dir.targets" />
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(dir.targets))" />
 </Project>
 

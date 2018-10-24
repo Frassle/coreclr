@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.props))\dir.props" />
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), Interop.settings.targets))\Interop.settings.targets" />
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(dir.props))" />
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(Interop.settings.targets))" />
   <PropertyGroup>
     <IgnoreCoreCLRTestLibraryDependency>true</IgnoreCoreCLRTestLibraryDependency>
     <CLRTestScriptLocalCoreShim>true</CLRTestScriptLocalCoreShim>
@@ -16,5 +16,5 @@
     <ProjectReference Include="Primitives/CMakeLists.txt"/>
     <ProjectReference Include="../NetServer/NetServer.csproj" />
   </ItemGroup>
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), dir.targets))\dir.targets" />
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(dir.targets))" />
 </Project>

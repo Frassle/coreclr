@@ -109,7 +109,7 @@
     </PropertyGroup>
   </Target>
 
-  <Import Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory)\.., dir.targets))\dir.targets" />
+  <Import Project="$([MSBuild]::GetPathOfFileAbove(dir.targets, ..)" />
   <ItemGroup>
     <!-- Add version file to packages -->
     <File Condition="Exists('$(SyncInfoFile)')"
