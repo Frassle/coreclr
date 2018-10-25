@@ -51,15 +51,16 @@ private:
 
 class TyParList {
 public:
-    TyParList(DWORD a, BinStr* b, LPCUTF8 n, TyParList* nx = NULL) 
+    TyParList(DWORD a, BinStr* b, LPCUTF8 n, TyParList* p, TyParList* nx = NULL)
     { 
         bound  = (b == NULL) ? new BinStr() : b;
         bound->appendInt32(0); // zero terminator
-        attrs = a; name = n; next = nx;
+        attrs = a; name = n; params = p; next = nx;
     };
     ~TyParList() 
     {         
         if( bound) delete bound;
+        if( params) delete params;
 
         // To avoid excessive stack usage (especially in debug builds), we break the next chain
         // and delete as we traverse the link list
@@ -166,6 +167,7 @@ public:
 private:
     BinStr* bound;
     LPCUTF8 name;
+    TyParList* params;
     TyParList* next;
     DWORD   attrs;
 };

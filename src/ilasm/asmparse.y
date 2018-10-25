@@ -489,8 +489,8 @@ typarAttribs            : /* EMPTY */                       { $$ = 0; }
                         | typarAttrib typarAttribs          { $$ = $1 | $2; }                         
                         ;
 
-typars                  : typarAttribs tyBound dottedName typarsRest {$$ = new TyParList($1, $2, $3, $4);}
-                        | typarAttribs dottedName typarsRest   {$$ = new TyParList($1, NULL, $2, $3);}
+typars                  : typarAttribs tyBound dottedName typarsClause typarsRest {$$ = new TyParList($1, $2, $3, $4, $5);}
+                        | typarAttribs dottedName typarsClause typarsRest   {$$ = new TyParList($1, NULL, $2, $3, $4);}
                         ;
 
 typarsRest              : /* EMPTY */                       { $$ = NULL; }
