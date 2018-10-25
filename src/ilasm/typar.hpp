@@ -15,6 +15,8 @@ class TyParDescr
 public:
     TyParDescr()
     {
+        m_TyPars = NULL;
+        m_NumTyPars = 0;
         m_pbsBounds = NULL;
         m_wzName = NULL;
         m_dwAttrs = 0;
@@ -22,13 +24,16 @@ public:
     ~TyParDescr()
     {
         delete m_pbsBounds;
+        delete [] m_TyPars;
         delete [] m_wzName;
         m_lstCA.RESET(true);
     };
-    void Init(BinStr* bounds, LPCUTF8 name, DWORD attrs)
+    void Init(BinStr* bounds, LPCUTF8 name, DWORD attrs, TyParDescr* tyPars, int numTyPars)
     {
+        m_TyPars = tyPars;
+        m_NumTyPars = numTyPars;
         m_pbsBounds = bounds;
-        ULONG               cTemp = (ULONG)strlen(name)+1;
+        ULONG cTemp = (ULONG)strlen(name)+1;
         WCHAR *pwzName;
         m_wzName = pwzName = new WCHAR[cTemp];
         if(pwzName)
@@ -43,6 +48,8 @@ public:
     DWORD   Attrs() { return m_dwAttrs; };
     CustomDescrList* CAList() { return &m_lstCA; };
 private:
+    int m_NumTyPars;
+    TyParDescr* m_TyPars;
     BinStr* m_pbsBounds;
     LPCWSTR m_wzName;
     DWORD   m_dwAttrs;
@@ -152,8 +159,15 @@ public:
                 TyParList *tp = this;
                 while (tp)
                 {
-                    pTPD[i].Init(tp->bound,tp->name,tp->attrs);
+                    TyParDescr *tyPars = NULL;
+                    int numTyPars = 0;
+                    if(tp->params)
+                    {
+                        numTyPars = tp->params->ToArray(&tyPars);
+                    }
+                    pTPD[i].Init(tp->bound,tp->name,tp->attrs,tyPars,numTyPars);
                     tp->bound = 0; // to avoid deletion by destructor
+                    tp->params = 0;
                     i++;
                     tp = tp->next;
                 }
