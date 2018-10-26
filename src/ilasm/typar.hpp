@@ -47,6 +47,8 @@ public:
     LPCWSTR Name() { return m_wzName; };
     DWORD   Attrs() { return m_dwAttrs; };
     CustomDescrList* CAList() { return &m_lstCA; };
+    int NumTyPars() { return m_NumTyPars; }
+    TyParDescr* TyPars() { return m_TyPars; }
 private:
     int m_NumTyPars;
     TyParDescr* m_TyPars;

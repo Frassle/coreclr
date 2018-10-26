@@ -840,22 +840,8 @@ BOOL Assembler::EmitMethod(Method *pMethod)
         }
     }
 
-    if (pMethod->m_NumTyPars)
-    {
-        ULONG i;
-        mdToken* ptk;
-        mdToken tk;
-        for(i = 0; i < pMethod->m_NumTyPars; i++)
-        {
-            //ptk = (pMethod->m_TyParBounds[i] == NULL)? NULL :  (mdToken*)(pMethod->m_TyParBounds[i]->ptr());
-            //if(FAILED(m_pEmitter->DefineGenericParam(MethodToken,i,0,pMethod->m_TyParNames[i],0,ptk,&tk)))
-            ptk = (pMethod->m_TyPars[i].Bounds() == NULL)? NULL :  (mdToken*)(pMethod->m_TyPars[i].Bounds()->ptr());
-            if(FAILED(m_pEmitter->DefineGenericParam(MethodToken,i,pMethod->m_TyPars[i].Attrs(),pMethod->m_TyPars[i].Name(),0,ptk,&tk)))
-                report->error("Unable to define generic param'\n");
-            else
-                EmitCustomAttributes(tk, pMethod->m_TyPars[i].CAList());
-        }
-    }
+    EmitTypeParameters(MethodToken, pMethod->m_NumTyPars, pMethod->m_TyPars);
+
     //--------------------------------------------------------------------------------
     EmitSecurityInfo(MethodToken,
                      pMethod->m_pPermissions,
@@ -1188,6 +1174,26 @@ Class *Assembler::FindCreateClass(__in __nullterminated const char *pszFQN)
     return pSearch;
 }
 
+void Assembler::EmitTypeParameters(mdToken token, int numTyPars, TyParDescr* tyPars)
+{
+    ULONG i;
+    mdToken* ptk;
+    mdToken tk;
+    for(i = 0; i < numTyPars; i++)
+    {
+        TyParDescr* tyPar = &tyPars[i];
+        ptk = (tyPar->Bounds() == NULL) ? NULL : (mdToken*)(tyPar->Bounds()->ptr());
+        if(FAILED(m_pEmitter->DefineGenericParam(token,i,tyPar->Attrs(),tyPar->Name(),0,ptk,&tk)))
+        {
+            report->error("Unable to define generic param'\n");
+        }
+        else
+        {
+            EmitTypeParameters(tk, tyPars->NumTyPars(), tyPars->TyPars());
+            EmitCustomAttributes(tk, tyPar->CAList());
+        }
+    }
+}
 
 BOOL Assembler::EmitClass(Class *pClass)
 {
@@ -1242,23 +1248,7 @@ BOOL Assembler::EmitClass(Class *pClass)
     }
     _ASSERTE(tok == pClass->m_cl);
     if (FAILED(hr)) goto exit;
-    if (pClass->m_NumTyPars)
-    {
-        ULONG i;
-        mdToken* ptk;
-        mdToken tk;
-        for(i = 0; i < pClass->m_NumTyPars; i++)
-        {
-            //ptk = (pClass->m_TyParBounds[i] == NULL)? NULL :  (mdToken*)(pClass->m_TyParBounds[i]->ptr());
-            //if(FAILED(m_pEmitter->DefineGenericParam(pClass->m_cl,i,pClass->m_TyParAttrs[i],pClass->m_TyParNames[i],0,ptk,&tk)))
-            ptk = (pClass->m_TyPars[i].Bounds() == NULL)? NULL :  (mdToken*)(pClass->m_TyPars[i].Bounds()->ptr());
-            if(FAILED(m_pEmitter->DefineGenericParam(pClass->m_cl,i,pClass->m_TyPars[i].Attrs(),pClass->m_TyPars[i].Name(),0,ptk,&tk)))
-                report->error("Unable to define generic param'\n");
-            else
-                EmitCustomAttributes(tk, pClass->m_TyPars[i].CAList());
-        }
-    }
-    
+    EmitTypeParameters(pClass->m_cl, pClass->m_NumTyPars, pClass->m_TyPars);
     
     EmitCustomAttributes(pClass->m_cl, &(pClass->m_CustDList));
     hr = S_OK;

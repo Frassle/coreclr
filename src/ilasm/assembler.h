@@ -781,6 +781,7 @@ public:
     void SetTLSSection() { m_pCurSection = m_pTLSSection; }
     void SetILSection() { m_pCurSection = m_pILSection; }
     void SetDataSection()       { m_pCurSection = m_pGlobalDataSection; }
+    void EmitTypeParameters(mdToken token, int numTyPars, TyParDescr* tyPars);
     BOOL EmitMethod(Method *pMethod);
     BOOL EmitMethodBody(Method* pMethod, BinStr* pbsOut);
     BOOL EmitClass(Class *pClass);
