@@ -2,3 +2,4 @@ Tools/msbuild.sh /maxcpucount tests/src/hkt/functor/functor.ilproj /p:__BuildTyp
 
 export CORE_ROOT=~/github.com/dotnet/coreclr/bin/tests/Linux.x64.Debug/Tests/Core_Root/
 bash ./bin/tests/Linux.x64.Debug/hkt/functor/functor/functor.sh -coreroot=/home/fraser/github.com/dotnet/coreclr/bin/tests/Linux.x64.Debug/Tests/Core_Root
+./bin/Product/Linux.x64.Debug/ilasm tests/src/hkt/functor/ldfunctor.il
