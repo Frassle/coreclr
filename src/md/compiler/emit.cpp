@@ -1848,7 +1848,7 @@ ErrExit:
 // Define a formal type parameter for the given TypeDef or MethodDef token.
 //*****************************************************************************
 STDMETHODIMP RegMeta::DefineGenericParam(   // S_OK or error.
-        mdToken      tkOwner,               // [IN] TypeDef or MethodDef
+        mdToken      tkOwner,               // [IN] TypeDef or MethodDef or GenericParam
         ULONG        ulParamSeq,            // [IN] Index of the type parameter
         DWORD        dwParamFlags,          // [IN] Flags, for future use (e.g. variance)
         LPCWSTR      szName,                // [IN] Name
