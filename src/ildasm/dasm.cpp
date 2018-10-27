@@ -3080,7 +3080,7 @@ BOOL PrettyPrintGP(                     // prints name of generic param, or retu
     return ret;
 }
 
-// Pretty-print formal type parameters for a class or method
+// Pretty-print formal type parameters for a class, method, or generic param
 char *DumpGenericPars(__inout_ecount(SZSTRING_SIZE) char* szString, mdToken tok, void* GUICookie/*=NULL*/, BOOL fSplit/*=FALSE*/)
 {
     WCHAR *wzArgName = wzUniBuf;
@@ -3164,7 +3164,7 @@ char *DumpGenericPars(__inout_ecount(SZSTRING_SIZE) char* szString, mdToken tok,
             szptr += sprintf_s(szptr,SZSTRING_REMAINING_SIZE(szptr),"%s",ProperName(sz));
         }
         CHECK_REMAINING_SIZE;
-        szptr = DumpGenericPars(szptr, tkTyPar, GUICookie, fSplit);
+        szptr = DumpGenericPars(szptr, tkTyPar); //,NULL,FALSE);
 
         if (FAILED(g_pPubImport->EnumGenericParams(&hEnumTyPar, tok, &tkTyPar, 1, &NumTyPars)))
           return NULL;
