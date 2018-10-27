@@ -1417,7 +1417,7 @@ public:
       
         COL_Number,                     // index; zero = first var
         COL_Flags,                      // flags, for future use
-        COL_Owner,                      // typeDef/methodDef
+        COL_Owner,                      // typeDef/methodDef/genericParam(>=v3)
         COL_Name,                       // Purely descriptive, not used for binding purposes
         COL_COUNT, 
         COL_KEY = COL_Owner
