@@ -34,7 +34,7 @@
   call void [mscorlib]System.Console::WriteLine(bool)
 
   ldstr "fmap"
-  callvirt instance class [mscorlib]System.Refelection.MethodInfo [mscorlib]System.Type::GetMethod(string)
+  callvirt instance class [mscorlib]System.Reflection.MethodInfo [mscorlib]System.Type::GetMethod(string)
   call void [mscorlib]System.Console::WriteLine(object)
 
   ldc.i4     100
