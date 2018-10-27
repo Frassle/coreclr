@@ -1189,7 +1189,7 @@ void Assembler::EmitTypeParameters(mdToken token, int numTyPars, TyParDescr* tyP
         }
         else
         {
-            EmitTypeParameters(tk, tyPars->NumTyPars(), tyPars->TyPars());
+            EmitTypeParameters(tk, tyPar->NumTyPars(), tyPar->TyPars());
             EmitCustomAttributes(tk, tyPar->CAList());
         }
     }
