@@ -1596,6 +1596,7 @@ enum {
     MiniMdCodedToken(CustomAttributeType)   \
     MiniMdCodedToken(ResolutionScope)       \
     MiniMdCodedToken(TypeOrMethodDef)       \
+    MiniMdCodedToken(GenericParamParent)    \
 
 #undef MiniMdCodedToken
 #define MiniMdCodedToken(x) CDTKN_##x,

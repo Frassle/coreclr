@@ -402,6 +402,12 @@ const mdToken CMiniMdBase::mdtTypeOrMethodDef[2] = {
     mdtMethodDef
 };
 
+const mdToken CMiniMdBase::mdtGenericParamParent[3] = {
+    mdtTypeDef,
+    mdtMethodDef,
+    mdtGenericParam
+};
+
 const int CMiniMdBase::m_cb[] = {0,1,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5}; 
 
 //*****************************************************************************

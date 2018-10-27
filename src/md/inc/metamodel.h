@@ -600,6 +600,7 @@ public:
     static const mdToken mdtCustomAttributeType[5];
     static const mdToken mdtResolutionScope[4];
     static const mdToken mdtTypeOrMethodDef[2];
+    static const mdToken mdtGenericParamParent[3];
 
 
 public:
