@@ -71,10 +71,12 @@ EXTERN_GUID(CLSID_CLR_v1_MetaData, 0x005023ca, 0x72b1, 0x11d3, 0x9f, 0xc4, 0x0, 
 // CLSID_CLR_v2_MetaData: {EFEA471A-44FD-4862-9292-0C58D46E1F3A}
 EXTERN_GUID(CLSID_CLR_v2_MetaData, 0xefea471a, 0x44fd, 0x4862, 0x92, 0x92, 0xc, 0x58, 0xd4, 0x6e, 0x1f, 0x3a);
 
+// CLSID_CLR_v3_MetaData: {69C67ED4-8420-43A7-A00D-0DFCC5F14A92}
+EXTERN_GUID(CLSID_CLR_v3_MetaData, 0x69c67ed4, 0x8420, 0x43a7, 0xa0, 0x0d, 0xd, 0xfc, 0xc5, 0xf1, 0x4a, 0x92);
 
 // CLSID_CorMetaDataRuntime:
 // This will can always be used to generate the "latest" metadata available.
-#define CLSID_CorMetaDataRuntime CLSID_CLR_v2_MetaData
+#define CLSID_CorMetaDataRuntime CLSID_CLR_v3_MetaData
 
 
 // {30FE7BE8-D7D9-11D2-9F80-00C04F79A0A3}

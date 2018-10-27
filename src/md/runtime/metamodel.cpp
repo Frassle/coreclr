@@ -126,8 +126,13 @@ CMiniMdSchema::InitNew(
     }
     else if (mdVersion == MDVersion2)
     {
-        m_major = METAMODEL_MAJOR_VER;              
-        m_minor = METAMODEL_MINOR_VER;
+        m_major = METAMODEL_MAJOR_VER_V2_0;
+        m_minor = METAMODEL_MINOR_VER_V2_0;
+    }
+    else if (mdVersion == MDVersion3)
+    {
+        m_major = METAMODEL_MAJOR_VER_V3_0;
+        m_minor = METAMODEL_MINOR_VER_V3_0;
     }
     else
     {
@@ -174,6 +179,7 @@ CMiniMdSchema::SaveTo(
 
     // Make sure we're saving out a version that Beta1 version can read
     _ASSERTE((m_major == METAMODEL_MAJOR_VER && m_minor == METAMODEL_MINOR_VER) ||
+            (m_major == METAMODEL_MAJOR_VER_V2_0 && m_minor == METAMODEL_MINOR_VER_V2_0) ||
             (m_major == METAMODEL_MAJOR_VER_B1 && m_minor == METAMODEL_MINOR_VER_B1) ||
             (m_major == METAMODEL_MAJOR_VER_V1_0 && m_minor == METAMODEL_MINOR_VER_V1_0));
     
@@ -533,6 +539,12 @@ CMiniMdBase::SchemaPopulate(
             m_TableDefs[TBL_GenericParam] = g_Table_GenericParamV1_1.m_Def;
             m_TableDefs[TBL_GenericParam].m_pColDefs = BYTEARRAY_TO_COLDES(s_GenericParamCol);
         }
+        // Is this v2.0?
+        else if ((m_Schema.m_major == METAMODEL_MAJOR_VER_V2_0) &&
+            (m_Schema.m_minor == METAMODEL_MINOR_VER_V2_0))
+        {
+            m_TblCount = TBL_COUNT_V2;
+        }
         else
         {   // We don't support this version of the metadata
             Debug_ReportError("Unsupported version of MetaData.");
@@ -578,6 +590,11 @@ CMiniMdBase::SchemaPopulate(
             // 1.1 had a different type of GenericParam table
             m_TableDefs[TBL_GenericParam] = g_Table_GenericParamV1_1.m_Def;
             m_TableDefs[TBL_GenericParam].m_pColDefs = BYTEARRAY_TO_COLDES(s_GenericParamCol);
+        }
+        else if ((m_Schema.m_major == METAMODEL_MAJOR_VER_V2_0) && (m_Schema.m_minor == METAMODEL_MINOR_VER_V2_0))
+        {   // Older version has fewer tables.
+            m_TblCount = that.m_TblCount;
+            _ASSERTE(m_TblCount == TBL_COUNT_V2);
         }
         // Is it a supported old version?  This should never fail!
         else 

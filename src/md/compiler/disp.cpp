@@ -90,6 +90,10 @@ Disp::DefineScope(
     {
         optionForNewScope.m_MetadataVersion = MDVersion2;
     }
+    else if (rclsid == CLSID_CLR_v3_MetaData)
+    {
+        optionForNewScope.m_MetadataVersion = MDVersion3;
+    }
     else
     {
         // If it is a version we don't understand, then we cannot continue.

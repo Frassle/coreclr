@@ -8,9 +8,11 @@
 //
 //*****************************************************************************
 
+#if METAMODEL_MAJOR_VER != 3
 #if METAMODEL_MAJOR_VER != 2 
 #if METAMODEL_MAJOR_VER != 1
-#error "METAMODEL_MAJOR_VER other than 1 or 2 is not implemented"
+#error "METAMODEL_MAJOR_VER other than 1, 2, or 3 is not implemented"
+#endif
 #endif
 #endif
     //

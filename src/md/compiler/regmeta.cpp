@@ -312,8 +312,12 @@ HRESULT RegMeta::OpenExistingMD(
         m_pStgdb->m_MiniMd.m_Schema.m_minor == METAMODEL_MINOR_VER_V1_0)
         m_OptionValue.m_MetadataVersion = MDVersion1;
 
-    else
+    else if (m_pStgdb->m_MiniMd.m_Schema.m_major == METAMODEL_MAJOR_VER_V2_0 &&
+             m_pStgdb->m_MiniMd.m_Schema.m_minor == METAMODEL_MINOR_VER_V2_0)
         m_OptionValue.m_MetadataVersion = MDVersion2;
+
+    else
+        m_OptionValue.m_MetadataVersion = MDVersion3;
         
     
 
@@ -365,8 +369,12 @@ HRESULT RegMeta::OpenExistingMD(
         m_pStgdb->m_MiniMd.m_Schema.m_minor == METAMODEL_MINOR_VER_V1_0)
         m_OptionValue.m_MetadataVersion = MDVersion1;
 
-    else
+    else if (m_pStgdb->m_MiniMd.m_Schema.m_major == METAMODEL_MAJOR_VER_V2_0 &&
+             m_pStgdb->m_MiniMd.m_Schema.m_minor == METAMODEL_MINOR_VER_V2_0)
         m_OptionValue.m_MetadataVersion = MDVersion2;
+
+    else
+        m_OptionValue.m_MetadataVersion = MDVersion3;
 
 
 
