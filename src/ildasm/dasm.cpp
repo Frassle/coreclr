@@ -3106,6 +3106,7 @@ char *DumpGenericPars(__inout_ecount(SZSTRING_SIZE) char* szString, mdToken tok,
       
       for (i = 1; NumTyPars != 0; i++)
       {
+        if(g_fDumpTokens) szptr+=sprintf_s(szptr,SZSTRING_REMAINING_SIZE(szptr),COMMENT("/*%8.8X*/ "),tkTyPar);
         g_pPubImport->GetGenericParamProps(tkTyPar, NULL, &attr, NULL, NULL, wzArgName, UNIBUF_SIZE/2, &chName);
         //if(wcslen(wzArgName) >= MAX_CLASSNAME_LENGTH)
         //    wzArgName[MAX_CLASSNAME_LENGTH-1] = 0;
