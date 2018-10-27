@@ -1882,6 +1882,10 @@ STDMETHODIMP RegMeta::DefineGenericParam(   // S_OK or error.
 
     if ((tkOwnerType == mdtTypeDef) || (tkOwnerType == mdtMethodDef) || (tkOwnerType == mdtGenericParam))
     {
+        // See if this version of the metadata can do Generic Generics
+        if ((tkOwnerType == mdtGenericParam) && !m_pStgdb->m_MiniMd.SupportsGenericGenerics())
+            IfFailGo(CLDB_E_INCOMPATIBLE);
+
         // 1. Find/create GP (unique tkOwner+ulParamSeq)  = tkRet
         GenericParamRec *pGenericParam = NULL;
         RID         iGenericParam,rid;
