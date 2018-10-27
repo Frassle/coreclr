@@ -8769,8 +8769,8 @@ void NativeImageDumper::DumpTypeDesc( PTR_TypeDesc td )
         DisplayWriteFieldPointer( m_pModule,
                                   DPtrToPreferredAddr(tvtd->GetModule()),
                                   TypeVarTypeDesc, TYPEDESCS );
-        DisplayWriteFieldUInt( m_typeOrMethodDef,
-                               tvtd->m_typeOrMethodDef,
+        DisplayWriteFieldUInt( m_genericParamParent,
+                               tvtd->m_genericParamParent,
                                TypeVarTypeDesc, TYPEDESCS );
         DisplayWriteFieldInt( m_numConstraints, tvtd->m_numConstraints,
                               TypeVarTypeDesc, TYPEDESCS );

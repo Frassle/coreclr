@@ -440,7 +440,7 @@ public:
 
 /*************************************************************************/
 // These are for verification of generic code and reflection over generic code.
-// Each TypeVarTypeDesc represents a class or method type variable, as specified by a GenericParam entry.
+// Each TypeVarTypeDesc represents a class, method, or generic param type variable, as specified by a GenericParam entry.
 // The type variables are tied back to the class or method that *defines* them.
 // This is done through typedef or methoddef tokens.
 
@@ -453,22 +453,25 @@ public:
 
 #ifndef DACCESS_COMPILE
 
-    TypeVarTypeDesc(PTR_Module pModule, mdToken typeOrMethodDef, unsigned int index, mdGenericParam token) :
-        TypeDesc(TypeFromToken(typeOrMethodDef) == mdtTypeDef ? ELEMENT_TYPE_VAR : ELEMENT_TYPE_MVAR)
+    TypeVarTypeDesc(PTR_Module pModule, mdToken genericParamParent, unsigned int index, mdGenericParam token) :
+        TypeDesc(TypeFromToken(genericParamParent) == mdtMethodDef ? ELEMENT_TYPE_MVAR : ELEMENT_TYPE_VAR)
     {
         CONTRACTL
         {
             NOTHROW;
             GC_NOTRIGGER;
             PRECONDITION(CheckPointer(pModule));
-            PRECONDITION(TypeFromToken(typeOrMethodDef) == mdtTypeDef || TypeFromToken(typeOrMethodDef) == mdtMethodDef);
+            PRECONDITION(
+                TypeFromToken(genericParamParent) == mdtTypeDef ||
+                TypeFromToken(genericParamParent) == mdtMethodDef ||
+                TypeFromToken(genericParamParent) == mdtGenericParam);
             PRECONDITION(index >= 0);
             PRECONDITION(TypeFromToken(token) == mdtGenericParam);
         }
         CONTRACTL_END;
 
         m_pModule.SetValue(pModule);
-        m_typeOrMethodDef = typeOrMethodDef;
+        m_genericParamParent = genericParamParent;
         m_token = token;
         m_index = index;
         m_hExposedClassObject = 0;
@@ -502,11 +505,11 @@ public:
         return m_token; 
     }
 
-    mdToken GetTypeOrMethodDef() 
-    { 
+    mdToken GetGenericParamParent()
+    {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        return m_typeOrMethodDef; 
+        return m_genericParamParent;
     }
 
     OBJECTREF GetManagedClassObject();
@@ -575,8 +578,8 @@ protected:
     // Module containing the generic definition, also the loader module for this type desc
     RelativePointer<PTR_Module> m_pModule;
 
-    // Declaring type or method
-    mdToken m_typeOrMethodDef;
+    // Declaring type, method, or generic param
+    mdToken m_genericParamParent;
 
     // Constraints, determined on first call to GetConstraints
     Volatile<DWORD> m_numConstraints;    // -1 until number has been determined

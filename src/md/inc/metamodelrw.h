@@ -978,7 +978,7 @@ public:
     HRESULT GetGenericParamsForToken(mdToken tk, RID *pRidStart, RID *pRidEnd = 0)
     {
         return LookUpTableByCol( 
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), mdtTypeOrMethodDef, lengthof(mdtTypeOrMethodDef)), 
+            encodeGenericParamParentToken(RidFromToken(tk), TypeFromToken(tk)),
             m_pVS[TBL_GenericParam], pRidStart, pRidEnd);
     }
 

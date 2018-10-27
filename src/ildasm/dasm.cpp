@@ -3021,7 +3021,7 @@ BOOL PrettyPrintGP(                     // prints name of generic param, or retu
     int n)                              // Index of generic param 
 {
     BOOL ret = FALSE;
-    if(tkOwner && ((TypeFromToken(tkOwner)==mdtTypeDef)||(TypeFromToken(tkOwner)==mdtMethodDef)))
+    if(tkOwner && ((TypeFromToken(tkOwner)==mdtTypeDef)||(TypeFromToken(tkOwner)==mdtMethodDef)||(TypeFromToken(tkOwner)==mdtGenericParam)))
     {
         DWORD           NumTyPars;
         HENUMInternal   hEnumTyPar;
@@ -3164,6 +3164,8 @@ char *DumpGenericPars(__inout_ecount(SZSTRING_SIZE) char* szString, mdToken tok,
             szptr += sprintf_s(szptr,SZSTRING_REMAINING_SIZE(szptr),"%s",ProperName(sz));
         }
         CHECK_REMAINING_SIZE;
+        szptr = DumpGenericPars(szptr, tkTyPar, GUICookie, fSplit);
+
         if (FAILED(g_pPubImport->EnumGenericParams(&hEnumTyPar, tok, &tkTyPar, 1, &NumTyPars)))
           return NULL;
         if (NumTyPars != 0)

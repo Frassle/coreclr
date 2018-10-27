@@ -97,6 +97,9 @@ const CMiniTableDefEx g_Tables[TBL_COUNT] = {
 // Define a table descriptor for the obsolete v1.0 GenericParam table definition.
 const CMiniTableDefEx g_Table_GenericParamV1_1 = { { rGenericParamV1_1Cols, lengthof(rGenericParamV1_1Cols), GenericParamV1_1Rec::COL_KEY, 0 }, rGenericParamV1_1ColNames, "GenericParamV1_"};
 
+// Define a table descriptor for the obsolete v2.0 GenericParam table definition.
+const CMiniTableDefEx g_Table_GenericParamV2_0 = { { rGenericParamV2_0Cols, lengthof(rGenericParamV2_0Cols), GenericParamRec::COL_KEY, 0 }, rGenericParamV2_0ColNames, "GenericParamV2_"};
+
 
 
 // Define the array of Ptr Tables.  This is initialized to TBL_COUNT here.
@@ -550,6 +553,9 @@ CMiniMdBase::SchemaPopulate(
             (m_Schema.m_minor == METAMODEL_MINOR_VER_V2_0))
         {
             m_TblCount = TBL_COUNT_V2;
+            // 2.0 had a different type of GenericParam table
+            m_TableDefs[TBL_GenericParam] = g_Table_GenericParamV2_0.m_Def;
+            m_TableDefs[TBL_GenericParam].m_pColDefs = BYTEARRAY_TO_COLDES(s_GenericParamCol);
         }
         else
         {   // We don't support this version of the metadata
@@ -601,6 +607,9 @@ CMiniMdBase::SchemaPopulate(
         {   // Older version has fewer tables.
             m_TblCount = that.m_TblCount;
             _ASSERTE(m_TblCount == TBL_COUNT_V2);
+            // 2.0 had a different type of GenericParam table
+            m_TableDefs[TBL_GenericParam] = g_Table_GenericParamV2_0.m_Def;
+            m_TableDefs[TBL_GenericParam].m_pColDefs = BYTEARRAY_TO_COLDES(s_GenericParamCol);
         }
         // Is it a supported old version?  This should never fail!
         else 
@@ -689,6 +698,10 @@ CMiniMdBase::GetTableDefTemplate(
     if ((m_Schema.m_major == METAMODEL_MAJOR_VER_B1) && (m_Schema.m_minor == METAMODEL_MINOR_VER_B1) && (ixTbl == TBL_GenericParam))
     {
         pTemplate = &g_Table_GenericParamV1_1.m_Def;
+    }
+    else if ((m_Schema.m_major == METAMODEL_MAJOR_VER_V2_0) && (m_Schema.m_minor == METAMODEL_MINOR_VER_V2_0) && (ixTbl == TBL_GenericParam))
+    {
+        pTemplate = &g_Table_GenericParamV2_0.m_Def;
     }
     else
     {

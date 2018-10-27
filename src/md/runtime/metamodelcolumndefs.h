@@ -365,8 +365,8 @@
 
 
     //-------------------------------------------------------------------------
-    // GenericParam
-    SCHEMA_TABLE_START(GenericParam)
+    // Table for Metadata v2.0 for GenericParam
+    SCHEMA_TABLE_START(GenericParamV2_0)
     SCHEMA_ITEM(GenericParam, USHORT, Number)
     SCHEMA_ITEM(GenericParam, USHORT, Flags)
     SCHEMA_ITEM_CDTKN(GenericParam, Owner, TypeOrMethodDef)
@@ -383,6 +383,14 @@
     SCHEMA_ITEM_CDTKN(GenericParam, Kind, TypeDefOrRef)
     SCHEMA_TABLE_END(GenericParam)
 
+    //-------------------------------------------------------------------------
+    // GenericParam
+    SCHEMA_TABLE_START(GenericParam)
+    SCHEMA_ITEM(GenericParam, USHORT, Number)
+    SCHEMA_ITEM(GenericParam, USHORT, Flags)
+    SCHEMA_ITEM_CDTKN(GenericParam, Owner, GenericParamParent)
+    SCHEMA_ITEM_STRING(GenericParam, Name)
+    SCHEMA_TABLE_END(GenericParam)
 
 
     //-------------------------------------------------------------------------

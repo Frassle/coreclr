@@ -1221,7 +1221,7 @@ FCIMPL1(ReflectMethodObject*, RuntimeTypeHandle::GetDeclaringMethod, ReflectClas
         return NULL;
     
     TypeVarTypeDesc* pGenericVariable = typeHandle.AsGenericVariable();
-    mdToken defToken = pGenericVariable->GetTypeOrMethodDef();
+    mdToken defToken = pGenericVariable->GetGenericParamParent();
     if (TypeFromToken(defToken) != mdtMethodDef)
         return NULL;
 
@@ -1263,7 +1263,7 @@ FCIMPL1(ReflectClassBaseObject*, RuntimeTypeHandle::GetDeclaringType, ReflectCla
 
         if (typeHandle.IsGenericVariable()) {
             TypeVarTypeDesc* pGenericVariable = typeHandle.AsGenericVariable();
-            mdToken defToken = pGenericVariable->GetTypeOrMethodDef();
+            mdToken defToken = pGenericVariable->GetGenericParamParent();
             
             // Try the fast way first (if the declaring type has been loaded already).
             if (TypeFromToken(defToken) == mdtMethodDef)
@@ -1276,6 +1276,7 @@ FCIMPL1(ReflectClassBaseObject*, RuntimeTypeHandle::GetDeclaringType, ReflectCla
             {
                 retTypeHandle = pGenericVariable->GetModule()->LookupTypeDef(defToken);
             }
+            // FRASER TODO, declaring type could be a generic param itself!
 
             if (!retTypeHandle.IsNull() && retTypeHandle.IsFullyLoaded())
                 goto Exit;

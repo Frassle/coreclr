@@ -1356,14 +1356,14 @@ MethodDesc * TypeVarTypeDesc::LoadOwnerMethod()
         GC_TRIGGERS;
         MODE_ANY;
 
-        PRECONDITION(TypeFromToken(m_typeOrMethodDef) == mdtMethodDef);
+        PRECONDITION(TypeFromToken(m_genericParamParent) == mdtMethodDef);
     }
     CONTRACTL_END;
 
-    MethodDesc *pMD = GetModule()->LookupMethodDef(m_typeOrMethodDef);
+    MethodDesc *pMD = GetModule()->LookupMethodDef(m_genericParamParent);
     if (pMD == NULL)
     {
-        pMD = MemberLoader::GetMethodDescFromMethodDef(GetModule(), m_typeOrMethodDef, FALSE);
+        pMD = MemberLoader::GetMethodDescFromMethodDef(GetModule(), m_genericParamParent, FALSE);
     }
     return pMD;
 }
@@ -1376,14 +1376,14 @@ TypeHandle TypeVarTypeDesc::LoadOwnerType()
         GC_TRIGGERS;
         MODE_ANY;
 
-        PRECONDITION(TypeFromToken(m_typeOrMethodDef) == mdtTypeDef);
+        PRECONDITION(TypeFromToken(m_genericParamParent) == mdtTypeDef);
     }
     CONTRACTL_END;
 
-    TypeHandle genericType = GetModule()->LookupTypeDef(m_typeOrMethodDef);
+    TypeHandle genericType = GetModule()->LookupTypeDef(m_genericParamParent);
     if (genericType.IsNull())
     {
-        genericType = ClassLoader::LoadTypeDefThrowing(GetModule(), m_typeOrMethodDef,
+        genericType = ClassLoader::LoadTypeDefThrowing(GetModule(), m_genericParamParent,
             ClassLoader::ThrowIfNotFound,
             ClassLoader::PermitUninstDefOrRef);
     }
@@ -1446,7 +1446,7 @@ void TypeVarTypeDesc::LoadConstraints(ClassLoadLevel level /* = CLASS_LOADED */)
         mdGenericParamConstraint tkConstraint;
 
         SigTypeContext typeContext;
-        mdToken defToken = GetTypeOrMethodDef();
+        mdToken defToken = GetGenericParamParent();
 
         MethodTable *pMT = NULL;
         if (TypeFromToken(defToken) == mdtMethodDef)
@@ -1467,6 +1467,7 @@ void TypeVarTypeDesc::LoadConstraints(ClassLoadLevel level /* = CLASS_LOADED */)
 
             SigTypeContext::InitTypeContext(genericType,&typeContext);
         }
+        // FRASER TODO ower might be a generic param
         
         hEnum.EnumInit(mdtGenericParamConstraint, GetToken());
         numConstraints = pInternalImport->EnumGetCount(&hEnum);
@@ -1671,7 +1672,7 @@ TypeHandle LoadTypeVarConstraint(TypeVarTypeDesc *pTypeVar, mdGenericParamConstr
     mdToken tkConstraintType, tkParam;
     IfFailThrow(pInternalImport->GetGenericParamConstraintProps(tkConstraint, &tkParam, &tkConstraintType));
     _ASSERTE(tkParam == pTypeVar->GetToken());
-    mdToken tkOwnerToken = pTypeVar->GetTypeOrMethodDef();
+    mdToken tkOwnerToken = pTypeVar->GetGenericParamParent();
     
     if (TypeFromToken(tkConstraintType) == mdtTypeSpec && pInstContext != NULL)
     {
@@ -2026,7 +2027,7 @@ BOOL TypeVarTypeDesc::SatisfiesConstraints(SigTypeContext *pTypeContextOfConstra
     IMDInternalImport* pInternalImport = GetModule()->GetMDImport();
     mdGenericParamConstraint tkConstraint;
         
-    INDEBUG(mdToken defToken = GetTypeOrMethodDef());
+    INDEBUG(mdToken defToken = GetGenericParamParent());
     _ASSERTE(TypeFromToken(defToken) == mdtMethodDef || TypeFromToken(defToken) == mdtTypeDef);
 
     // prepare for the enumeration of this variable's general constraints

@@ -413,9 +413,9 @@ HRESULT MDInternalRO::EnumInit(     // return S_FALSE if record not found
         break;
 
     case mdtGenericParam:
-        _ASSERTE(TypeFromToken(tkParent) == mdtTypeDef || TypeFromToken(tkParent) == mdtMethodDef);
+        _ASSERTE(TypeFromToken(tkParent) == mdtTypeDef || TypeFromToken(tkParent) == mdtMethodDef || TypeFromToken(tkParent) == mdtGenericParam);
 
-        if (TypeFromToken(tkParent) != mdtTypeDef && TypeFromToken(tkParent) != mdtMethodDef)
+        if (TypeFromToken(tkParent) != mdtTypeDef && TypeFromToken(tkParent) != mdtMethodDef && TypeFromToken(tkParent) != mdtGenericParam)
             IfFailGo(CLDB_E_FILE_CORRUPT);
         
         if (TypeFromToken(tkParent) == mdtTypeDef)
@@ -425,11 +425,18 @@ HRESULT MDInternalRO::EnumInit(     // return S_FALSE if record not found
                 &phEnum->u.m_ulEnd, 
                 &(phEnum->u.m_ulStart)));
         }
-        else
+        else if(TypeFromToken(tkParent) == mdtMethodDef)
         {
             IfFailGo(m_LiteWeightStgdb.m_MiniMd.getGenericParamsForMethodDef(
                 RidFromToken(tkParent), 
                 &phEnum->u.m_ulEnd, 
+                &(phEnum->u.m_ulStart)));
+        }
+        else
+        {
+            IfFailGo(m_LiteWeightStgdb.m_MiniMd.getGenericParamsForGenericParam(
+                RidFromToken(tkParent),
+                &phEnum->u.m_ulEnd,
                 &(phEnum->u.m_ulStart)));
         }
         break;

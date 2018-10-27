@@ -233,7 +233,7 @@ BOOL TypeHandle::ContainsGenericVariables(BOOL methodOnly /*=FALSE*/) const
                 return TRUE;
 
             PTR_TypeVarTypeDesc pTyVar = dac_cast<PTR_TypeVarTypeDesc>(AsTypeDesc());
-            return TypeFromToken(pTyVar->GetTypeOrMethodDef()) == mdtMethodDef;
+            return TypeFromToken(pTyVar->GetGenericParamParent()) == mdtMethodDef;
         }
 
         if (HasTypeParam())
@@ -1654,7 +1654,7 @@ BOOL TypeHandle::SatisfiesClassConstraints() const
 
         TypeVarTypeDesc* tyvar = typicalInst[i].AsGenericVariable();
         _ASSERTE(tyvar != NULL);
-        _ASSERTE(TypeFromToken(tyvar->GetTypeOrMethodDef()) == mdtTypeDef);        
+        _ASSERTE(TypeFromToken(tyvar->GetGenericParamParent()) == mdtTypeDef);
 
         tyvar->LoadConstraints(); //TODO: is this necessary for anything but the typical class?
 

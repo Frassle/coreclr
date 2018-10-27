@@ -461,7 +461,7 @@ BOOL ClassLoader::IsTypicalInstantiation(Module *pModule, mdToken token, Instant
             TypeVarTypeDesc* tyvar = thArg.AsGenericVariable();
 
             PREFIX_ASSUME(tyvar!=NULL);
-            if ((tyvar->GetTypeOrMethodDef() != token) ||
+            if ((tyvar->GetGenericParamParent() != token) ||
                 (tyvar->GetModule() != dac_cast<PTR_Module>(pModule)) ||
                 (tyvar->GetIndex() != i))
                 return FALSE;

@@ -1147,11 +1147,18 @@ HRESULT MDInternalRW::EnumInit(     // return S_FALSE if record not found
                 &phEnum->u.m_ulEnd, 
                 &(phEnum->u.m_ulStart)));
         }
-        else
+        else if(TypeFromToken(tkParent) == mdtMethodDef)
         {
             IfFailGo(m_pStgdb->m_MiniMd.getGenericParamsForMethodDef(
                 RidFromToken(tkParent), 
                 &phEnum->u.m_ulEnd, 
+                &(phEnum->u.m_ulStart)));
+        }
+        else
+        {
+            IfFailGo(m_pStgdb->m_MiniMd.getGenericParamsForGenericParam(
+                RidFromToken(tkParent),
+                &phEnum->u.m_ulEnd,
                 &(phEnum->u.m_ulStart)));
         }
         break;

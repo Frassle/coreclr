@@ -1659,7 +1659,7 @@ BOOL MethodDesc::SatisfiesMethodConstraints(TypeHandle thParent, BOOL fThrowIfNo
 
         TypeVarTypeDesc* tyvar = (TypeVarTypeDesc*) (typicalInst[i].AsTypeDesc());
         _ASSERTE(tyvar != NULL);
-        _ASSERTE(TypeFromToken(tyvar->GetTypeOrMethodDef()) == mdtMethodDef);
+        _ASSERTE(TypeFromToken(tyvar->GetGenericParamParent()) == mdtMethodDef);
 
         tyvar->LoadConstraints(); //TODO: is this necessary for anything but the typical method?
 

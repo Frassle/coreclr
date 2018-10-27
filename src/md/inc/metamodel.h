@@ -1664,12 +1664,25 @@ public:
     _GETLIST(TypeDef,MethodList,Method);    // RID getMethodListOfTypeDef(TypeDefRec *pRec);
     mdToken _GETCDTKN(TypeDef,Extends,mdtTypeDefOrRef); // mdToken getExtendsOfTypeDef(TypeDefRec *pRec);
     
+    ULONG encodeGenericParamParentToken(RID rid, mdToken typ)
+    {
+        ULONG tk;
+        if(SupportsGenericGenerics())
+        {
+            tk = encodeToken(rid, typ, mdtGenericParamParent, lengthof(mdtGenericParamParent));
+        }
+        else
+        {
+            tk = encodeToken(rid, typ, mdtTypeOrMethodDef, lengthof(mdtTypeOrMethodDef));
+        }
+        return tk;
+    }
     __checkReturn 
     HRESULT getGenericParamsForTypeDef(RID rid, RID *pEnd, RID *pFoundRid)
     { 
         return SearchTableForMultipleRows(TBL_GenericParam, 
                             _COLDEF(GenericParam,Owner),
-                            encodeToken(rid, mdtTypeDef, mdtTypeOrMethodDef, lengthof(mdtTypeOrMethodDef)),
+                            encodeGenericParamParentToken(rid, mdtTypeDef),
                             pEnd, 
                             pFoundRid);
     }
@@ -1678,7 +1691,16 @@ public:
     { 
         return SearchTableForMultipleRows(TBL_GenericParam, 
                             _COLDEF(GenericParam,Owner),
-                            encodeToken(rid, mdtMethodDef, mdtTypeOrMethodDef, lengthof(mdtTypeOrMethodDef)),
+                            encodeGenericParamParentToken(rid, mdtMethodDef),
+                            pEnd,
+                            pFoundRid);
+    }
+    __checkReturn
+    HRESULT getGenericParamsForGenericParam(RID rid, RID *pEnd, RID *pFoundRid)
+    {
+        return SearchTableForMultipleRows(TBL_GenericParam,
+                            _COLDEF(GenericParam,Owner),
+                            encodeGenericParamParentToken(rid, mdtGenericParam),
                             pEnd, 
                             pFoundRid);
     }
@@ -1928,7 +1950,17 @@ public:
     // GenericParRec
     USHORT _GETFLD(GenericParam,Number);
     USHORT _GETFLD(GenericParam,Flags);
-    mdToken _GETCDTKN(GenericParam,Owner,mdtTypeOrMethodDef);
+    mdToken getOwnerOfGenericParam(GenericParamRec *pRec)
+    {
+        if (SupportsGenericGenerics())
+        {
+            return decodeToken(getIX(pRec, _COLDEF(GenericParam, Owner)), mdtGenericParamParent, lengthof(mdtGenericParamParent));
+        }
+        else
+        {
+            return decodeToken(getIX(pRec, _COLDEF(GenericParam, Owner)), mdtTypeOrMethodDef, lengthof(mdtTypeOrMethodDef));
+        }
+    }
     _GETSTR(GenericParam,Name);
     
     __checkReturn 
@@ -1955,6 +1987,12 @@ public:
         return (m_Schema.m_major >= METAMODEL_MAJOR_VER_V2_0 ||
                 (m_Schema.m_major == METAMODEL_MAJOR_VER_B1 && m_Schema.m_minor == METAMODEL_MINOR_VER_B1));
     }// SupportGenerics
+
+    BOOL SupportsGenericGenerics()
+    {
+        // Only 3.0 of the metadata support generics
+        return (m_Schema.m_major >= METAMODEL_MAJOR_VER_V3_0);
+    }// SupportGenericGenerics
 
     protected:
     //*****************************************************************************

@@ -677,7 +677,7 @@ DECLARE_INTERFACE_(IMetaDataEmit2, IMetaDataEmit)
         ULONG       cbData) PURE;           // [IN] Max size of data buffer.
 
     STDMETHOD(DefineGenericParam)(          // S_OK or error.
-        mdToken      tk,                    // [IN] TypeDef or MethodDef
+        mdToken      tk,                    // [IN] TypeDef, MethodDef, or GenericParam
         ULONG        ulParamSeq,            // [IN] Index of the type parameter
         DWORD        dwParamFlags,          // [IN] Flags, for future use (e.g. variance)
         LPCWSTR      szname,                // [IN] Name

@@ -355,7 +355,7 @@ STDMETHODIMP RegMeta::EnumGenericParams(HCORENUM *phEnum, mdToken tkOwner,
     }
 
     
-    _ASSERTE(TypeFromToken(tkOwner) == mdtTypeDef || TypeFromToken(tkOwner) == mdtMethodDef);
+    _ASSERTE(TypeFromToken(tkOwner) == mdtTypeDef || TypeFromToken(tkOwner) == mdtMethodDef || TypeFromToken(tkOwner) == mdtGenericParam);
 
 
     if ( *ppmdEnum == 0 )
@@ -369,9 +369,13 @@ STDMETHODIMP RegMeta::EnumGenericParams(HCORENUM *phEnum, mdToken tkOwner,
             {
                 IfFailGo(pMiniMd->getGenericParamsForTypeDef(RidFromToken(tkOwner), &ridEnd, &ridStart));
             }
-            else
+            else if (TypeFromToken(tkOwner) == mdtMethodDef)
             {
                 IfFailGo(pMiniMd->getGenericParamsForMethodDef(RidFromToken(tkOwner), &ridEnd, &ridStart));
+            }
+            else
+            {
+                IfFailGo(pMiniMd->getGenericParamsForGenericParam(RidFromToken(tkOwner), &ridEnd, &ridStart));
             }
 
             IfFailGo( HENUMInternal::CreateSimpleEnum(mdtGenericParam, ridStart, ridEnd, &pEnum) );
