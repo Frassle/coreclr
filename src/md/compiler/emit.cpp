@@ -1845,7 +1845,7 @@ ErrExit:
 } // RegMeta::DefineNestedType
 
 //*****************************************************************************
-// Define a formal type parameter for the given TypeDef or MethodDef token.
+// Define a formal type parameter for the given TypeDef, MethodDef, or GenericParam token.
 //*****************************************************************************
 STDMETHODIMP RegMeta::DefineGenericParam(   // S_OK or error.
         mdToken      tkOwner,               // [IN] TypeDef or MethodDef or GenericParam
