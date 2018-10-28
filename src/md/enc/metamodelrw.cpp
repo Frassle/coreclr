@@ -3047,6 +3047,7 @@ CMiniMdRW::PreSaveFull()
             //  so they need fixups after sorting GenericParam table.
             IfFailGo(FixUpTable(TBL_GenericParamConstraint));
             IfFailGo(FixUpTable(TBL_GenericParam));
+            // After fixup we might not be sorted any more (in the case of generic generics)
             IfFailGo(sortGenericParam.CheckSortedWithNoDuplicates());
         }
         
