@@ -3050,7 +3050,8 @@ CMiniMdRW::PreSaveFull()
                 //  so they need fixups after sorting GenericParam table.
                 IfFailGo(FixUpTable(TBL_GenericParamConstraint));
                 IfFailGo(FixUpTable(TBL_GenericParam));
-            } while (FAILED(sortGenericParam.CheckSortedWithNoDuplicates()));
+                IfFailGo(sortGenericParam.CheckSortedWithNoDuplicates());
+            } while (!IsSorted(TBL_GenericParam));
         }
         
         // Sort the InterfaceImpl table by class.
