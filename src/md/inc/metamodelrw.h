@@ -907,14 +907,6 @@ public:
         HENUMInternal *phEnum);             // fill in the enum
 
     //*****************************************************************************
-    // Find helper for a GenericParams
-    //*****************************************************************************
-    __checkReturn 
-    HRESULT FindGenericParamHelper(         // Return HRESULT
-        mdToken     tkOwner,                // Token for the GenericParams' owner
-        HENUMInternal *phEnum);             // Fill in the enum.
-
-    //*****************************************************************************
     // Find helper for a Generic Constraints
     //*****************************************************************************
     __checkReturn 
