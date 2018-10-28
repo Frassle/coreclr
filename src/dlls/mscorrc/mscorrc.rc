@@ -1106,7 +1106,7 @@ BEGIN
         BFA_UNEXPECTED_TOKEN_AFTER_CLASSVALTYPE "A valid typedef or typeref token is expected to follow a ELEMENT_TYPE_CLASS or ELEMENT_TYPE_VALUETYPE."
         BFA_FNPTR_CANNOT_BE_A_FIELD             "A ELEMENT_TYPE_FNPTR cannot have a field signature."
         BFA_FNPTR_CANNOT_BE_GENERIC             "A ELEMENT_TYPE_FNPTR cannot be generic."
-        BFA_UNEXPECTED_TOKEN_AFTER_GENINST      "A valid typedef or typeref token is expected to follow a ELEMENT_TYPE_GENERICINST."
+        BFA_UNEXPECTED_TOKEN_AFTER_GENINST      "A valid typedef, typeref or genericparam token is expected to follow a ELEMENT_TYPE_GENERICINST."
         BFA_TYPEDBYREFCANNOTHAVEBYREF           "An ELEMENT_TYPE_TYPEDBYREF cannot have a ELEMENT_TYPE_BYREF modifier."
         BFA_REFERENCE_ASSEMBLY                  "Cannot load a reference assembly for execution."
 
