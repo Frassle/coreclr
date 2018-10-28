@@ -3041,17 +3041,13 @@ CMiniMdRW::PreSaveFull()
             // Don't disturb the sequence ordering within Owner
             STABLESORTER_WITHREMAP(GenericParam, Owner);
 
-            // GenericParams refer to generic params so we need to keep sorting until we get a stable order
-            do
-            {
-                IfFailGo(sortGenericParam.Sort());
+            IfFailGo(sortGenericParam.Sort());
 
-                // The GenericParamConstraint, and the GenericParam table are parented to the GenericParam table,
-                //  so they need fixups after sorting GenericParam table.
-                IfFailGo(FixUpTable(TBL_GenericParamConstraint));
-                IfFailGo(FixUpTable(TBL_GenericParam));
-                IfFailGo(sortGenericParam.CheckSortedWithNoDuplicates());
-            } while (!IsSorted(TBL_GenericParam));
+            // The GenericParamConstraint, and the GenericParam table are parented to the GenericParam table,
+            //  so they need fixups after sorting GenericParam table.
+            IfFailGo(FixUpTable(TBL_GenericParamConstraint));
+            IfFailGo(FixUpTable(TBL_GenericParam));
+            IfFailGo(sortGenericParam.CheckSortedWithNoDuplicates());
         }
         
         // Sort the InterfaceImpl table by class.
