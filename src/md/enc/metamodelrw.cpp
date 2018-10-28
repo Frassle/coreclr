@@ -3035,13 +3035,14 @@ CMiniMdRW::PreSaveFull()
     //  tables for which we hand out tokens.
     if ((m_OptionValue.m_UpdateMode & MDUpdateMask) == MDUpdateFull)
     {
-        if (SupportsGenerics())
-        {
-            // Sort the GenericParam table by the Owner.
-            // Don't disturb the sequence ordering within Owner
-            STABLESORTER_WITHREMAP(GenericParam, Owner);
-            IfFailGo(sortGenericParam.Sort());
-        }
+        // FRASER TODO: GenericParams refer to GenericParams, sorting this will be hard but it would be good to have binary searches again.
+        // if (SupportsGenerics())
+        // {
+        //     // Sort the GenericParam table by the Owner.
+        //     // Don't disturb the sequence ordering within Owner
+        //     STABLESORTER_WITHREMAP(GenericParam, Owner);
+        //     IfFailGo(sortGenericParam.Sort());
+        // }
         
         // Sort the InterfaceImpl table by class.
         STABLESORTER_WITHREMAP(InterfaceImpl, Class);
