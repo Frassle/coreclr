@@ -1783,8 +1783,8 @@ TypeHandle SigPointer::GetGenericInstType(Module *        pModule,
 
         if (mdt == mdtGenericParam)
         {
-            // FRASER TODO: Actually support this case
-            THROW_BAD_FORMAT(BFA_UNEXPECTED_TOKEN_AFTER_GENINST, pOrigModule);
+            TypeVarTypeDesc* tvtd = pModule->LookupGenericParam(typeToken);
+            genericType = static_cast<TypeHandle>(tvtd);
         }
         else
         {
