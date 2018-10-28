@@ -1459,13 +1459,16 @@ void TypeVarTypeDesc::LoadConstraints(ClassLoadLevel level /* = CLASS_LOADED */)
             _ASSERTE(!typeContext.m_methodInst.IsEmpty());
             pMT = pMD->GetMethodTable();
         }
-        else
+        else if(TypeFromToken(defToken) == mdtTypeDef)
         {
-            _ASSERTE(TypeFromToken(defToken) == mdtTypeDef);
             TypeHandle genericType = LoadOwnerType();
             _ASSERTE(genericType.IsGenericTypeDefinition());
 
             SigTypeContext::InitTypeContext(genericType,&typeContext);
+        }
+        else
+        {
+            _ASSERTE(FALSE);
         }
         // FRASER TODO ower might be a generic param
         

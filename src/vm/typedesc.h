@@ -453,6 +453,7 @@ public:
 
 #ifndef DACCESS_COMPILE
 
+    // FRASER TODO: genericParamParent could be mdtGenericParam
     TypeVarTypeDesc(PTR_Module pModule, mdToken genericParamParent, unsigned int index, mdGenericParam token) :
         TypeDesc(TypeFromToken(genericParamParent) == mdtMethodDef ? ELEMENT_TYPE_MVAR : ELEMENT_TYPE_VAR)
     {

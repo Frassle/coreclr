@@ -1774,6 +1774,7 @@ TypeHandle SigPointer::GetGenericInstType(Module *        pModule,
             }
         }
 #endif
+        // FRASER TODO: typeToken could be mdtGenericParam
 
         if ((TypeFromToken(typeToken) != mdtTypeRef) && (TypeFromToken(typeToken) != mdtTypeDef))
             THROW_BAD_FORMAT(BFA_UNEXPECTED_TOKEN_AFTER_GENINST, pOrigModule);
