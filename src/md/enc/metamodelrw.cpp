@@ -3035,14 +3035,23 @@ CMiniMdRW::PreSaveFull()
     //  tables for which we hand out tokens.
     if ((m_OptionValue.m_UpdateMode & MDUpdateMask) == MDUpdateFull)
     {
-        // FRASER TODO: GenericParams refer to GenericParams, sorting this will be hard but it would be good to have binary searches again.
-        // if (SupportsGenerics())
-        // {
-        //     // Sort the GenericParam table by the Owner.
-        //     // Don't disturb the sequence ordering within Owner
-        //     STABLESORTER_WITHREMAP(GenericParam, Owner);
-        //     IfFailGo(sortGenericParam.Sort());
-        // }
+        if (SupportsGenerics())
+        {
+            // Sort the GenericParam table by the Owner.
+            // Don't disturb the sequence ordering within Owner
+            STABLESORTER_WITHREMAP(GenericParam, Owner);
+
+            // GenericParams refer to generic params so we need to keep sorting until we get a stable order
+            do
+            {
+                IfFailGo(sortGenericParam.Sort());
+
+                // The GenericParamConstraint, and the GenericParam table are parented to the GenericParam table,
+                //  so they need fixups after sorting GenericParam table.
+                IfFailGo(FixUpTable(TBL_GenericParamConstraint));
+                IfFailGo(FixUpTable(TBL_GenericParam));
+            } while (FAILED(sortGenericParam.CheckSortedWithNoDuplicates()));
+        }
         
         // Sort the InterfaceImpl table by class.
         STABLESORTER_WITHREMAP(InterfaceImpl, Class);
@@ -3053,12 +3062,8 @@ CMiniMdRW::PreSaveFull()
         IfFailGo(sortDeclSecurity.Sort());
     }
     
-    // The GenericParamConstraint table is parented to the GenericParam table,
-    //  so it needs fixup after sorting GenericParam table.
     if (SupportsGenerics())
     {
-        IfFailGo(FixUpTable(TBL_GenericParamConstraint));
-        
         // After fixing up the GenericParamConstraint table, we can then
         // sort it.
         if ((m_OptionValue.m_UpdateMode & MDUpdateMask) == MDUpdateFull)
