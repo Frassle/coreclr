@@ -30,6 +30,10 @@
   call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
 
   dup
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  dup
   callvirt instance bool [mscorlib]System.Type::get_IsGenericType()
   call void [mscorlib]System.Console::WriteLine(bool)
 
