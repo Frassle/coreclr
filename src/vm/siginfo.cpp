@@ -1774,63 +1774,70 @@ TypeHandle SigPointer::GetGenericInstType(Module *        pModule,
             }
         }
 #endif
-        // FRASER TODO: typeToken could be mdtGenericParam
-
-        if ((TypeFromToken(typeToken) != mdtTypeRef) && (TypeFromToken(typeToken) != mdtTypeDef))
+        ULONG32 mdt = TypeFromToken(typeToken);
+        if ((mdt != mdtTypeRef) && (mdt != mdtTypeDef) && (mdt != mdtGenericParam))
             THROW_BAD_FORMAT(BFA_UNEXPECTED_TOKEN_AFTER_GENINST, pOrigModule);
-       
+
         if (IsNilToken(typeToken))
             THROW_BAD_FORMAT(BFA_UNEXPECTED_TOKEN_AFTER_GENINST, pOrigModule);
-        
-        ClassLoader::NotFoundAction  notFoundAction;
-        CorInternalStates            tdTypes;
 
-        if (fLoadTypes == ClassLoader::LoadTypes)
+        if (mdt == mdtGenericParam)
         {
-            notFoundAction = ClassLoader::ThrowIfNotFound;
-            tdTypes = tdNoTypes;
+            // FRASER TODO: Actually support this case
+            THROW_BAD_FORMAT(BFA_UNEXPECTED_TOKEN_AFTER_GENINST, pOrigModule);
         }
         else
         {
-            notFoundAction = ClassLoader::ReturnNullIfNotFound;
-            tdTypes = tdAllTypes;
-        }
+            ClassLoader::NotFoundAction  notFoundAction;
+            CorInternalStates            tdTypes;
 
-        genericType = ClassLoader::LoadTypeDefOrRefThrowing(pModule,
-                                                            typeToken, 
-                                                            notFoundAction,
-                                                            ClassLoader::PermitUninstDefOrRef,
-                                                            tdTypes,
-                                                            level);
-
-        if (genericType.IsNull()) 
-        {
-            return genericType;
-        }
-
-#ifndef DACCESS_COMPILE
-        if (fLoadTypes == ClassLoader::LoadTypes)
-        {
-            // Skip this check when using zap sigs; it should have been correctly computed at NGen time 
-            // and a change from one to the other would have invalidated the image.  Leave in the code for debug so we can assert below.
-            if (pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens)
+            if (fLoadTypes == ClassLoader::LoadTypes)
             {
-                bool typFromSigIsClass = (typ == ELEMENT_TYPE_CLASS);
-                bool typLoadedIsClass  = (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS);
-            
-                if (typFromSigIsClass != typLoadedIsClass)
-                { 
-                    pOrigModule->GetAssembly()->ThrowTypeLoadException(pModule->GetMDImport(),
-                                                                       typeToken, 
-                                                                       BFA_CLASSLOAD_VALUETYPEMISMATCH);
-                }
+                notFoundAction = ClassLoader::ThrowIfNotFound;
+                tdTypes = tdNoTypes;
+            }
+            else
+            {
+                notFoundAction = ClassLoader::ReturnNullIfNotFound;
+                tdTypes = tdAllTypes;
             }
 
-            // Assert that our reasoning above was valid (that there is never a zapsig that gets this wrong)
-            _ASSERTE(((typ == ELEMENT_TYPE_CLASS) == (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS)) ||
-                      pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens);
-        }
+            genericType = ClassLoader::LoadTypeDefOrRefThrowing(pModule,
+                                                                typeToken,
+                                                                notFoundAction,
+                                                                ClassLoader::PermitUninstDefOrRef,
+                                                                tdTypes,
+                                                                level);
+
+            if (genericType.IsNull())
+            {
+                return genericType;
+            }
+
+#ifndef DACCESS_COMPILE
+            if (fLoadTypes == ClassLoader::LoadTypes)
+            {
+                // Skip this check when using zap sigs; it should have been correctly computed at NGen time
+                // and a change from one to the other would have invalidated the image.  Leave in the code for debug so we can assert below.
+                if (pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens)
+                {
+                    bool typFromSigIsClass = (typ == ELEMENT_TYPE_CLASS);
+                    bool typLoadedIsClass  = (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS);
+
+                    if (typFromSigIsClass != typLoadedIsClass)
+                    {
+                        pOrigModule->GetAssembly()->ThrowTypeLoadException(pModule->GetMDImport(),
+                                                                        typeToken,
+                                                                        BFA_CLASSLOAD_VALUETYPEMISMATCH);
+                    }
+                }
+
+                // Assert that our reasoning above was valid (that there is never a zapsig that gets this wrong)
+                _ASSERTE(((typ == ELEMENT_TYPE_CLASS) == (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS)) ||
+                        pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens);
+            }
 #endif // #ifndef DACCESS_COMPILE
+        }
     }
 
     return genericType;
