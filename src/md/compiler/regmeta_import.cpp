@@ -365,19 +365,7 @@ STDMETHODIMP RegMeta::EnumGenericParams(HCORENUM *phEnum, mdToken tkOwner,
         //@todo GENERICS: review this. Are we expecting a sorted table or not?
         if ( pMiniMd->IsSorted( TBL_GenericParam ) )
         {
-            if (TypeFromToken(tkOwner) == mdtTypeDef)
-            {
-                IfFailGo(pMiniMd->getGenericParamsForTypeDef(RidFromToken(tkOwner), &ridEnd, &ridStart));
-            }
-            else if (TypeFromToken(tkOwner) == mdtMethodDef)
-            {
-                IfFailGo(pMiniMd->getGenericParamsForMethodDef(RidFromToken(tkOwner), &ridEnd, &ridStart));
-            }
-            else
-            {
-                IfFailGo(pMiniMd->getGenericParamsForGenericParam(RidFromToken(tkOwner), &ridEnd, &ridStart));
-            }
-
+            IfFailGo(pMiniMd->getGenericParamsFor(TypeFromToken(tkOwner), RidFromToken(tkOwner), &ridEnd, &ridStart));
             IfFailGo( HENUMInternal::CreateSimpleEnum(mdtGenericParam, ridStart, ridEnd, &pEnum) );
         }
         else

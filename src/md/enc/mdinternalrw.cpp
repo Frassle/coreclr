@@ -1140,27 +1140,11 @@ HRESULT MDInternalRW::EnumInit(     // return S_FALSE if record not found
     case mdtGenericParam:
         //@todo: deal with non-sorted case.
         
-        if (TypeFromToken(tkParent) == mdtTypeDef)
-        {
-            IfFailGo(m_pStgdb->m_MiniMd.getGenericParamsForTypeDef(
-                RidFromToken(tkParent), 
-                &phEnum->u.m_ulEnd, 
-                &(phEnum->u.m_ulStart)));
-        }
-        else if(TypeFromToken(tkParent) == mdtMethodDef)
-        {
-            IfFailGo(m_pStgdb->m_MiniMd.getGenericParamsForMethodDef(
-                RidFromToken(tkParent), 
-                &phEnum->u.m_ulEnd, 
-                &(phEnum->u.m_ulStart)));
-        }
-        else
-        {
-            IfFailGo(m_pStgdb->m_MiniMd.getGenericParamsForGenericParam(
-                RidFromToken(tkParent),
-                &phEnum->u.m_ulEnd,
-                &(phEnum->u.m_ulStart)));
-        }
+        IfFailGo(m_pStgdb->m_MiniMd.getGenericParamsFor(
+            TypeFromToken(tkParent),
+            RidFromToken(tkParent), 
+            &phEnum->u.m_ulEnd, 
+            &(phEnum->u.m_ulStart)));
         break;
     
     case mdtGenericParamConstraint:

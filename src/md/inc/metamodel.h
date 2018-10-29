@@ -1678,29 +1678,11 @@ public:
         return tk;
     }
     __checkReturn 
-    HRESULT getGenericParamsForTypeDef(RID rid, RID *pEnd, RID *pFoundRid)
+    HRESULT getGenericParamsFor(mdToken typ, RID rid, RID *pEnd, RID *pFoundRid)
     { 
         return SearchTableForMultipleRows(TBL_GenericParam, 
                             _COLDEF(GenericParam,Owner),
-                            encodeGenericParamParentToken(rid, mdtTypeDef),
-                            pEnd, 
-                            pFoundRid);
-    }
-    __checkReturn 
-    HRESULT getGenericParamsForMethodDef(RID rid, RID *pEnd, RID *pFoundRid)
-    { 
-        return SearchTableForMultipleRows(TBL_GenericParam, 
-                            _COLDEF(GenericParam,Owner),
-                            encodeGenericParamParentToken(rid, mdtMethodDef),
-                            pEnd,
-                            pFoundRid);
-    }
-    __checkReturn
-    HRESULT getGenericParamsForGenericParam(RID rid, RID *pEnd, RID *pFoundRid)
-    {
-        return SearchTableForMultipleRows(TBL_GenericParam,
-                            _COLDEF(GenericParam,Owner),
-                            encodeGenericParamParentToken(rid, mdtGenericParam),
+                            encodeGenericParamParentToken(rid, typ),
                             pEnd, 
                             pFoundRid);
     }

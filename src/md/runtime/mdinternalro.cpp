@@ -418,27 +418,11 @@ HRESULT MDInternalRO::EnumInit(     // return S_FALSE if record not found
         if (TypeFromToken(tkParent) != mdtTypeDef && TypeFromToken(tkParent) != mdtMethodDef && TypeFromToken(tkParent) != mdtGenericParam)
             IfFailGo(CLDB_E_FILE_CORRUPT);
         
-        if (TypeFromToken(tkParent) == mdtTypeDef)
-        {
-            IfFailGo(m_LiteWeightStgdb.m_MiniMd.getGenericParamsForTypeDef(
-                RidFromToken(tkParent), 
-                &phEnum->u.m_ulEnd, 
-                &(phEnum->u.m_ulStart)));
-        }
-        else if(TypeFromToken(tkParent) == mdtMethodDef)
-        {
-            IfFailGo(m_LiteWeightStgdb.m_MiniMd.getGenericParamsForMethodDef(
-                RidFromToken(tkParent), 
-                &phEnum->u.m_ulEnd, 
-                &(phEnum->u.m_ulStart)));
-        }
-        else
-        {
-            IfFailGo(m_LiteWeightStgdb.m_MiniMd.getGenericParamsForGenericParam(
-                RidFromToken(tkParent),
-                &phEnum->u.m_ulEnd,
-                &(phEnum->u.m_ulStart)));
-        }
+        IfFailGo(m_LiteWeightStgdb.m_MiniMd.getGenericParamsFor(
+            TypeFromToken(tkParent),
+            RidFromToken(tkParent),
+            &phEnum->u.m_ulEnd,
+            &(phEnum->u.m_ulStart)));
         break;
     
     case mdtGenericParamConstraint:
