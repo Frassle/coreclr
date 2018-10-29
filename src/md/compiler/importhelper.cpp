@@ -115,64 +115,6 @@ HRESULT ImportHelper::FindGenericParamConstraintByOwnerAndConstraint(
     return CLDB_E_RECORD_NOTFOUND;
 } // HRESULT ImportHelper::FindGenericParamConstraintByOwnerAndConstraint()
 
-//*******************************************************************************
-// Find the GenericParam by owner and name or number
-//*******************************************************************************
-//<REVISIT_TODO> @GENERICS: todo: look in hashtable (cf. MetaModelRW.cpp) if necessary </REVISIT_TODO>
-HRESULT ImportHelper::FindGenericParamByOwner(
-    CMiniMdRW   *pMiniMd,                   // [IN] the minimd to lookup
-    mdToken     tkOwner,                    // [IN] GenericParam Owner
-    LPCUTF8     szUTF8Name,                 // [IN] GeneriParam Name, may be NULL if not used for search
-    ULONG       *pNumber,                   // [IN] GeneriParam Number, may be NULL if not used for search
-    mdGenericParam *pGenericParam,          // [OUT] Put the GenericParam token here.
-    RID         rid /* = 0*/)               // [IN] Optional rid to be ignored.
-{
-    HRESULT          hr;
-    GenericParamRec *pRecord;
-    mdToken     tkOwnerTmp;
-    ULONG       cGenericParams;
-    LPCUTF8     szCurName;
-    ULONG       curNumber;
-    ULONG       i;
-
-    _ASSERTE(pGenericParam);
-
-    cGenericParams = pMiniMd->getCountGenericParams();
-
-    // linear scan through the GenericParam table
-    for (i=1; i <= cGenericParams; ++i)
-    {
-        // For the call from Validator ignore the rid passed in.
-        if (i == rid)
-            continue;
-
-        IfFailRet(pMiniMd->GetGenericParamRecord(i, &pRecord));
-        
-        tkOwnerTmp = pMiniMd->getOwnerOfGenericParam(pRecord);
-        if ( tkOwnerTmp != tkOwner)
-            continue;
-
-        // if the name is significant, try to match it
-        if (szUTF8Name)
-        {
-            IfFailRet(pMiniMd->getNameOfGenericParam(pRecord, &szCurName));
-            if (strcmp(szCurName, szUTF8Name))
-                continue;
-        }
-
-        // if the number is significant, try to match it
-        if (pNumber)
-        {  curNumber = pMiniMd->getNumberOfGenericParam(pRecord);
-           if (*pNumber != curNumber)
-               continue;
-        }
-
-        //  Matching record found.
-        *pGenericParam = TokenFromRid(i, mdtGenericParam);
-        return S_OK;
-    }
-    return CLDB_E_RECORD_NOTFOUND;
-} // HRESULT ImportHelper::FindGenericParamByOwner()
 
 //*******************************************************************************
 // Find a Method given a parent, name and signature.

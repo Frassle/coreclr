@@ -43,16 +43,7 @@ public:
         mdGenericParam tkOwner,                 // [IN] GenericParamConstraint Owner
         mdToken tkConstraint,                   // [IN] GenericParamConstraint Constraint
         mdGenericParamConstraint *pGenericParamConstraint, // [OUT] Put the GenericParamConstraint token here.
-        RID         rid = 0);              // [IN] Optional rid to be ignored.
-
-
-    static HRESULT FindGenericParamByOwner(
-        CMiniMdRW   *pMiniMd,                   // [IN] the minimd to lookup
-        mdToken     tkOwner,                    // [IN] GenericParam Owner
-        LPCUTF8     szUTF8Name,                 // [IN] GeneriParam Name, may be NULL if not used for search
-        ULONG       *pNumber,                   // [IN] GeneriParam Number, may be NULL if not used for search
-        mdGenericParam *pGenericParam,          // [OUT] Put the GenericParam token here.
-        RID         rid = 0);                   // [IN] Optional rid to be ignored.
+        RID         rid = 0);              // [IN] Optional rid to be ignored.     
 
     static HRESULT FindMethod(      
         CMiniMdRW *     pMiniMd,                    // [IN] the minimd to lookup
