@@ -1318,9 +1318,6 @@ public:
     
     __checkReturn HRESULT InitTokenRemapManager();
 
-    virtual ULONG vGetCol(ULONG ixTbl, ULONG ixCol, void *pRecord)
-    { return GetCol(ixTbl, ixCol, pRecord);}
-
 public:
     virtual BOOL IsWritable()
     {
