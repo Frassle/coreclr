@@ -11798,6 +11798,8 @@ MethodTableBuilder::GatherGenericsInfo(
             
             if (bmtGenericsInfo->fTypicalInstantiation)
             {
+                // FRASER TODO: This needs to load instantiations inside instatiations
+
                 // code:Module.m_GenericParamToDescMap maps generic parameter RIDs to TypeVarTypeDesc
                 // instances so that we do not leak by allocating them all over again, if the type
                 // repeatedly fails to load.

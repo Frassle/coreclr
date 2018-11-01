@@ -1440,6 +1440,7 @@ void InstantiatedMethodDesc::SetupGenericMethodDefinition(IMDInternalImport *pIM
         TypeVarTypeDesc *pTypeVarTypeDesc = pModule->LookupGenericParam(tkTyPar);
         if (pTypeVarTypeDesc == NULL)
         {
+            // FRASER TODO this is borked, need to load instanced generic params here
             // Do NOT use pamTracker for this memory as we need it stay allocated even if the load fails.
             void *mem = (void *)pAllocator->GetLowFrequencyHeap()->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
             pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, tok, i, tkTyPar);
