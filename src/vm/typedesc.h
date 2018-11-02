@@ -123,6 +123,9 @@ public:
     // Is actually ParamTypeDesc (ARRAY, SZARRAY, BYREF, PTR)
     BOOL HasTypeParam();
 
+    // VAR, MVAR
+    BOOL HasInstantiation();
+
 #ifdef FEATURE_PREJIT
     void Save(DataImage *image);
     void Fixup(DataImage *image);
@@ -478,6 +481,7 @@ public:
         m_hExposedClassObject = 0;
         m_constraints = NULL;
         m_numConstraints = (DWORD)-1;
+        m_inst = Instantiation();
     }
 #endif // #ifndef DACCESS_COMPILE
 
@@ -511,6 +515,13 @@ public:
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
         return m_genericParamParent;
+    }
+
+    Instantiation GetInstantiation()
+    {
+        LIMITED_METHOD_CONTRACT;
+        SUPPORTS_DAC;
+        return m_inst;
     }
 
     OBJECTREF GetManagedClassObject();
@@ -594,6 +605,9 @@ protected:
 
     // index within declaring type or method, numbered from zero
     unsigned int m_index;
+
+    // This is a generic generic
+    Instantiation m_inst;
 };
 
 /*************************************************************************/

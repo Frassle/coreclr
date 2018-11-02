@@ -1368,8 +1368,9 @@ BOOL TypeHandle::HasInstantiation()  const
 {
     LIMITED_METHOD_DAC_CONTRACT;
 
-    if (IsTypeDesc()) return false;
     if (IsNull()) return false;
+    if (IsTypeDesc())
+        return AsTypeDesc()->HasInstantiation();
     return AsMethodTable()->HasInstantiation();
 }
 

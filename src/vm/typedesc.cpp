@@ -356,6 +356,18 @@ BOOL TypeDesc::HasTypeParam()
            GetInternalCorElementType() == ELEMENT_TYPE_VALUETYPE;
 }
 
+BOOL TypeDesc::HasInstantiation()
+{
+    LIMITED_METHOD_DAC_CONTRACT;
+    if(IsGenericVariable())
+    {
+        TypeVarTypeDesc *tyvar = (TypeVarTypeDesc*) this;
+        Instantiation inst = tyvar->GetInstantiation();
+        return !inst.IsEmpty();
+    }
+    return FALSE;
+}
+
 #ifndef DACCESS_COMPILE
 
 BOOL TypeDesc::CanCastTo(TypeHandle toType, TypeHandlePairList *pVisited)
