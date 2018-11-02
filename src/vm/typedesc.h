@@ -457,7 +457,7 @@ public:
 #ifndef DACCESS_COMPILE
 
     // FRASER TODO: genericParamParent could be mdtGenericParam
-    TypeVarTypeDesc(PTR_Module pModule, mdToken genericParamParent, unsigned int index, mdGenericParam token) :
+    TypeVarTypeDesc(PTR_Module pModule, mdToken genericParamParent, unsigned int index, mdGenericParam token, Instantiation inst) :
         TypeDesc(TypeFromToken(genericParamParent) == mdtMethodDef ? ELEMENT_TYPE_MVAR : ELEMENT_TYPE_VAR)
     {
         CONTRACTL
@@ -481,7 +481,7 @@ public:
         m_hExposedClassObject = 0;
         m_constraints = NULL;
         m_numConstraints = (DWORD)-1;
-        m_inst = Instantiation();
+        m_inst = inst;
     }
 #endif // #ifndef DACCESS_COMPILE
 
