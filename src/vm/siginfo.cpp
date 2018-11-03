@@ -1318,6 +1318,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 pGenericTypeModule = pModule;
             }
 
+            // FRASER TODO - This will need updating, our Type might be a Param
             TypeHandle genericType = psig.GetGenericInstType(pModule, fLoadTypes, level, pZapSigContext);
 
             if (genericType.IsNull())
