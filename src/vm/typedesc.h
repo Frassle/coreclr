@@ -551,6 +551,8 @@ public:
     // Load the owning type. Note that the result is not guaranteed to be full loaded
     MethodDesc * LoadOwnerMethod();
     TypeHandle LoadOwnerType();
+
+    static Instantiation GetTypicalInstantiation(PTR_Module pModule, mdGenericParam tkParam);
     
     BOOL ConstraintsLoaded() { LIMITED_METHOD_CONTRACT; return m_numConstraints != (DWORD)-1; }
 

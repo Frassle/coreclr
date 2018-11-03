@@ -1402,6 +1402,51 @@ TypeHandle TypeVarTypeDesc::LoadOwnerType()
     return genericType;
 }
 
+// static
+Instantiation TypeVarTypeDesc::GetTypicalInstantiation(PTR_Module pModule, mdGenericParam tkParam)
+{
+    IMDInternalImport * pInternalImport = pModule->GetMDImport();
+
+    // Enumerate the formal type parameters
+    HENUMInternal hEnumGenericPars;
+    HRESULT hr = pInternalImport->EnumInit(mdtGenericParam, tkParam, &hEnumGenericPars);
+    if (FAILED(hr))
+        pModule->GetAssembly()->ThrowTypeLoadException(pInternalImport, tkParam, IDS_CLASSLOAD_BADFORMAT);
+
+    DWORD numGenericArgs = pInternalImport->EnumGetCount(&hEnumGenericPars);
+
+    if (numGenericArgs == 0)
+        return Instantiation();
+
+    S_UINT32 scbAllocSize = S_UINT32(numGenericArgs) * S_UINT32(sizeof(TypeHandle));
+    TypeHandle * genericArgs = (TypeHandle *) GetThread()->m_MarshalAlloc.Alloc(scbAllocSize);
+
+    Instantiation inst = Instantiation(genericArgs, numGenericArgs);
+    TypeHandle * pDestInst = (TypeHandle *)inst.GetRawArgs();
+    for (unsigned int i = 0; i < numGenericArgs; i++)
+    {
+        mdGenericParam tkVarParam;
+        pInternalImport->EnumNext(&hEnumGenericPars, &tkVarParam);
+
+        TypeVarTypeDesc *pTypeVarTypeDesc = pModule->LookupGenericParam(tkVarParam);
+        if (pTypeVarTypeDesc == NULL)
+        {
+            Instantiation varInst = TypeVarTypeDesc::GetTypicalInstantiation(pModule, tkVarParam);
+
+            // Do NOT use the alloc tracker for this memory as we need it stay allocated even if the load fails.
+            void *mem = (void *)pModule->GetLoaderAllocator()->GetLowFrequencyHeap()->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
+            pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, tkParam, i, tkVarParam, varInst);
+
+            // No race here - the row in GenericParam table is owned exclusively by this type and we
+            // are holding a lock preventing other threads from concurrently loading it.
+            pModule->StoreGenericParamThrowing(tkVarParam, pTypeVarTypeDesc);
+        }
+        pDestInst[i] = TypeHandle(pTypeVarTypeDesc);
+    }
+
+    return inst;
+}
+
 TypeHandle* TypeVarTypeDesc::GetCachedConstraints(DWORD *pNumConstraints)
 {
     LIMITED_METHOD_CONTRACT;

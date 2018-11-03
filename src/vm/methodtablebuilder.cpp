@@ -11806,9 +11806,11 @@ MethodTableBuilder::GatherGenericsInfo(
                 TypeVarTypeDesc *pTypeVarTypeDesc = pModule->LookupGenericParam(tkTyPar);
                 if (pTypeVarTypeDesc == NULL)
                 {
+                    Instantiation varInst = TypeVarTypeDesc::GetTypicalInstantiation(pModule, tkTyPar);
+
                     // Do NOT use the alloc tracker for this memory as we need it stay allocated even if the load fails.
                     void *mem = (void *)pModule->GetLoaderAllocator()->GetLowFrequencyHeap()->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
-                    pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, cl, i, tkTyPar, Instantiation());
+                    pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, cl, i, tkTyPar, varInst);
 
                     // No race here - the row in GenericParam table is owned exclusively by this type and we
                     // are holding a lock preventing other threads from concurrently loading it.
