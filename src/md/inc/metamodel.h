@@ -381,8 +381,8 @@ public:
 { return TokenFromRid(getIX(pRec, _COLDEF(tbl,fld)), tok); }
 
 // Get a coded token.
-#define _GETCDTKN(tbl,fld,toks)  _GETTER(tbl,fld) \
-{ return decodeToken(getIX(pRec, _COLDEF(tbl,fld)), toks, sizeof(toks)/sizeof(toks[0])); }
+#define _GETCDTKN(tbl,fld)  _GETTER(tbl,fld) \
+{ CMiniColDef ColDef = _COLDEF(tbl, fld); return decodeToken(getIX(pRec, ColDef), ColDef, m_Schema.m_major<=2); }
 
 // Functions for the start and end of a list.
 #define _GETLIST(tbl,fld,tbl2) \
@@ -526,19 +526,31 @@ public:
     }
 
     // Function to encode a token into fewer bits.  Looks up token type in array of types.
-    ULONG static encodeToken(RID rid, mdToken typ, const mdToken rTokens[], ULONG32 cTokens);
+    ULONG static encodeToken(RID rid, mdToken typ, const CMiniColDef ColDef, bool useLowBits);
 
     // Decode a token.
-    inline static mdToken decodeToken(mdToken val, const mdToken rTokens[], ULONG32 cTokens)
+    inline static mdToken decodeToken(mdToken val, const CMiniColDef ColDef, bool useLowBits)
     {
-        //<TODO>@FUTURE: make compile-time calculation</TODO>
-        ULONG32 ix = (ULONG32)(val & ~(-1 << m_cb[cTokens]));
-        // If the coded token has an invalid table index, return the first entry
-        //  from the array of valid token types.  It would be preferable to 
-        //  return an error or to raise an exception.
-        if (ix >= cTokens)
-            return rTokens[0];
-        return TokenFromRid(val >> m_cb[cTokens], rTokens[ix]);
+        _ASSERTE(ColDef.m_Type <= iCodedTokenMax);
+        ULONG indexCodedToken = ColDef.m_Type - iCodedToken;
+        const CCodedTokenDef *pCdTkn = &g_CodedTokens[indexCodedToken];
+
+        if (useLowBits) {
+            //<TODO>@FUTURE: make compile-time calculation</TODO>
+            ULONG32 ix = (ULONG32)(val & ~(-1 << m_cb[pCdTkn->m_cTokens]));
+            // If the coded token has an invalid table index, return the first entry
+            //  from the array of valid token types.  It would be preferable to
+            //  return an error or to raise an exception.
+            if (ix >= pCdTkn->m_cTokens)
+                return pCdTkn->m_pTokens[0];
+            return TokenFromRid(val >> m_cb[pCdTkn->m_cTokens], pCdTkn->m_pTokens[ix]);
+        } else {
+            size_t shift = (ColDef.m_cbColumn * 8) - m_cb[pCdTkn->m_cTokens];
+            ULONG32 ix = val >> shift;
+            if (ix >= pCdTkn->m_cTokens)
+                return pCdTkn->m_pTokens[0];
+            return TokenFromRid(val & ((1<<shift)-1), pCdTkn->m_pTokens[ix]);
+        }
     }
     static const int m_cb[];
 
@@ -1556,12 +1568,28 @@ public:
     // Return RID to Constant table.
     __checkReturn 
     HRESULT FindConstantFor(RID rid, mdToken typ, RID *pFoundRid)
-    { return doSearchTable(TBL_Constant, _COLPAIR(Constant,Parent), encodeToken(rid,typ,mdtHasConstant,lengthof(mdtHasConstant)), pFoundRid); }
+    {
+        CMiniColDef colDef = _COLDEF(Constant,Parent);
+        return doSearchTable(
+            TBL_Constant,
+            colDef,
+            ConstantRec::COL_Parent,
+            encodeToken(rid,typ,colDef,m_Schema.m_major<=2),
+            pFoundRid);
+    }
     
     // Return RID to FieldMarshal table.
     __checkReturn 
     HRESULT FindFieldMarshalFor(RID rid, mdToken typ, RID *pFoundRid)
-    { return doSearchTable(TBL_FieldMarshal, _COLPAIR(FieldMarshal,Parent), encodeToken(rid,typ,mdtHasFieldMarshal,lengthof(mdtHasFieldMarshal)), pFoundRid); }
+    {
+        CMiniColDef colDef = _COLDEF(FieldMarshal,Parent);
+        return doSearchTable(
+            TBL_FieldMarshal,
+            colDef,
+            FieldMarshalRec::COL_Parent,
+            encodeToken(rid,typ,colDef,m_Schema.m_major<=2),
+            pFoundRid);
+    }
 
     // Return RID to ClassLayout table, given the rid to a TypeDef.
     __checkReturn 
@@ -1629,7 +1657,15 @@ public:
     // Return RID to Constant table.
     __checkReturn 
     HRESULT FindImplMapFor(RID rid, mdToken typ, RID *pFoundRid)
-    { return doSearchTable(TBL_ImplMap, _COLPAIR(ImplMap,MemberForwarded), encodeToken(rid,typ,mdtMemberForwarded,lengthof(mdtMemberForwarded)), pFoundRid); }
+    {
+        CMiniColDef colDef = _COLDEF(ImplMap,MemberForwarded);
+        return doSearchTable(
+            TBL_ImplMap,
+            colDef,
+            ImplMapRec::COL_MemberForwarded,
+            encodeToken(rid,typ,colDef,m_Schema.m_major<=2),
+            pFoundRid);
+    }
 
     // Return RID to FieldRVA table.
     __checkReturn 
@@ -1651,7 +1687,7 @@ public:
     __checkReturn HRESULT _GETGUID(Module,EncBaseId);
 
     // TypeRefRec
-    mdToken _GETCDTKN(TypeRef, ResolutionScope, mdtResolutionScope);
+    mdToken _GETCDTKN(TypeRef, ResolutionScope);
     _GETSTR(TypeRef, Name);
     _GETSTR(TypeRef, Namespace);
 
@@ -1662,45 +1698,35 @@ public:
 
     _GETLIST(TypeDef,FieldList,Field);      // RID getFieldListOfTypeDef(TypeDefRec *pRec);
     _GETLIST(TypeDef,MethodList,Method);    // RID getMethodListOfTypeDef(TypeDefRec *pRec);
-    mdToken _GETCDTKN(TypeDef,Extends,mdtTypeDefOrRef); // mdToken getExtendsOfTypeDef(TypeDefRec *pRec);
+    mdToken _GETCDTKN(TypeDef,Extends); // mdToken getExtendsOfTypeDef(TypeDefRec *pRec);
     
-    ULONG encodeGenericParamParentToken(RID rid, mdToken typ)
-    {
-        ULONG tk;
-        if(SupportsGenericGenerics())
-        {
-            tk = encodeToken(rid, typ, mdtGenericParamParent, lengthof(mdtGenericParamParent));
-        }
-        else
-        {
-            tk = encodeToken(rid, typ, mdtTypeOrMethodDef, lengthof(mdtTypeOrMethodDef));
-        }
-        return tk;
-    }
     __checkReturn 
     HRESULT getGenericParamsFor(mdToken typ, RID rid, RID *pEnd, RID *pFoundRid)
     { 
+        CMiniColDef colDef = _COLDEF(GenericParam,Owner);
         return SearchTableForMultipleRows(TBL_GenericParam, 
-                            _COLDEF(GenericParam,Owner),
-                            encodeGenericParamParentToken(rid, typ),
+                            colDef,
+                            encodeToken(rid, typ, colDef, m_Schema.m_major<=2),
                             pEnd, 
                             pFoundRid);
     }
     __checkReturn 
     HRESULT getMethodSpecsForMethodDef(RID rid, RID *pEnd, RID *pFoundRid)
     { 
-        return SearchTableForMultipleRows(TBL_MethodSpec, 
-                            _COLDEF(MethodSpec,Method),
-                            encodeToken(rid, mdtMethodDef, mdtMethodDefOrRef, lengthof(mdtMethodDefOrRef)),
+        CMiniColDef colDef = _COLDEF(MethodSpec,Method);
+        return SearchTableForMultipleRows(TBL_MethodSpec,
+                            colDef,
+                            encodeToken(rid, mdtMethodDef, colDef, m_Schema.m_major<=2),
                             pEnd, 
                             pFoundRid);
     }
     __checkReturn 
     HRESULT getMethodSpecsForMemberRef(RID rid, RID *pEnd, RID *pFoundRid)
     { 
+        CMiniColDef colDef = _COLDEF(MethodSpec,Method);
         return SearchTableForMultipleRows(TBL_MethodSpec, 
-                            _COLDEF(MethodSpec,Method),
-                            encodeToken(rid, mdtMemberRef, mdtMethodDefOrRef, lengthof(mdtMethodDefOrRef)),
+                            colDef,
+                            encodeToken(rid, mdtMemberRef, colDef, m_Schema.m_major<=2),
                             pEnd, 
                             pFoundRid);
     }
@@ -1743,50 +1769,52 @@ public:
 
     // InterfaceImplRec
     mdToken _GETTKN(InterfaceImpl,Class,mdtTypeDef);
-    mdToken _GETCDTKN(InterfaceImpl,Interface,mdtTypeDefOrRef);
+    mdToken _GETCDTKN(InterfaceImpl,Interface);
 
     // MemberRefRec
-    mdToken _GETCDTKN(MemberRef,Class,mdtMemberRefParent);
+    mdToken _GETCDTKN(MemberRef,Class);
     _GETSTR(MemberRef,Name);
     _GETSIGBLOB(MemberRef,Signature);       // HRESULT getSignatureOfMemberRef(MemberRefRec *pRec, PCCOR_SIGNATURE *ppbData, ULONG *pcbSize);
 
     // ConstantRec
     BYTE    _GETFLD(Constant,Type);
-    mdToken _GETCDTKN(Constant,Parent,mdtHasConstant);
+    mdToken _GETCDTKN(Constant,Parent);
     _GETBLOB(Constant,Value);
 
     // CustomAttributeRec
     __checkReturn 
     HRESULT getCustomAttributeForToken(mdToken  tk, RID *pEnd, RID *pFoundRid)
     {
+        CMiniColDef colDef = _COLDEF(CustomAttribute,Parent);
         return SearchTableForMultipleRows(TBL_CustomAttribute,
-                            _COLDEF(CustomAttribute,Parent),
-                            encodeToken(RidFromToken(tk), TypeFromToken(tk), mdtHasCustomAttribute, lengthof(mdtHasCustomAttribute)),
+                            colDef,
+                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
                             pEnd, 
                             pFoundRid);
     }
 
-    mdToken _GETCDTKN(CustomAttribute,Parent,mdtHasCustomAttribute);
-    mdToken _GETCDTKN(CustomAttribute,Type,mdtCustomAttributeType);
+    mdToken _GETCDTKN(CustomAttribute,Parent);
+    mdToken _GETCDTKN(CustomAttribute,Type);
     _GETBLOB(CustomAttribute,Value);
 
     // FieldMarshalRec
-    mdToken _GETCDTKN(FieldMarshal,Parent,mdtHasFieldMarshal);
+    mdToken _GETCDTKN(FieldMarshal,Parent);
     _GETSIGBLOB(FieldMarshal,NativeType);
 
     // DeclSecurityRec
     __checkReturn 
     HRESULT getDeclSecurityForToken(mdToken tk, RID *pEnd, RID *pFoundRid)
     {
+        CMiniColDef colDef = _COLDEF(DeclSecurity,Parent);
         return SearchTableForMultipleRows(TBL_DeclSecurity,
-                            _COLDEF(DeclSecurity,Parent),
-                            encodeToken(RidFromToken(tk), TypeFromToken(tk), mdtHasDeclSecurity, lengthof(mdtHasDeclSecurity)),
+                            colDef,
+                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
                             pEnd, 
                             pFoundRid);
     }
 
     short _GETFLD(DeclSecurity,Action);
-    mdToken _GETCDTKN(DeclSecurity,Parent,mdtHasDeclSecurity);
+    mdToken _GETCDTKN(DeclSecurity,Parent);
     _GETBLOB(DeclSecurity,PermissionSet);
 
     // ClassLayoutRec
@@ -1808,7 +1836,7 @@ public:
     // Event.
     USHORT _GETFLD(Event,EventFlags);
     _GETSTR(Event,Name);
-    mdToken _GETCDTKN(Event,EventType,mdtTypeDefOrRef);
+    mdToken _GETCDTKN(Event,EventType);
 
     // Property map.
     _GETLIST(PropertyMap,PropertyList,Property);
@@ -1829,16 +1857,17 @@ public:
     __checkReturn 
     HRESULT getAssociatesForToken(mdToken tk, RID *pEnd, RID *pFoundRid)
     {
+        CMiniColDef colDef = _COLDEF(MethodSemantics,Association);
         return SearchTableForMultipleRows(TBL_MethodSemantics,
-                            _COLDEF(MethodSemantics,Association),
-                            encodeToken(RidFromToken(tk), TypeFromToken(tk), mdtHasSemantic, lengthof(mdtHasSemantic)),
+                            colDef,
+                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
                             pEnd, 
                             pFoundRid);
     }
 
     USHORT _GETFLD(MethodSemantics,Semantic);
     mdToken _GETTKN(MethodSemantics,Method,mdtMethodDef);
-    mdToken _GETCDTKN(MethodSemantics,Association,mdtHasSemantic);
+    mdToken _GETCDTKN(MethodSemantics,Association);
 
     // MethodImpl
     // Given a class token, return the beginning/ending MethodImpls.
@@ -1854,8 +1883,8 @@ public:
     }
 
     mdToken _GETTKN(MethodImpl,Class,mdtTypeDef);
-    mdToken _GETCDTKN(MethodImpl,MethodBody, mdtMethodDefOrRef);
-    mdToken _GETCDTKN(MethodImpl, MethodDeclaration, mdtMethodDefOrRef);
+    mdToken _GETCDTKN(MethodImpl,MethodBody);
+    mdToken _GETCDTKN(MethodImpl, MethodDeclaration);
 
     // StandAloneSigRec
     _GETSIGBLOB(StandAloneSig,Signature);       // HRESULT getSignatureOfStandAloneSig(StandAloneSigRec *pRec, PCCOR_SIGNATURE *ppbData, ULONG *pcbSize);
@@ -1872,7 +1901,7 @@ public:
 
     // ImplMap
     USHORT _GETFLD(ImplMap, MappingFlags);          // USHORT getMappingFlagsOfImplMap(ImplMapRec *pRec);
-    mdToken _GETCDTKN(ImplMap, MemberForwarded, mdtMemberForwarded);    // mdToken getMemberForwardedOfImplMap(ImplMapRec *pRec);
+    mdToken _GETCDTKN(ImplMap, MemberForwarded);    // mdToken getMemberForwardedOfImplMap(ImplMapRec *pRec);
     _GETSTR(ImplMap, ImportName);                           // HRESULT getImportNameOfImplMap(ImplMapRec *pRec, LPCUTF8 *pszString);
     mdToken _GETTKN(ImplMap, ImportScope, mdtModuleRef);    // mdToken getImportScopeOfImplMap(ImplMapRec *pRec);
 
@@ -1912,13 +1941,13 @@ public:
     ULONG _GETFLD(ExportedType, TypeDefId);
     _GETSTR(ExportedType, TypeName);
     _GETSTR(ExportedType, TypeNamespace);
-    mdToken _GETCDTKN(ExportedType, Implementation, mdtImplementation);
+    mdToken _GETCDTKN(ExportedType, Implementation);
 
     // ManifestResource
     ULONG _GETFLD(ManifestResource, Offset);
     ULONG _GETFLD(ManifestResource, Flags);
     _GETSTR(ManifestResource, Name);
-    mdToken _GETCDTKN(ManifestResource, Implementation, mdtImplementation);
+    mdToken _GETCDTKN(ManifestResource, Implementation);
 
     // NestedClass
     mdToken _GETTKN(NestedClass, NestedClass, mdtTypeDef);
@@ -1932,17 +1961,7 @@ public:
     // GenericParRec
     USHORT _GETFLD(GenericParam,Number);
     USHORT _GETFLD(GenericParam,Flags);
-    mdToken getOwnerOfGenericParam(GenericParamRec *pRec)
-    {
-        if (SupportsGenericGenerics())
-        {
-            return decodeToken(getIX(pRec, _COLDEF(GenericParam, Owner)), mdtGenericParamParent, lengthof(mdtGenericParamParent));
-        }
-        else
-        {
-            return decodeToken(getIX(pRec, _COLDEF(GenericParam, Owner)), mdtTypeOrMethodDef, lengthof(mdtTypeOrMethodDef));
-        }
-    }
+    mdToken _GETCDTKN(GenericParam,Owner);
     _GETSTR(GenericParam,Name);
     
     __checkReturn 
@@ -1956,12 +1975,12 @@ public:
     }
 
     // MethodSpecRec
-    mdToken _GETCDTKN(MethodSpec,Method,mdtMethodDefOrRef);
+    mdToken _GETCDTKN(MethodSpec,Method);
     _GETSIGBLOB(MethodSpec,Instantiation);
 
     //GenericParamConstraintRec
     mdToken _GETTKN(GenericParamConstraint,Owner,mdtGenericParam);
-    mdToken _GETCDTKN(GenericParamConstraint,Constraint,mdtTypeDefOrRef);
+    mdToken _GETCDTKN(GenericParamConstraint,Constraint);
 
     BOOL SupportsGenerics()
     {

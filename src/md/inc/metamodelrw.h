@@ -969,9 +969,11 @@ public:
     __checkReturn 
     HRESULT GetGenericParamsForToken(mdToken tk, RID *pRidStart, RID *pRidEnd = 0)
     {
-        return LookUpTableByCol( 
-            encodeGenericParamParentToken(RidFromToken(tk), TypeFromToken(tk)),
-            m_pVS[TBL_GenericParam], pRidStart, pRidEnd);
+        VirtualSort* pVS = m_pVS[TBL_MethodSpec];
+        CMiniColDef colDef = m_TableDefs[TBL_MethodSpec].m_pColDefs[pVS->m_ixCol];
+        return LookUpTableByCol(
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            pVS, pRidStart, pRidEnd);
     }
 
     __checkReturn 
@@ -984,17 +986,21 @@ public:
     __checkReturn 
     HRESULT GetMethodSpecsForToken(mdToken tk, RID *pRidStart, RID *pRidEnd = 0)
     {
+        VirtualSort* pVS = m_pVS[TBL_MethodSpec];
+        CMiniColDef colDef = m_TableDefs[TBL_MethodSpec].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol( 
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), mdtMethodDefOrRef, lengthof(mdtMethodDefOrRef)), 
-            m_pVS[TBL_MethodSpec], pRidStart, pRidEnd);
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            pVS, pRidStart, pRidEnd);
     }
 
     __checkReturn 
     HRESULT GetDeclSecurityForToken(mdToken tk, RID *pRidStart, RID *pRidEnd = 0)
     {
+        VirtualSort* pVS = m_pVS[TBL_DeclSecurity];
+        CMiniColDef colDef = m_TableDefs[TBL_DeclSecurity].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol( 
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), mdtHasDeclSecurity, lengthof(mdtHasDeclSecurity)), 
-            m_pVS[TBL_DeclSecurity], 
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            pVS,
             pRidStart, 
             pRidEnd);
     }
@@ -1002,9 +1008,11 @@ public:
     __checkReturn 
     HRESULT GetCustomAttributeForToken(mdToken tk, RID *pRidStart, RID *pRidEnd = 0)
     {
+        VirtualSort* pVS = m_pVS[TBL_CustomAttribute];
+        CMiniColDef colDef = m_TableDefs[TBL_CustomAttribute].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol( 
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), mdtHasCustomAttribute, lengthof(mdtHasCustomAttribute)),
-            m_pVS[TBL_CustomAttribute], 
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            pVS,
             pRidStart, 
             pRidEnd);
     }

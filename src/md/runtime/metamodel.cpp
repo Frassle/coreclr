@@ -419,23 +419,34 @@ const int CMiniMdBase::m_cb[] = {0,1,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5
 //<TODO>@consider whether this could be a binary search.</TODO>
 ULONG 
 CMiniMdBase::encodeToken(
-    RID           rid,          // Rid to encode.
-    mdToken       typ,          // Token type to encode.
-    const mdToken rTokens[],    // Table of valid token.
-    ULONG32       cTokens)      // Size of the table.
+    RID               rid,          // Rid to encode.
+    mdToken           typ,          // Token type to encode.
+    const CMiniColDef ColDef,       // Column def to encode for.
+    bool              useLowBits)
 {
+    _ASSERTE(ColDef.m_Type <= iCodedTokenMax);
+    ULONG indexCodedToken = ColDef.m_Type - iCodedToken;
+    const CCodedTokenDef *pCdTkn = &g_CodedTokens[indexCodedToken];
+
     mdToken tk = TypeFromToken(typ);
     size_t ix;
+    ULONG cTokens = pCdTkn->m_cTokens;
     for (ix = 0; ix < cTokens; ++ix)
     {
-        if (rTokens[ix] == tk)
+        if (pCdTkn->m_pTokens[ix] == tk)
             break;
     }
     _ASSERTE(ix < cTokens);
     if (ix >= cTokens)
         return mdTokenNil;
-    //<TODO>@FUTURE: make compile-time calculation</TODO>
-    return (ULONG)((rid << m_cb[cTokens]) | ix);
+
+    if (useLowBits) {
+        //<TODO>@FUTURE: make compile-time calculation</TODO>
+        return (ULONG)((rid << m_cb[cTokens]) | ix);
+    } else {
+        size_t shift = (ColDef.m_cbColumn * 8) - m_cb[cTokens];
+        return (ULONG)((ix << shift) | rid);
+    }
 } // CMiniMd::encodeToken
 
 
@@ -1154,13 +1165,16 @@ CMiniMdBase::FindCustomAttributeFor(
 {
     HRESULT hr;
     int     ixFound;                // index of some custom value row.
-    ULONG   ulTarget = encodeToken(rid,tkObj,mdtHasCustomAttribute,lengthof(mdtHasCustomAttribute)); // encoded token representing target.
+    ULONG   ulTarget;               // encoded token representing target.
     ULONG   ixCur;                  // Current row being examined.
     mdToken tkFound;                // Type of some custom value row.
     void   *pCur;                   // A custom value entry.
+    CMiniColDef colDef = _COLDEF(CustomAttribute,Parent);
+
+    ulTarget = encodeToken(rid,tkObj,colDef,m_Schema.m_major<=2);
 
     // Search for any entry in CustomAttribute table.  Convert to RID.
-    IfFailRet(vSearchTable(TBL_CustomAttribute, _COLDEF(CustomAttribute,Parent), ulTarget, (RID *)&ixFound));
+    IfFailRet(vSearchTable(TBL_CustomAttribute, colDef, ulTarget, (RID *)&ixFound));
     if (ixFound == 0)
     {
         *pFoundRid = 0;
@@ -1176,8 +1190,9 @@ CMiniMdBase::FindCustomAttributeFor(
     for(;;)
     {
         // Test the type of the current row.
-        tkFound = getIX(pCur, _COLDEF(CustomAttribute,Type));
-        tkFound = decodeToken(tkFound, mdtCustomAttributeType, lengthof(mdtCustomAttributeType));
+        CMiniColDef ColDef = _COLDEF(CustomAttribute,Type);
+        tkFound = getIX(pCur, ColDef);
+        tkFound = decodeToken(tkFound, ColDef, m_Schema.m_major<=2);
         if (tkFound == tkType)
         {
             *pFoundRid = ixCur;
@@ -1206,8 +1221,9 @@ CMiniMdBase::FindCustomAttributeFor(
         if (getIX(pCur, _COLDEF(CustomAttribute,Parent)) != ulTarget)
             break;
         // Test the type of the current row.
-        tkFound = getIX(pCur, _COLDEF(CustomAttribute,Type));
-        tkFound = decodeToken(tkFound, mdtCustomAttributeType, lengthof(mdtCustomAttributeType));
+        CMiniColDef ColDef = _COLDEF(CustomAttribute,Type);
+        tkFound = getIX(pCur, ColDef);
+        tkFound = decodeToken(tkFound, ColDef, m_Schema.m_major<=2);
         if (tkFound == tkType)
         {
             *pFoundRid = ixCur;
