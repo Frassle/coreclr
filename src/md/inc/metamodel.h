@@ -1703,6 +1703,16 @@ public:
     __checkReturn 
     HRESULT getGenericParamsFor(mdToken typ, RID rid, RID *pEnd, RID *pFoundRid)
     { 
+        // If we don't support generic generics and we get asked for generic params for a generic we just return that there are none.
+        if (!SupportsGenericGenerics() && TypeFromToken(typ) == mdtGenericParam) {
+            if (pEnd != NULL)
+            {
+                *pEnd = 0;
+            }
+            *pFoundRid = 0;
+            return S_OK;
+        }
+
         CMiniColDef colDef = _COLDEF(GenericParam,Owner);
         return SearchTableForMultipleRows(TBL_GenericParam, 
                             colDef,
