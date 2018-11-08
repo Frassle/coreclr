@@ -269,7 +269,7 @@ BOOL TypeHandle::IsGenericTypeDefinition() const {
     if (!IsTypeDesc())
         return AsMethodTable()->IsGenericTypeDefinition();
     else 
-        return FALSE;
+        return AsTypeDesc()->IsGenericTypeDefinition();
 }
 
 PTR_MethodTable TypeHandle::GetCanonicalMethodTable() const
@@ -462,7 +462,7 @@ Instantiation TypeHandle::GetInstantiation() const
     LIMITED_METHOD_DAC_CONTRACT;
 
     if (!IsTypeDesc()) return AsMethodTable()->GetInstantiation();
-    else return Instantiation();
+    return AsTypeDesc()->GetInstantiation();
 }
 
 

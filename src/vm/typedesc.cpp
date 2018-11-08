@@ -368,6 +368,28 @@ BOOL TypeDesc::HasInstantiation()
     return FALSE;
 }
 
+Instantiation TypeDesc::GetInstantiation()
+{
+    LIMITED_METHOD_DAC_CONTRACT;
+    if(IsGenericVariable())
+    {
+        TypeVarTypeDesc *tyvar = (TypeVarTypeDesc*) this;
+        return tyvar->GetInstantiation();
+    }
+    return Instantiation();
+}
+
+BOOL TypeDesc::IsGenericTypeDefinition()
+{
+    LIMITED_METHOD_DAC_CONTRACT;
+    if(IsGenericVariable())
+    {
+        TypeVarTypeDesc *tyvar = (TypeVarTypeDesc*) this;
+        return tyvar->IsGenericTypeDefinition();
+    }
+    return FALSE;
+}
+
 #ifndef DACCESS_COMPILE
 
 BOOL TypeDesc::CanCastTo(TypeHandle toType, TypeHandlePairList *pVisited)

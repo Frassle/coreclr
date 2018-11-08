@@ -125,6 +125,8 @@ public:
 
     // VAR, MVAR
     BOOL HasInstantiation();
+    Instantiation GetInstantiation();
+    BOOL IsGenericTypeDefinition();
 
 #ifdef FEATURE_PREJIT
     void Save(DataImage *image);
@@ -522,6 +524,13 @@ public:
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
         return m_inst;
+    }
+
+    BOOL IsGenericTypeDefinition()
+    {
+        LIMITED_METHOD_CONTRACT;
+        SUPPORTS_DAC;
+        return !m_inst.IsEmpty();
     }
 
     OBJECTREF GetManagedClassObject();
