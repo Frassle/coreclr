@@ -948,19 +948,33 @@ void TypeString::AppendType(TypeNameBuilder& tnb, TypeHandle ty, Instantiation t
         
         IfFailThrow(ty.GetModule()->GetMDImport()->GetGenericParamProps(token, NULL, NULL, &mdOwner, NULL, &szName));
 
-        _ASSERTE(TypeFromToken(mdOwner) == mdtTypeDef || TypeFromToken(mdOwner) == mdtMethodDef);
+        _ASSERTE(
+            TypeFromToken(mdOwner) == mdtTypeDef ||
+            TypeFromToken(mdOwner) == mdtMethodDef ||
+            TypeFromToken(mdOwner) == mdtGenericParam);
             
         LPCSTR szPrefix;
         if (!(format & FormatGenericParam))
             szPrefix = "";
         else if (TypeFromToken(mdOwner) == mdtTypeDef)
             szPrefix = "!";
-        else
+        else if (TypeFromToken(mdOwner) == mdtMethodDef)
             szPrefix = "!!";
+        else
+            szPrefix = "!!!";
 
         SmallStackSString pName(SString::Utf8, szPrefix);
         pName.AppendUTF8(szName);
         tnb.AddName(pName.GetUnicode());
+
+        // Append the instantiation
+        if ((format & (FormatNamespace|FormatAssembly)) && ty.HasInstantiation() && (!ty.IsGenericTypeDefinition() || bToString))
+        {
+            if (typeInstantiation.IsEmpty())
+                AppendInst(tnb, ty.GetInstantiation(), format);
+            else
+                AppendInst(tnb, typeInstantiation, format);
+        }
             
         format &= ~FormatAssembly;
     }
