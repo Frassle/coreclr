@@ -1441,9 +1441,11 @@ Instantiation TypeVarTypeDesc::GetTypicalInstantiation(PTR_Module pModule, mdGen
         return Instantiation();
 
     S_UINT32 scbAllocSize = S_UINT32(numGenericArgs) * S_UINT32(sizeof(TypeHandle));
-    TypeHandle * genericArgs = (TypeHandle *) GetThread()->m_MarshalAlloc.Alloc(scbAllocSize);
+    // Do NOT use the alloc tracker for this memory as we need it stay allocated even if the load fails.
+    PTR_LoaderHeap pHeap = pModule->GetLoaderAllocator()->GetLowFrequencyHeap();
+    void *genericArgsMem = (void *)pHeap->AllocMem(scbAllocSize);
 
-    Instantiation inst = Instantiation(genericArgs, numGenericArgs);
+    Instantiation inst = Instantiation((TypeHandle*)genericArgsMem, numGenericArgs);
     TypeHandle * pDestInst = (TypeHandle *)inst.GetRawArgs();
     for (unsigned int i = 0; i < numGenericArgs; i++)
     {
@@ -1456,7 +1458,7 @@ Instantiation TypeVarTypeDesc::GetTypicalInstantiation(PTR_Module pModule, mdGen
             Instantiation varInst = TypeVarTypeDesc::GetTypicalInstantiation(pModule, tkVarParam);
 
             // Do NOT use the alloc tracker for this memory as we need it stay allocated even if the load fails.
-            void *mem = (void *)pModule->GetLoaderAllocator()->GetLowFrequencyHeap()->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
+            void *mem = (void *)pHeap->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
             pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, tkParam, i, tkVarParam, varInst);
 
             // No race here - the row in GenericParam table is owned exclusively by this type and we
