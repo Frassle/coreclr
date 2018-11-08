@@ -26,8 +26,9 @@
   .entrypoint
   .maxstack  8
   .locals init (
-    [0] class [mscorlib]System.Type typ,
-    [1] class [mscorlib]System.Type typA
+    [0] class [mscorlib]System.Type typF,
+    [1] class [mscorlib]System.Type typT,
+    [2] class [mscorlib]System.Type typA
   )
 
   ldtoken Functor`1
@@ -60,6 +61,21 @@
   box bool
   call void [mscorlib]System.Console::WriteLine(class System.String, class System.Object)
 
+  ldloc.1
+  callvirt instance class [mscorlib]System.Type[] [mscorlib]System.Type::GetGenericArguments()
+  ldc.i4 0
+  ldelem [mscorlib]System.Type
+  stloc.2
+
+  ldloc.2
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldstr "IsGenericType = {0}"
+  ldloc.2
+  callvirt instance bool [mscorlib]System.Type::get_IsGenericType()
+  box bool
+  call void [mscorlib]System.Console::WriteLine(class System.String, class System.Object)
 
   ldloc.0 
   ldstr "fmap"
