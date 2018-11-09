@@ -637,6 +637,7 @@ PCCOR_SIGNATURE PrettyPrintType(
 
             case ELEMENT_TYPE_GENERICINST :
             {
+                // TODO Fraser: This might be a generic param
               typePtr = PrettyPrintTypeOrDef(typePtr, out, pIMDI);
               appendStr(out, LTN());    
               unsigned numArgs = CorSigUncompressData(typePtr);    

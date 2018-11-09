@@ -956,6 +956,7 @@ CordbType::SigToType(CordbModule * pModule,
 
             CordbClass * pClass;
 
+            // TODO Fraser elementType might be a generic param
             IfFailRet( pModule->ResolveTypeRefOrDef(token, &pClass));
 
             // The use of a class in a signature provides definite evidence as to whether it is a VC or not.
