@@ -330,7 +330,7 @@ BOOL TypeDesc::IsArray()
     return CorTypeInfo::IsArray_NoThrow(GetInternalCorElementType());
 }
 
-BOOL TypeDesc::IsGenericVariable()
+BOOL TypeDesc::IsGenericVariable() const
 {
     LIMITED_METHOD_DAC_CONTRACT;
     return CorTypeInfo::IsGenericVariable_NoThrow(GetInternalCorElementType());
@@ -386,6 +386,17 @@ BOOL TypeDesc::IsGenericTypeDefinition()
     {
         TypeVarTypeDesc *tyvar = (TypeVarTypeDesc*) this;
         return tyvar->IsGenericTypeDefinition();
+    }
+    return FALSE;
+}
+
+DWORD TypeDesc::GetNumGenericArgs() const
+{
+    LIMITED_METHOD_DAC_CONTRACT;
+    if(IsGenericVariable())
+    {
+        TypeVarTypeDesc *tyvar = (TypeVarTypeDesc*) this;
+        return tyvar->GetNumGenericArgs();
     }
     return FALSE;
 }

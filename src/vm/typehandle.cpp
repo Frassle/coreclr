@@ -258,9 +258,9 @@ DWORD TypeHandle::GetNumGenericArgs() const {
     LIMITED_METHOD_DAC_CONTRACT;
 
     if (IsTypeDesc())
-        return 0;
+        return AsTypeDesc()->GetNumGenericArgs();
     else
-        return GetMethodTable()->GetNumGenericArgs();
+        return AsMethodTable()->GetNumGenericArgs();
 }
 
 BOOL TypeHandle::IsGenericTypeDefinition() const {

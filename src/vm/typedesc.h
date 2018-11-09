@@ -48,7 +48,7 @@ public:
 
     // This is the ELEMENT_TYPE* that would be used in the type sig for this type
     // For enums this is the uderlying type
-    inline CorElementType GetInternalCorElementType() { 
+    inline CorElementType GetInternalCorElementType() const {
         LIMITED_METHOD_DAC_CONTRACT;
 
         return (CorElementType) (m_typeAndFlags & 0xff);
@@ -112,7 +112,7 @@ public:
     BOOL IsArray();
 
     // VAR, MVAR
-    BOOL IsGenericVariable();
+    BOOL IsGenericVariable() const;
 
     // ELEMENT_TYPE_FNPTR
     BOOL IsFnPtr();
@@ -127,6 +127,7 @@ public:
     BOOL HasInstantiation();
     Instantiation GetInstantiation();
     BOOL IsGenericTypeDefinition();
+    DWORD GetNumGenericArgs() const;
 
 #ifdef FEATURE_PREJIT
     void Save(DataImage *image);
