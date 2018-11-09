@@ -298,7 +298,7 @@ void SigPointer::ConvertToInternalExactlyOne(Module* pSigModule, SigTypeContext 
 
             case ELEMENT_TYPE_GENERICINST:
                 {
-                    TypeHandle genericType = GetGenericInstType(pSigModule);
+                    TypeHandle genericType = GetGenericInstType(pSigModule, pTypeContext);
 
                     pSigBuilder->AppendElementType(ELEMENT_TYPE_INTERNAL);
                     pSigBuilder->AppendPointer(genericType.AsPtr());
@@ -1306,7 +1306,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
 
         case ELEMENT_TYPE_GENERICINST:
         {
-            mdTypeDef tkGenericType = mdTypeDefNil;
+            mdToken tkGenericType = mdTypeDefNil;
             Module *pGenericTypeModule = NULL;
 
             // Before parsing the generic instantiation, determine if the signature tells us its module and token.
@@ -1319,7 +1319,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
             }
 
             // FRASER TODO - This will need updating, our Type might be a Param
-            TypeHandle genericType = psig.GetGenericInstType(pModule, fLoadTypes, level, pZapSigContext);
+            TypeHandle genericType = psig.GetGenericInstType(pModule, pTypeContext, fLoadTypes, level, pZapSigContext);
 
             if (genericType.IsNull())
             {
@@ -1722,6 +1722,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
 #endif
 
 TypeHandle SigPointer::GetGenericInstType(Module *        pModule,
+                                    const SigTypeContext *pTypeContext,
                                     ClassLoader::LoadTypesFlag  fLoadTypes/*=LoadTypes*/,
                                     ClassLoadLevel              level/*=CLASS_LOADED*/,
                                     const ZapSig::Context *     pZapSigContext)
@@ -1756,7 +1757,14 @@ TypeHandle SigPointer::GetGenericInstType(Module *        pModule,
 
         IfFailThrow(GetPointer((void**)&genericType));
     }
-    else 
+    else if(typ == ELEMENT_TYPE_VAR || typ == ELEMENT_TYPE_MVAR)
+    {
+        TypeHandle ty = GetTypeVariableThrowing(pModule, typ, fLoadTypes, pTypeContext);
+        if (fLoadTypes == ClassLoader::LoadTypes)
+            ClassLoader::EnsureLoaded(ty, level);
+        return ty;
+    }
+    else
     {
         mdToken typeToken = mdTypeRefNil;
         IfFailThrowBF(GetToken(&typeToken), BFA_BAD_SIGNATURE, pOrigModule);
@@ -1776,69 +1784,61 @@ TypeHandle SigPointer::GetGenericInstType(Module *        pModule,
         }
 #endif
         ULONG32 mdt = TypeFromToken(typeToken);
-        if ((mdt != mdtTypeRef) && (mdt != mdtTypeDef) && (mdt != mdtGenericParam))
+        if ((mdt != mdtTypeRef) && (mdt != mdtTypeDef))
             THROW_BAD_FORMAT(BFA_UNEXPECTED_TOKEN_AFTER_GENINST, pOrigModule);
 
         if (IsNilToken(typeToken))
             THROW_BAD_FORMAT(BFA_UNEXPECTED_TOKEN_AFTER_GENINST, pOrigModule);
 
-        if (mdt == mdtGenericParam)
+        ClassLoader::NotFoundAction  notFoundAction;
+        CorInternalStates            tdTypes;
+
+        if (fLoadTypes == ClassLoader::LoadTypes)
         {
-            TypeVarTypeDesc* tvtd = pModule->LookupGenericParam(typeToken);
-            genericType = static_cast<TypeHandle>(tvtd);
+            notFoundAction = ClassLoader::ThrowIfNotFound;
+            tdTypes = tdNoTypes;
         }
         else
         {
-            ClassLoader::NotFoundAction  notFoundAction;
-            CorInternalStates            tdTypes;
+            notFoundAction = ClassLoader::ReturnNullIfNotFound;
+            tdTypes = tdAllTypes;
+        }
 
-            if (fLoadTypes == ClassLoader::LoadTypes)
-            {
-                notFoundAction = ClassLoader::ThrowIfNotFound;
-                tdTypes = tdNoTypes;
-            }
-            else
-            {
-                notFoundAction = ClassLoader::ReturnNullIfNotFound;
-                tdTypes = tdAllTypes;
-            }
+        genericType = ClassLoader::LoadTypeDefOrRefThrowing(pModule,
+                                                            typeToken,
+                                                            notFoundAction,
+                                                            ClassLoader::PermitUninstDefOrRef,
+                                                            tdTypes,
+                                                            level);
 
-            genericType = ClassLoader::LoadTypeDefOrRefThrowing(pModule,
-                                                                typeToken,
-                                                                notFoundAction,
-                                                                ClassLoader::PermitUninstDefOrRef,
-                                                                tdTypes,
-                                                                level);
-
-            if (genericType.IsNull())
-            {
-                return genericType;
-            }
+        if (genericType.IsNull())
+        {
+            return genericType;
+        }
 
 #ifndef DACCESS_COMPILE
-            if (fLoadTypes == ClassLoader::LoadTypes)
+        if (fLoadTypes == ClassLoader::LoadTypes)
+        {
+            // Skip this check when using zap sigs; it should have been correctly computed at NGen time
+            // and a change from one to the other would have invalidated the image.  Leave in the code for debug so we can assert below.
+            if (pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens)
             {
-                // Skip this check when using zap sigs; it should have been correctly computed at NGen time
-                // and a change from one to the other would have invalidated the image.  Leave in the code for debug so we can assert below.
-                if (pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens)
+                bool typFromSigIsClass = (typ == ELEMENT_TYPE_CLASS);
+                bool typLoadedIsClass  = (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS);
+
+                if (typFromSigIsClass != typLoadedIsClass)
                 {
-                    bool typFromSigIsClass = (typ == ELEMENT_TYPE_CLASS);
-                    bool typLoadedIsClass  = (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS);
-
-                    if (typFromSigIsClass != typLoadedIsClass)
-                    {
-                        pOrigModule->GetAssembly()->ThrowTypeLoadException(pModule->GetMDImport(),
-                                                                        typeToken,
-                                                                        BFA_CLASSLOAD_VALUETYPEMISMATCH);
-                    }
+                    pOrigModule->GetAssembly()->ThrowTypeLoadException(pModule->GetMDImport(),
+                                                                    typeToken,
+                                                                    BFA_CLASSLOAD_VALUETYPEMISMATCH);
                 }
-
-                // Assert that our reasoning above was valid (that there is never a zapsig that gets this wrong)
-                _ASSERTE(((typ == ELEMENT_TYPE_CLASS) == (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS)) ||
-                        pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens);
             }
-#endif // #ifndef DACCESS_COMPILE
+
+            // Assert that our reasoning above was valid (that there is never a zapsig that gets this wrong)
+            _ASSERTE(((typ == ELEMENT_TYPE_CLASS) == (genericType.GetSignatureCorElementType() == ELEMENT_TYPE_CLASS)) ||
+                    pZapSigContext == NULL || pZapSigContext->externalTokens != ZapSig::NormalTokens);
         }
+#endif // #ifndef DACCESS_COMPILE
     }
 
     return genericType;

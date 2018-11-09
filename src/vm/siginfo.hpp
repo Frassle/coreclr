@@ -210,6 +210,7 @@ private:
 
         // Parse type following E_T_GENERICINST
         TypeHandle GetGenericInstType(Module *        pModule,
+                                      const SigTypeContext *pTypeContext,
                                       ClassLoader::LoadTypesFlag = ClassLoader::LoadTypes,
                                       ClassLoadLevel level = CLASS_LOADED,
                                       const ZapSig::Context *pZapSigContext = NULL);
