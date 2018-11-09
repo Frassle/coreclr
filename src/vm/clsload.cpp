@@ -447,7 +447,10 @@ BOOL ClassLoader::IsTypicalInstantiation(Module *pModule, mdToken token, Instant
         GC_NOTRIGGER;
         FORBID_FAULT;
         PRECONDITION(CheckPointer(pModule));
-        PRECONDITION(TypeFromToken(token) == mdtTypeDef || TypeFromToken(token) == mdtMethodDef);
+        PRECONDITION(
+            TypeFromToken(token) == mdtTypeDef ||
+            TypeFromToken(token) == mdtMethodDef ||
+            TypeFromToken(token) == mdtGenericParam );
         SUPPORTS_DAC;
     }
     CONTRACTL_END
