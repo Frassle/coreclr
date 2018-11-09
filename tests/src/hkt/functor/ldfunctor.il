@@ -28,7 +28,8 @@
   .locals init (
     [0] class [mscorlib]System.Type typF,
     [1] class [mscorlib]System.Type typT,
-    [2] class [mscorlib]System.Type typA
+    [2] class [mscorlib]System.Type typA,
+    [3] class [mscorlib]System.Reflection.MethodInfo fmap
   )
 
   ldtoken Functor`1
@@ -80,7 +81,17 @@
   ldloc.0 
   ldstr "fmap"
   callvirt instance class [mscorlib]System.Reflection.MethodInfo [mscorlib]System.Type::GetMethod(string)
-  call void [mscorlib]System.Console::WriteLine(object)
+  stloc.3
+
+  ldloc.3
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldstr "IsGenericType = {0}"
+  ldloc.3
+  callvirt instance bool [mscorlib]System.Reflection.MethodInfo::get_IsGenericMethod()
+  box bool
+  call void [mscorlib]System.Console::WriteLine(class System.String, class System.Object)
 
   ldc.i4     100
   ret
