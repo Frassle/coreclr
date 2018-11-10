@@ -11888,6 +11888,7 @@ ClassLoader::CreateTypeHandleForTypeDefThrowing(
     Assembly * pAssembly = pModule->GetAssembly();
     pInternalImport = pModule->GetMDImport();
 
+    // TODO This need to be a generic var
     if (TypeFromToken(cl) != mdtTypeDef || !pInternalImport->IsValidToken(cl))
     {
         pAssembly->ThrowTypeLoadException(pInternalImport, cl, IDS_CLASSLOAD_BADFORMAT);
