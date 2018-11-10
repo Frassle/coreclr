@@ -148,7 +148,7 @@ public:
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        return !(m_kind == ELEMENT_TYPE_CLASS && u.asClass.m_numGenericArgs == 0);
+        return !((m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR) && u.asClass.m_numGenericArgs == 0);
     }
 
     // Accessors on instantiated types
@@ -163,7 +163,7 @@ public:
             SUPPORTS_DAC;
         }
         CONTRACTL_END;
-        if (m_kind == ELEMENT_TYPE_CLASS)
+        if (m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR)
             return PTR_Module(u.asClass.m_pModule);
         else if (CorTypeInfo::IsModifier_NoThrow(m_kind) || m_kind == ELEMENT_TYPE_VALUETYPE)
             return GetElementType().GetModule();
@@ -175,9 +175,7 @@ public:
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        PRECONDITION(
-            m_kind == ELEMENT_TYPE_CLASS ||
-            m_kind == ELEMENT_TYPE_VAR);
+        PRECONDITION(m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR);
         return u.asClass.m_token;
     }
 
@@ -187,7 +185,7 @@ public:
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        PRECONDITION(m_kind == ELEMENT_TYPE_CLASS);
+        PRECONDITION(m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR);
         return Instantiation(u.asClass.m_pGenericArgs, u.asClass.m_numGenericArgs);
     }
 
@@ -195,14 +193,14 @@ public:
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        PRECONDITION(m_kind == ELEMENT_TYPE_CLASS);
+        PRECONDITION(m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR);
         return u.asClass.m_numGenericArgs;
     }
 
     BOOL HasInstantiation() const
     {
         LIMITED_METHOD_CONTRACT;
-        return m_kind == ELEMENT_TYPE_CLASS && u.asClass.m_numGenericArgs != 0;
+        return (m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR) && u.asClass.m_numGenericArgs != 0;
     }
 
     // Accessors on function pointer types
@@ -244,9 +242,10 @@ public:
         {
             return FALSE;
         }
-        if (pKey1->m_kind == ELEMENT_TYPE_CLASS)
+        if (pKey1->m_kind == ELEMENT_TYPE_CLASS || pKey1->m_kind == ELEMENT_TYPE_VAR)
         {
-            if (pKey1->u.asClass.m_token != pKey2->u.asClass.m_token ||
+            if (pKey1->m_kind != pKey2->m_kind ||
+                pKey1->u.asClass.m_token != pKey2->u.asClass.m_token ||
                 pKey1->u.asClass.m_pModule != pKey2->u.asClass.m_pModule ||
                 pKey1->u.asClass.m_numGenericArgs != pKey2->u.asClass.m_numGenericArgs)
             {
@@ -287,7 +286,7 @@ public:
         LIMITED_METHOD_CONTRACT;
         DWORD_PTR hashLarge;
 
-        if (m_kind == ELEMENT_TYPE_CLASS)
+        if (m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR)
         {
             hashLarge = ((DWORD_PTR)u.asClass.m_pModule ^ (DWORD_PTR)u.asClass.m_numGenericArgs ^ (DWORD_PTR)u.asClass.m_token);
         }
