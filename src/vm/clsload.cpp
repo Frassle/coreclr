@@ -2105,27 +2105,31 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
     // to create an instantiation flow.  There is a similar choke point for generic
     // methods in genmeth.cpp.
 
-    if (inst.IsEmpty() || ClassLoader::IsTypicalInstantiation(pModule, typeDefOrGenericParam, inst))
-    {
-        TypeHandle th = LoadTypeDefThrowing(pModule, typeDefOrGenericParam,
-                                            ThrowIfNotFound,
-                                            PermitUninstDefOrRef,
-                                            fLoadTypes == DontLoadTypes ? tdAllTypes : tdNoTypes, 
-                                            level, 
-                                            fFromNativeImage ? NULL : &inst);
-        _ASSERTE(th.GetNumGenericArgs() == inst.GetNumArgs());
-        RETURN th;
-    }
+    BOOL isEmptyOrTypical = inst.IsEmpty() || ClassLoader::IsTypicalInstantiation(pModule, typeDefOrGenericParam, inst);
 
-    if (!fFromNativeImage)
+
+    if (isEmptyOrTypical || !fFromNativeImage)
     {
-        TypeHandle th = ClassLoader::LoadTypeDefThrowing(pModule, typeDefOrGenericParam,
-                                         ThrowIfNotFound,
-                                         PermitUninstDefOrRef,
-                                         fLoadTypes == DontLoadTypes ? tdAllTypes : tdNoTypes, 
-                                         level, 
-                                         fFromNativeImage ? NULL : &inst);
+        TypeHandle th;
+
+        if (TypeFromToken(typeDefOrGenericParam) == mdtGenericParam)
+        {
+            th = TypeHandle(pModule->LookupGenericParam(typeDefOrGenericParam));
+        }
+        else
+        {
+            _ASSERTE(TypeFromToken(typeDefOrGenericParam) == mdtTypeDef);
+            th = LoadTypeDefThrowing(pModule, typeDefOrGenericParam,
+                                                ThrowIfNotFound,
+                                                PermitUninstDefOrRef,
+                                                fLoadTypes == DontLoadTypes ? tdAllTypes : tdNoTypes,
+                                                level,
+                                                fFromNativeImage ? NULL : &inst);
+        }
         _ASSERTE(th.GetNumGenericArgs() == inst.GetNumArgs());
+
+        if (isEmptyOrTypical)
+            RETURN th;
     }
 
     TypeKey key(pModule, typeDefOrGenericParam, inst);
