@@ -398,7 +398,7 @@ DWORD TypeDesc::GetNumGenericArgs() const
         TypeVarTypeDesc *tyvar = (TypeVarTypeDesc*) this;
         return tyvar->GetNumGenericArgs();
     }
-    return FALSE;
+    return 0;
 }
 
 #ifndef DACCESS_COMPILE

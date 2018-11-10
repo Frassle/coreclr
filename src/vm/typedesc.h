@@ -534,6 +534,13 @@ public:
         return !m_inst.IsEmpty();
     }
 
+    DWORD GetNumGenericArgs() const
+    {
+        LIMITED_METHOD_CONTRACT;
+        SUPPORTS_DAC;
+        return m_inst.GetNumArgs();
+    }
+
     OBJECTREF GetManagedClassObject();
     OBJECTREF GetManagedClassObjectIfExists()
     {
