@@ -32,11 +32,11 @@ class TypeKey
 
     union 
     {
-        // m_kind = CLASS 
+        // m_kind = CLASS, VAR
         struct 
         {
             Module *       m_pModule;
-            mdToken        m_typeDef;
+            mdToken        m_token;
             DWORD          m_numGenericArgs; // 0 for non-generic types
             FixupPointer<TypeHandle> * m_pGenericArgs;   // NULL for non-generic types 
             // Note that for DAC builds, m_pGenericArgs is a host allocated buffer (eg. by in SigPointer::GetTypeHandleThrowing), 
@@ -78,16 +78,26 @@ public:
         u.asParamType.m_isTemplateMethodTable = isTemplateMethodTable;
     }
 
-    // Constructor for instantiated types
+    // Constructor for instantiated types or open generic generics
     TypeKey(Module *pModule, mdTypeDef token, Instantiation inst = Instantiation())
     {
         WRAPPER_NO_CONTRACT;
         PRECONDITION(CheckPointer(pModule));
-        PRECONDITION(TypeFromToken(token) == mdtTypeDef);
+        PRECONDITION(TypeFromToken(token) == mdtTypeDef || TypeFromToken(token) == mdtTypeDef);
         PRECONDITION(!IsNilToken(token));
-        m_kind = ELEMENT_TYPE_CLASS;
+
+        if(TypeFromToken(token) == mdtGenericParam)
+        {
+            m_kind = ELEMENT_TYPE_VAR;
+        }
+        else
+        {
+            _ASSERTE(TypeFromToken(token) == mdtTypeDef);
+            m_kind = ELEMENT_TYPE_CLASS;
+        }
+
         u.asClass.m_pModule = pModule;
-        u.asClass.m_typeDef = token;
+        u.asClass.m_token = token;
         u.asClass.m_numGenericArgs = inst.GetNumArgs();
         u.asClass.m_pGenericArgs = inst.GetRawArgs();
     }
@@ -161,12 +171,14 @@ public:
             return NULL;
     }
 
-    mdTypeDef GetTypeToken() const
+    mdToken GetTypeToken() const
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        PRECONDITION(m_kind == ELEMENT_TYPE_CLASS);
-        return u.asClass.m_typeDef;
+        PRECONDITION(
+            m_kind == ELEMENT_TYPE_CLASS ||
+            m_kind == ELEMENT_TYPE_VAR);
+        return u.asClass.m_token;
     }
 
     // Get the type parameters for this CLASS type.
@@ -234,7 +246,7 @@ public:
         }
         if (pKey1->m_kind == ELEMENT_TYPE_CLASS)
         {
-            if (pKey1->u.asClass.m_typeDef != pKey2->u.asClass.m_typeDef ||
+            if (pKey1->u.asClass.m_token != pKey2->u.asClass.m_token ||
                 pKey1->u.asClass.m_pModule != pKey2->u.asClass.m_pModule ||
                 pKey1->u.asClass.m_numGenericArgs != pKey2->u.asClass.m_numGenericArgs)
             {
@@ -277,7 +289,7 @@ public:
 
         if (m_kind == ELEMENT_TYPE_CLASS)
         {
-            hashLarge = ((DWORD_PTR)u.asClass.m_pModule ^ (DWORD_PTR)u.asClass.m_numGenericArgs ^ (DWORD_PTR)u.asClass.m_typeDef);
+            hashLarge = ((DWORD_PTR)u.asClass.m_pModule ^ (DWORD_PTR)u.asClass.m_numGenericArgs ^ (DWORD_PTR)u.asClass.m_token);
         }
         else if (CorTypeInfo::IsModifier_NoThrow(m_kind) || m_kind == ELEMENT_TYPE_VALUETYPE)
         {
