@@ -148,15 +148,15 @@ DWORD EETypeHashTable::GetCount()
 
 static DWORD HashTypeHandle(DWORD level, TypeHandle t);
 
-// Calculate hash value for a type def or instantiated type def
-static DWORD HashPossiblyInstantiatedType(DWORD level, mdTypeDef token, Instantiation inst)
+// Calculate hash value for a type def or instantiated type def or generic parm
+static DWORD HashPossiblyInstantiatedType(DWORD level, mdToken token, Instantiation inst)
 {
     CONTRACTL
     {
         NOTHROW;
         GC_NOTRIGGER;
         MODE_ANY;
-        PRECONDITION(TypeFromToken(token) == mdtTypeDef);
+        PRECONDITION(TypeFromToken(token) == mdtTypeDef || TypeFromToken(token) == mdtGenericParam);
         SUPPORTS_DAC;
     }
     CONTRACTL_END
@@ -239,13 +239,13 @@ static DWORD HashTypeHandle(DWORD level, TypeHandle t)
     {
         retVal =  HashParamType(level, t.GetInternalCorElementType(), t.GetTypeParam());
     }
+    else if (t.HasInstantiation())
+    {
+        retVal = HashPossiblyInstantiatedType(level, t.GetToken(), t.GetInstantiation());
+    }
     else if (t.IsGenericVariable())
     {
         retVal = (dac_cast<PTR_TypeVarTypeDesc>(t.AsTypeDesc())->GetToken());
-    }
-    else if (t.HasInstantiation())
-    {
-        retVal = HashPossiblyInstantiatedType(level, t.GetCl(), t.GetInstantiation());
     }
     else if (t.IsFnPtrType())
     {
@@ -277,7 +277,7 @@ static DWORD HashTypeKey(TypeKey* pKey)
     }
     CONTRACTL_END;
 
-    if (pKey->GetKind() == ELEMENT_TYPE_CLASS)
+    if (pKey->GetKind() == ELEMENT_TYPE_CLASS || pKey->GetKind() == ELEMENT_TYPE_VAR)
     {
         return HashPossiblyInstantiatedType(0, pKey->GetTypeToken(), pKey->GetInstantiation());
     }

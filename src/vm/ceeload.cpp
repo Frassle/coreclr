@@ -1673,7 +1673,7 @@ PTR_Module Module::ComputePreferredZapModule(TypeKey *pKey)
     }
     CONTRACTL_END;
 
-    if (pKey->GetKind() == ELEMENT_TYPE_CLASS)
+    if (pKey->GetKind() == ELEMENT_TYPE_CLASS || pKey->GetKind() == ELEMENT_TYPE_VAR)
     {
         return Module::ComputePreferredZapModule(pKey->GetModule(),
                                                  pKey->GetInstantiation());
