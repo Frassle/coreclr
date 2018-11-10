@@ -427,7 +427,7 @@ Module *ClassLoader::ComputeLoaderModule(TypeKey *typeKey)
     CONTRACTL_END;
 
 
-    if (typeKey->GetKind() == ELEMENT_TYPE_CLASS)
+    if (typeKey->GetKind() == ELEMENT_TYPE_CLASS || typeKey->GetKind() == ELEMENT_TYPE_VAR)
         return ComputeLoaderModuleWorker(typeKey->GetModule(),
                                    typeKey->GetTypeToken(),
                                    typeKey->GetInstantiation(),
@@ -1464,11 +1464,19 @@ TypeHandle ClassLoader::LookupTypeHandleForTypeKeyInner(TypeKey *pKey, BOOL fChe
     // Check if it's the typical instantiation.  In this case it's not stored in the same
     // way as other constructed types.
     if (!pKey->IsConstructed() || 
-        (pKey->GetKind() == ELEMENT_TYPE_CLASS && ClassLoader::IsTypicalInstantiation(pKey->GetModule(), 
-                                                                                      pKey->GetTypeToken(),
-                                                                                      pKey->GetInstantiation())))
+        ((pKey->GetKind() == ELEMENT_TYPE_CLASS || pKey->GetKind() == ELEMENT_TYPE_VAR)
+            && ClassLoader::IsTypicalInstantiation(pKey->GetModule(),
+                                                   pKey->GetTypeToken(),
+                                                   pKey->GetInstantiation())))
     {
-        return TypeHandle(pKey->GetModule()->LookupTypeDef(pKey->GetTypeToken()));
+        if(pKey->GetKind() == ELEMENT_TYPE_CLASS)
+        {
+            return TypeHandle(pKey->GetModule()->LookupTypeDef(pKey->GetTypeToken()));
+        }
+        else
+        {
+            return TypeHandle(pKey->GetModule()->LookupGenericParam(pKey->GetTypeToken()));
+        }
     }
 
 #ifdef FEATURE_PREJIT
@@ -2068,7 +2076,7 @@ TypeHandle ClassLoader::LoadFnptrTypeThrowing(BYTE callConv,
 // Value will be non-null if we're loading types.
 /* static */
 TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
-                                                         mdTypeDef typeDef,
+                                                         mdToken typeDefOrGenericParam,
                                                          Instantiation inst,
                                                          LoadTypesFlag fLoadTypes/*=LoadTypes*/,
                                                          ClassLoadLevel level/*=CLASS_LOADED*/,
@@ -2097,9 +2105,9 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
     // to create an instantiation flow.  There is a similar choke point for generic
     // methods in genmeth.cpp.
 
-    if (inst.IsEmpty() || ClassLoader::IsTypicalInstantiation(pModule, typeDef, inst))
+    if (inst.IsEmpty() || ClassLoader::IsTypicalInstantiation(pModule, typeDefOrGenericParam, inst))
     {
-        TypeHandle th = LoadTypeDefThrowing(pModule, typeDef, 
+        TypeHandle th = LoadTypeDefThrowing(pModule, typeDefOrGenericParam,
                                             ThrowIfNotFound,
                                             PermitUninstDefOrRef,
                                             fLoadTypes == DontLoadTypes ? tdAllTypes : tdNoTypes, 
@@ -2111,7 +2119,7 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
 
     if (!fFromNativeImage)
     {
-        TypeHandle th = ClassLoader::LoadTypeDefThrowing(pModule, typeDef, 
+        TypeHandle th = ClassLoader::LoadTypeDefThrowing(pModule, typeDefOrGenericParam,
                                          ThrowIfNotFound,
                                          PermitUninstDefOrRef,
                                          fLoadTypes == DontLoadTypes ? tdAllTypes : tdNoTypes, 
@@ -2120,7 +2128,7 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
         _ASSERTE(th.GetNumGenericArgs() == inst.GetNumArgs());
     }
 
-    TypeKey key(pModule, typeDef, inst);
+    TypeKey key(pModule, typeDefOrGenericParam, inst);
 
 #ifndef DACCESS_COMPILE
     // To avoid loading useless shared instantiations, normalize shared instantiations to the canonical form 

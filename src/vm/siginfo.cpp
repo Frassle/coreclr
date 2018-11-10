@@ -1329,12 +1329,12 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
 
             if (!typeAndModuleKnown)
             {
-                tkGenericType = genericType.GetCl();
+                tkGenericType = genericType.GetToken();
                 pGenericTypeModule = genericType.GetModule();
             }
             else
             {
-                _ASSERTE(tkGenericType == genericType.GetCl());
+                _ASSERTE(tkGenericType == genericType.GetToken());
                 _ASSERTE(pGenericTypeModule == genericType.GetModule());
             }
 
