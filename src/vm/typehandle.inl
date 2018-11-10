@@ -25,6 +25,17 @@ inline mdTypeDef TypeHandle::GetCl() const
     return GetMethodTable()->GetCl(); 
 }
 
+inline mdToken TypeHandle::GetToken() const
+{
+    LIMITED_METHOD_DAC_CONTRACT;
+
+    if(IsGenericVariable()) {
+        return AsGenericVariable()->GetToken();
+    } else {
+        return GetMethodTable()->GetCl();
+    }
+}
+
 inline PTR_MethodTable TypeHandle::GetMethodTable() const
 {
     LIMITED_METHOD_DAC_CONTRACT;

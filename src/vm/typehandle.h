@@ -476,6 +476,10 @@ public:
     // i.e. a class, a value type, a generic instantiation etc.
     inline mdTypeDef GetCl() const;
 
+    // Get the type token, assuming the type handle represents a named type,
+    // Like GetCl but includes generic parameters.
+    inline mdToken GetToken() const;
+
     // Shortcuts
 
     // ARRAY or SZARRAY TypeDesc (arrays with a shared MethodTable)
