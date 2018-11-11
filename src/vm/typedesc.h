@@ -485,6 +485,7 @@ public:
         m_constraints = NULL;
         m_numConstraints = (DWORD)-1;
         m_inst = inst;
+        m_isTypicalInstantiation = ClassLoader::IsTypicalInstantiation(pModule, m_token, m_inst);
     }
 #endif // #ifndef DACCESS_COMPILE
 
@@ -531,7 +532,7 @@ public:
     {
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
-        return !m_inst.IsEmpty();
+        return m_isTypicalInstantiation;
     }
 
     DWORD GetNumGenericArgs() const
@@ -627,6 +628,9 @@ protected:
 
     // This is a generic generic
     Instantiation m_inst;
+
+    // This is the typical instantiation of this generic param
+    BOOL m_isTypicalInstantiation;
 };
 
 /*************************************************************************/
