@@ -956,12 +956,10 @@ void TypeString::AppendType(TypeNameBuilder& tnb, TypeHandle ty, Instantiation t
         LPCSTR szPrefix;
         if (!(format & FormatGenericParam))
             szPrefix = "";
-        else if (TypeFromToken(mdOwner) == mdtTypeDef)
-            szPrefix = "!";
         else if (TypeFromToken(mdOwner) == mdtMethodDef)
             szPrefix = "!!";
-        else
-            szPrefix = "!!!";
+        else 
+            szPrefix = "!";
 
         SmallStackSString pName(SString::Utf8, szPrefix);
         pName.AppendUTF8(szName);
