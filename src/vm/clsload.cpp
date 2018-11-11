@@ -3423,17 +3423,24 @@ TypeHandle ClassLoader::CreateTypeHandleForTypeKey(TypeKey* pKey, AllocMemTracke
     }
     else if (pKey->HasInstantiation())
     {
-        if (IsCanonicalGenericInstantiation(pKey->GetInstantiation()))
+        if(pKey->GetKind() == ELEMENT_TYPE_CLASS)
         {
-            typeHnd = CreateTypeHandleForTypeDefThrowing(pKey->GetModule(),
-                                                            pKey->GetTypeToken(),
-                                                            pKey->GetInstantiation(),
-                                                            pamTracker);
+            if (IsCanonicalGenericInstantiation(pKey->GetInstantiation()))
+            {
+                typeHnd = CreateTypeHandleForTypeDefThrowing(pKey->GetModule(),
+                                                                pKey->GetTypeToken(),
+                                                                pKey->GetInstantiation(),
+                                                                pamTracker);
+            }
+            else
+            {
+                typeHnd = CreateTypeHandleForNonCanonicalGenericInstantiation(pKey, pamTracker);
+            }
         }
-        else 
+        else
         {
-            typeHnd = CreateTypeHandleForNonCanonicalGenericInstantiation(pKey,
-                                                                                        pamTracker);
+            _ASSERTE(pKey->GetKind() == ELEMENT_TYPE_VAR);
+            _ASSERTE(false && "no generic support yet");
         }
 #if defined(_DEBUG) && !defined(CROSSGEN_COMPILE)
         if (Nullable::IsNullableType(typeHnd)) 
