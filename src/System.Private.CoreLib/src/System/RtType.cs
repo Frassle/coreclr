@@ -4266,7 +4266,9 @@ namespace System
 
             // Legacy: this doesn't make sense, why use only Name for nested types but otherwise
             // ToString() which contains namespace.
-            if (elementType.IsNested)
+            // We skip this for GenericParams because they might be generic themselves but only new code will have generic generics.
+            // For non-generic generics ToString and Name is the same.
+            if (elementType.IsNested && !elementType.IsGenericParameter)
                 return Name;
 
             string typeName = ToString();
