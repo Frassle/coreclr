@@ -485,7 +485,7 @@ public:
         m_constraints = NULL;
         m_numConstraints = (DWORD)-1;
         m_inst = inst;
-        m_isTypicalInstantiation = ClassLoader::IsTypicalInstantiation(pModule, m_token, m_inst);
+        m_isTypicalInstantiation = !inst.IsEmpty() && ClassLoader::IsTypicalInstantiation(pModule, m_token, m_inst);
     }
 #endif // #ifndef DACCESS_COMPILE
 
