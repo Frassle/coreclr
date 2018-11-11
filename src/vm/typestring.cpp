@@ -1329,6 +1329,43 @@ void TypeString::AppendTypeKey(TypeNameBuilder& tnb, TypeKey *pTypeKey, DWORD fo
     {
         RETURN;
     }
+    else if (kind == ELEMENT_TYPE_VAR)
+    {
+        pModule = pTypeKey->GetModule();
+        if(pModule != NULL) {
+            IMDInternalImport *pImport = pModule->GetMDImport();
+            mdToken token = pTypeKey->GetTypeToken();
+            _ASSERTE(!IsNilToken(token));
+
+            LPCSTR szName = NULL;
+            mdToken mdOwner;
+
+            IfFailThrow(pImport->GetGenericParamProps(token, NULL, NULL, &mdOwner, NULL, &szName));
+
+            _ASSERTE(
+                TypeFromToken(mdOwner) == mdtTypeDef ||
+                TypeFromToken(mdOwner) == mdtMethodDef ||
+                TypeFromToken(mdOwner) == mdtGenericParam);
+
+            LPCSTR szPrefix;
+            if (!(format & FormatGenericParam))
+                szPrefix = "";
+            else if (TypeFromToken(mdOwner) == mdtMethodDef)
+                szPrefix = "!!";
+            else
+                szPrefix = "!";
+
+            SmallStackSString pName(SString::Utf8, szPrefix);
+            pName.AppendUTF8(szName);
+            tnb.AddName(pName.GetUnicode());
+
+            // Append the instantiation
+            if ((format & (FormatNamespace|FormatAssembly)) && pTypeKey->HasInstantiation())
+                AppendInst(tnb, pTypeKey->GetInstantiation(), format);
+        }
+
+        RETURN;
+    }
 
     // ...otherwise it's just a plain type def or an instantiated type
     else 
