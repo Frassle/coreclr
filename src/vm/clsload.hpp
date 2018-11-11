@@ -1013,6 +1013,12 @@ private:
     static TypeHandle CreateTypeHandleForNonCanonicalGenericInstantiation(TypeKey *pTypeKey,
                                                                           AllocMemTracker *pamTracker);
 
+    // Creates a type handle for a generic param with an instantiation
+    static TypeHandle CreateTypeHandleForGenericParamInstantiation(Module *         pModule,
+                                                                   mdGenericParam   param,
+                                                                   Instantiation    inst,
+                                                                   AllocMemTracker *pamTracker);
+
     // Loads a class. This is the inner call from the multi-threaded load. This load must
     // be protected in some manner.
     // If we're attempting to load a fresh instantiated type then genericArgs should be filled in

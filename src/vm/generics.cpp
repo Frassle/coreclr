@@ -622,6 +622,75 @@ ClassLoader::CreateTypeHandleForNonCanonicalGenericInstantiation(
     RETURN(TypeHandle(pMT));
 } // ClassLoader::CreateTypeHandleForNonCanonicalGenericInstantiation
 
+
+// Create a instantiation of a generic param
+//
+/* static */
+TypeHandle
+ClassLoader::CreateTypeHandleForGenericParamInstantiation(
+    Module *         pModule,
+    mdGenericParam   tkParam,
+    Instantiation    inst,
+    AllocMemTracker *pamTracker)
+{
+    CONTRACT(TypeHandle)
+    {
+        STANDARD_VM_CHECK;
+        PRECONDITION(GetThread() != NULL);
+        PRECONDITION(CheckPointer(pModule));
+        PRECONDITION(CheckPointer(pamTracker));
+        POSTCONDITION(CheckPointer(RETVAL));
+    }
+    CONTRACT_END
+
+    Assembly* pAssembly = pModule->GetAssembly();
+    IMDInternalImport* pInternalImport = pModule->GetMDImport();
+
+    if (TypeFromToken(tkParam) != mdtGenericParam || !pInternalImport->IsValidToken(tkParam))
+    {
+        pAssembly->ThrowTypeLoadException(pInternalImport, tkParam, IDS_CLASSLOAD_BADFORMAT);
+    }
+
+    TypeVarTypeDesc* typicalInst = pModule->LookupGenericParam(tkParam);
+
+    Module * pLoaderModule = pModule;
+    if (!inst.IsEmpty())
+    {
+        pLoaderModule = ClassLoader::ComputeLoaderModuleWorker(
+            pModule,
+            tkParam,
+            inst,
+            Instantiation());
+        pLoaderModule->GetLoaderAllocator()->EnsureInstantiation(pModule, inst);
+    }
+
+    LoaderAllocator * pAllocator = pLoaderModule->GetLoaderAllocator();
+    PTR_LoaderHeap pHeap = pAllocator->GetLowFrequencyHeap();
+
+    DWORD ntypars = inst.GetNumArgs();
+    S_UINT32 scbAllocSize = S_UINT32(ntypars) * S_UINT32(sizeof(TypeHandle));
+    void *genericArgsMem = (void *)pHeap->AllocMem(scbAllocSize);
+
+    Instantiation destInst = Instantiation((TypeHandle*)genericArgsMem, ntypars);
+    TypeHandle * pDestInst = (TypeHandle *)destInst.GetRawArgs();
+    for (unsigned int i = 0; i < ntypars; i++)
+    {
+        pDestInst[i] = inst[i];
+    }
+
+    // Do NOT use the alloc tracker for this memory as we need it stay allocated even if the load fails.
+    void *mem = (void *)pHeap->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
+    TypeVarTypeDesc* pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(
+        pModule,
+        typicalInst->GetGenericParamParent(),
+        typicalInst->GetIndex(),
+        typicalInst->GetToken(),
+        destInst
+    );
+
+    return TypeHandle(pTypeVarTypeDesc);
+}
+
 namespace Generics
 {
 

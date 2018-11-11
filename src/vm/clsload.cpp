@@ -3440,7 +3440,10 @@ TypeHandle ClassLoader::CreateTypeHandleForTypeKey(TypeKey* pKey, AllocMemTracke
         else
         {
             _ASSERTE(pKey->GetKind() == ELEMENT_TYPE_VAR);
-            _ASSERTE(false && "no generic support yet");
+            typeHnd = CreateTypeHandleForGenericParamInstantiation(pKey->GetModule(),
+                                                                    pKey->GetTypeToken(),
+                                                                    pKey->GetInstantiation(),
+                                                                    pamTracker);
         }
 #if defined(_DEBUG) && !defined(CROSSGEN_COMPILE)
         if (Nullable::IsNullableType(typeHnd)) 
