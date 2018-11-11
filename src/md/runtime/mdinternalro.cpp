@@ -3383,6 +3383,8 @@ BOOL MDInternalRO::IsValidToken(        // True or False.
         return (rid <= m_LiteWeightStgdb.m_MiniMd.getCountManifestResources());
     case mdtMethodSpec:
         return (rid <= m_LiteWeightStgdb.m_MiniMd.getCountMethodSpecs());
+    case mdtGenericParam:
+        return (rid <= m_LiteWeightStgdb.m_MiniMd.getCountGenericParams());
     case mdtString:
         // need to check the user string heap
         return m_LiteWeightStgdb.m_MiniMd.m_UserStringHeap.IsValidIndex(rid);
