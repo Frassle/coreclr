@@ -64,6 +64,43 @@
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
 
+  // Now with an instantiation
+
+  ldtoken method !!0<int32> KindedMethod<class [mscorlib]System.Collections.Generic.List`1>(!!0<int32>)
+  call class [mscorlib]System.Reflection.MethodBase [mscorlib]System.Reflection.MethodBase::GetMethodFromHandle(valuetype [mscorlib]System.RuntimeMethodHandle)
+  stloc methodBase
+
+  ldloc methodBase
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldloc methodBase
+  callvirt instance class [mscorlib]System.Type[] [mscorlib]System.Reflection.MethodInfo::GetGenericArguments()
+  ldc.i4 0
+  ldelem [mscorlib]System.Type
+  stloc typT
+
+  ldloc typT
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldloc typT
+  callvirt instance class [mscorlib]System.Type[] [mscorlib]System.Type::GetGenericArguments()
+  ldc.i4 0
+  ldelem [mscorlib]System.Type 
+  stloc typA
+
+  ldloc typA
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+
+
+ // newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+  //call class [mscorlib]System.Collections.Generic.List`1<int32> KindedMethod<class [mscorlib]System.Collections.Generic.List`1>(class [mscorlib]System.Collections.Generic.List`1<int32>)
+  //callvirt instance string [mscorlib]System.Object::ToString()
+  //call void [mscorlib]System.Console::WriteLine(string)
+
   ldc.i4     100
   ret
 }
