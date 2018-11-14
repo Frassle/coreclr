@@ -1440,10 +1440,11 @@ void InstantiatedMethodDesc::SetupGenericMethodDefinition(IMDInternalImport *pIM
         TypeVarTypeDesc *pTypeVarTypeDesc = pModule->LookupGenericParam(tkTyPar);
         if (pTypeVarTypeDesc == NULL)
         {
-            // FRASER TODO this is borked, need to load instanced generic params here
+            Instantiation varInst = TypeVarTypeDesc::GetTypicalInstantiation(pModule, tkTyPar);
+
             // Do NOT use pamTracker for this memory as we need it stay allocated even if the load fails.
             void *mem = (void *)pAllocator->GetLowFrequencyHeap()->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
-            pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, tok, i, tkTyPar, Instantiation());
+            pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, tok, i, tkTyPar, varInst);
 
             // No race here - the row in GenericParam table is owned exclusively by this method and we
             // are holding a lock preventing other threads from loading the declaring type and setting
