@@ -254,7 +254,8 @@ public:
                                          ClassLoadLevel level = CLASS_LOADED,
                                          BOOL dropGenericArgumentLevel = FALSE,
                                          const Substitution *pSubst = NULL,
-                                         const ZapSig::Context *pZapSigContext = NULL) const;
+                                         const ZapSig::Context *pZapSigContext = NULL,
+                                         BOOL allowUninstantiated = FALSE) const;
 
 public:
         //------------------------------------------------------------------------

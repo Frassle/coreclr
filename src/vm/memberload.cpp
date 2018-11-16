@@ -839,7 +839,7 @@ MethodDesc * MemberLoader::GetMethodDescFromMethodSpec(Module * pModule,
 
     for (DWORD i = 0; i < nGenericMethodArgs; i++)
     {
-        genericMethodArgs[i] = sp.GetTypeHandleThrowing(pModule, pTypeContext);
+        genericMethodArgs[i] = sp.GetTypeHandleThrowing(pModule, pTypeContext, ClassLoader::LoadTypes, CLASS_LOADED, 0, NULL, NULL, TRUE);
         _ASSERTE (!genericMethodArgs[i].IsNull());
         IfFailThrow(sp.SkipExactlyOne());
     }

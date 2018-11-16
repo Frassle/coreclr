@@ -988,7 +988,8 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                  BOOL                        dropGenericArgumentLevel/*=FALSE*/,
                  const Substitution *        pSubst/*=NULL*/,
                  // ZapSigContext is only set when decoding zapsigs
-                 const ZapSig::Context *     pZapSigContext) const
+                 const ZapSig::Context *     pZapSigContext,
+                 BOOL                        allowUninstantiated) const
 {
     CONTRACT(TypeHandle)
     {
@@ -1491,14 +1492,19 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 notFoundAction = ClassLoader::ReturnNullIfNotFound;
                 tdTypes = tdAllTypes;
             }
+
+            ClassLoader::PermitUninstantiatedFlag fUninstantiated =
+                // pZapSigContext is only set when decoding zapsigs
+                // ZapSigs use uninstantiated tokens to represent the GenericTypeDefinition
+                pZapSigContext ? ClassLoader::PermitUninstDefOrRef : ClassLoader::FailIfUninstDefOrRef;
+            if (allowUninstantiated)
+                fUninstantiated = ClassLoader::PermitUninstDefOrRef;
                     
             TypeHandle loadedType = 
                 ClassLoader::LoadTypeDefOrRefThrowing(pModule, 
                                                       typeToken, 
                                                       notFoundAction,
-                                                      // pZapSigContext is only set when decoding zapsigs
-                                                      // ZapSigs use uninstantiated tokens to represent the GenericTypeDefinition
-                                                      (pZapSigContext ? ClassLoader::PermitUninstDefOrRef : ClassLoader::FailIfUninstDefOrRef),
+                                                      fUninstantiated,
                                                       tdTypes,
                                                       level);
 

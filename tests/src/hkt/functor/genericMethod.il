@@ -94,12 +94,10 @@
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
 
-
-
- // newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
-  //call class [mscorlib]System.Collections.Generic.List`1<int32> KindedMethod<class [mscorlib]System.Collections.Generic.List`1>(class [mscorlib]System.Collections.Generic.List`1<int32>)
-  //callvirt instance string [mscorlib]System.Object::ToString()
-  //call void [mscorlib]System.Console::WriteLine(string)
+  newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
+  //call !!0<int32> KindedMethod<class [mscorlib]System.Collections.Generic.List`1>(!!0<int32>)
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
 
   ldc.i4     100
   ret
