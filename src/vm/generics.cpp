@@ -41,7 +41,11 @@ TypeHandle ClassLoader::CanonicalizeGenericArg(TypeHandle thGenericArg)
     }
     CONTRACT_END
 
-#if defined(FEATURE_SHARE_GENERIC_CODE)  
+#if defined(FEATURE_SHARE_GENERIC_CODE)
+
+    if (thGenericArg.IsGenericTypeDefinition())
+        RETURN(thGenericArg);
+
     CorElementType et = thGenericArg.GetSignatureCorElementType();
 
     // Note that generic variables do not share
