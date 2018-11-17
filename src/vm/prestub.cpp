@@ -1650,7 +1650,7 @@ PCODE MethodDesc::DoPrestub(MethodTable *pDispatchingMT)
     // Running a prestub on a method causes us to access its MethodTable
     g_IBCLogger.LogMethodDescAccess(this);
 
-    if (ContainsGenericVariables())
+    if (TypeHandle(GetMethodTable()).ContainsGenericVariables() || IsGenericMethodDefinition())
     {
         COMPlusThrow(kInvalidOperationException, IDS_EE_CODEEXECUTION_CONTAINSGENERICVAR);
     }
