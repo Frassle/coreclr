@@ -10,7 +10,7 @@
 {
 }
 
-.class interface abstract Functor`1<T>
+.class interface abstract Functor`1<T<A>>
 {
   .method public newslot abstract virtual instance 
     !T<!!B> fmap<A, B> (
@@ -79,7 +79,7 @@
   ret
 }
 
-.method private static !!T<float64> MapDouble<T, .ctor (class Functor`1<!!T>) F>(!!T<int32> v) cil managed 
+.method private static !!T<float64> MapDouble<T<A>, .ctor (class Functor`1<!!T>) F>(!!T<int32> v) cil managed 
 {
   .maxstack 8
   .locals init (
