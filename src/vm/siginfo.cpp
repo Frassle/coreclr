@@ -1417,7 +1417,8 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                                                          argLevel,
                                                          argDrop,
                                                          pSubst, 
-                                                         pZapSigContext);
+                                                         pZapSigContext,
+                                                         TRUE);
                     if (typeHnd.IsNull()) 
                     {
                         // Indicate failure by setting thisinst to NULL
