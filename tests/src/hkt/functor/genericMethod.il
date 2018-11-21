@@ -10,14 +10,6 @@
 {
 }
 
-.method private hidebysig static !!T GenericMethod<T>(!!T thing) cil managed
-{
-  .maxstack  8
-
-  ldarg 0
-  ret
-}
-
 .method private hidebysig static !!T<int32> KindedMethod<T<A>>(!!T<int32> thing) cil managed
 {
   .maxstack  8
