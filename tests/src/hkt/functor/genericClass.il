@@ -27,7 +27,7 @@
     [2] class [mscorlib]System.Reflection.FieldInfo fFloat
   )
 
-  ldtoken class KindedClass`1
+  ldtoken KindedClass`1
   call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
   stloc typClass
 
@@ -54,6 +54,32 @@
   call void [mscorlib]System.Console::WriteLine(string)
 
   // Now with an instantiation
+
+  ldtoken class KindedClass`1<class [mscorlib]System.Collections.Generic.List`1>
+  call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+  stloc typClass
+
+  ldloc typClass
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldloc typClass
+  ldstr "int_thing"
+  callvirt instance class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Type::GetField(string)
+  stloc fInt
+
+  ldloc fInt
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldloc typClass
+  ldstr "float_thing"
+  callvirt instance class [mscorlib]System.Reflection.FieldInfo [mscorlib]System.Type::GetField(string)
+  stloc fFloat
+
+  ldloc fFloat
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
 
   ldc.i4     100
   ret
