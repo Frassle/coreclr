@@ -39,8 +39,7 @@
     .maxstack 8
     .locals init (
       [0] class [mscorlib]System.Collections.Generic.List`1<!!B> result,
-      [1] valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!!A>,
-      [2] !!A item
+      [1] valuetype [mscorlib]System.Collections.Generic.List`1/Enumerator<!!A>
     )
 
     newobj instance void class [mscorlib]System.Collections.Generic.List`1<!!B>::.ctor()
@@ -104,6 +103,9 @@
 {
   .entrypoint
   .maxstack  8
+  .locals init (
+    [0] class [mscorlib]System.Collections.Generic.List`1<float64> result
+  )
 
   newobj instance void class [mscorlib]System.Collections.Generic.List`1<int32>::.ctor()
   
@@ -120,28 +122,25 @@
   callvirt instance void class [mscorlib]System.Collections.Generic.List`1<int32>::Add(!0)
 
   call !!0<float64> MapDouble<class [mscorlib]System.Collections.Generic.List`1, class ListFunctor>(!!0<int32>)
+  stloc result
 
-  pop
-  ldc.i4     100
-  ret
-
-  dup 
+  ldloc result
   ldc.i4.0
   callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Item(int32)
   ldc.r8 1
-  bne.un.s fail
-
-  dup 
+  bne.un fail
+  
+  ldloc result 
   ldc.i4.1
   callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Item(int32)
   ldc.r8 2
-  bne.un.s fail
+  bne.un fail
 
-  dup 
+  ldloc result
   ldc.i4.2
   callvirt instance !0 class [mscorlib]System.Collections.Generic.List`1<float64>::get_Item(int32)
   ldc.r8 3
-  bne.un.s fail
+  bne.un fail
 
   ldc.i4     100
   ret

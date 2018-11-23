@@ -5472,6 +5472,10 @@ TokenPairList TokenPairList::AdjustForTypeSpec(TokenPairList *pTemplate, Module 
             result.m_bInTypeEquivalenceForbiddenScope = !IsTdInterface(dwAttrType);
         }
     }
+    else if(elemType == ELEMENT_TYPE_VAR)
+    {
+        
+    }
     else
     {
         _ASSERTE(elemType == ELEMENT_TYPE_VALUETYPE);
