@@ -1176,7 +1176,7 @@ Class *Assembler::FindCreateClass(__in __nullterminated const char *pszFQN)
 
 void Assembler::EmitTypeParameters(mdToken token, int numTyPars, TyParDescr* tyPars)
 {
-    ULONG i;
+    int i;
     mdToken* ptk;
     mdToken tk;
     for(i = 0; i < numTyPars; i++)
