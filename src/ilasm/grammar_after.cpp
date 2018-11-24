@@ -204,7 +204,7 @@ char* yygetline(int Line)
     return buff;
 }
 
-void yyerror(__in __nullterminated const char* str) {
+void yyerror(__in __nullterminated const char* str, ...) {
     char tokBuff[64];
     WCHAR *wzfile = (WCHAR*)(PENV->in->namew());
     int iline = PENV->curLine;

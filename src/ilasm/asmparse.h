@@ -304,7 +304,7 @@ private:
 	HANDLE	hstderr;
 
 private:
-    friend void yyerror(__in __nullterminated const char* str);
+    friend void yyerror(__in __nullterminated const char* str, ...);
     friend int parse_literal(unsigned curSym, __inout __nullterminated char* &curPos, BOOL translate_escapes);
     friend int yyparse();
     friend int yylex();
