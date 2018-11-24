@@ -3,8 +3,8 @@ project(ilasm)
 add_custom_command(
   COMMENT "Generating IL Asssembly Parser"
   OUTPUT asmparse.cpp
-  COMMAND btyacc -b asmparse.cpp ${PROJECT_SOURCE_DIR}/asmparse.y
-  COMMAND mv asmparse.cpp.tab.c asmparse.cpp
+  COMMAND btyacc ${PROJECT_SOURCE_DIR}/asmparse.y
+  COMMAND ${CMAKE_COMMAND} -E rename y.tab.c asmparse.cpp
   DEPENDS ${PROJECT_SOURCE_DIR}/asmparse.y
 )
 
