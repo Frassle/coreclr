@@ -692,7 +692,7 @@ ClassLoader::CreateTypeHandleForGenericParamInstantiation(
         destInst
     );
 
-    return TypeHandle(pTypeVarTypeDesc);
+    RETURN(TypeHandle(pTypeVarTypeDesc));
 }
 
 namespace Generics
