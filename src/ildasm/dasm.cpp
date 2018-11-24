@@ -5793,7 +5793,7 @@ void DumpTable(unsigned long Table, const char *TableName, void* GUICookie)
 
         char *szStr = &szString[0];
         szStr += sprintf_s(szStr,SZSTRING_REMAINING_SIZE(szStr),"//   RID: ");
-        for(int col = 0; col < cols; ++col)
+        for(ULONG col = 0; col < cols; ++col)
         {
             const char* pName;
             pITables->GetColumnInfo(Table, col, NULL, NULL, NULL, &pName);
@@ -5802,11 +5802,11 @@ void DumpTable(unsigned long Table, const char *TableName, void* GUICookie)
         printLine(GUICookie,szString);
         szStr = &szString[0];
     
-        for(int rid = 1; rid <= count; ++rid)
+        for(ULONG rid = 1; rid <= count; ++rid)
         {
             szStr += sprintf_s(szStr,SZSTRING_REMAINING_SIZE(szStr),"//   %-3d: ", rid);
 
-            for(int col = 0; col < cols; ++col)
+            for(ULONG col = 0; col < cols; ++col)
             {
                 ULONG val;
                 pITables->GetColumn(Table, col, rid, &val);
