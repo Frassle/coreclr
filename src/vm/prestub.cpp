@@ -82,7 +82,6 @@ PCODE MethodDesc::DoBackpatch(MethodTable * pMT, MethodTable *pDispatchingMT, BO
     CONTRACTL
     {
         STANDARD_VM_CHECK;
-        PRECONDITION(!ContainsGenericVariables());
         PRECONDITION(HasStableEntryPoint());
         PRECONDITION(pMT == GetMethodTable());
     }

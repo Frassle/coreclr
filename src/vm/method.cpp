@@ -1928,7 +1928,6 @@ MethodDesc* MethodDesc::ResolveGenericVirtualMethod(OBJECTREF *orThis)
         PRECONDITION(IsVtableMethod());
         PRECONDITION(IsRestored_NoLogging());
         PRECONDITION(HasMethodInstantiation());
-        PRECONDITION(!ContainsGenericVariables());
         POSTCONDITION(CheckPointer(RETVAL));
         POSTCONDITION(RETVAL->HasMethodInstantiation());
     }
