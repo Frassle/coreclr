@@ -1,14 +1,19 @@
+CORE_ROOT="./bin/tests/Linux.x64.Debug/Tests/Core_Root/"
 
-tests=$(find tests/src/hkt -name "*proj")
-
+tests=$(find tests/src/hkt -name "*.il")
 for test in $tests; do
-	Tools/msbuild.sh /maxcpucount $test /p:__BuildType=Debug /p:__BuildOS=Linux
+	"$CORE_ROOT/ilasm" $test
 done
 
 for test in $tests; do
-	name=$(echo "$test" | sed 's|tests/src/hkt/||g')
-	name=$(echo "$name" | sed -E 's|/(.+)\...proj|/\1/\1.sh|g')
-	testpath="./bin/tests/Linux.x64.Debug/hkt/$name"
-	bash $testpath -coreroot=/home/fraser/github.com/dotnet/coreclr/bin/tests/Linux.x64.Debug/Tests/Core_Root
+	testpath=$(echo "$test" | sed -E 's|(.+)\.il|\1.exe|')
+	"$CORE_ROOT/corerun" $testpath
+	exitcode=$?
+	if [ $exitcode -ne 100 ]; then
+		echo "Test exit code was $exitcode"
+		exit 1
+	fi
 done
+
+echo "All passed"
 
