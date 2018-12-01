@@ -972,7 +972,7 @@ public:
         VirtualSort* pVS = m_pVS[TBL_MethodSpec];
         CMiniColDef colDef = m_TableDefs[TBL_MethodSpec].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol(
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef),
             pVS, pRidStart, pRidEnd);
     }
 
@@ -989,7 +989,7 @@ public:
         VirtualSort* pVS = m_pVS[TBL_MethodSpec];
         CMiniColDef colDef = m_TableDefs[TBL_MethodSpec].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol( 
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef),
             pVS, pRidStart, pRidEnd);
     }
 
@@ -999,7 +999,7 @@ public:
         VirtualSort* pVS = m_pVS[TBL_DeclSecurity];
         CMiniColDef colDef = m_TableDefs[TBL_DeclSecurity].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol( 
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef),
             pVS,
             pRidStart, 
             pRidEnd);
@@ -1011,7 +1011,7 @@ public:
         VirtualSort* pVS = m_pVS[TBL_CustomAttribute];
         CMiniColDef colDef = m_TableDefs[TBL_CustomAttribute].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol( 
-            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef),
             pVS,
             pRidStart, 
             pRidEnd);

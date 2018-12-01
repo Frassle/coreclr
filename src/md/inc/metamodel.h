@@ -382,7 +382,7 @@ public:
 
 // Get a coded token.
 #define _GETCDTKN(tbl,fld)  _GETTER(tbl,fld) \
-{ CMiniColDef ColDef = _COLDEF(tbl, fld); return decodeToken(getIX(pRec, ColDef), ColDef, m_Schema.m_major<=2); }
+{ CMiniColDef ColDef = _COLDEF(tbl, fld); return decodeToken(getIX(pRec, ColDef), ColDef); }
 
 // Functions for the start and end of a list.
 #define _GETLIST(tbl,fld,tbl2) \
@@ -526,16 +526,16 @@ public:
     }
 
     // Function to encode a token into fewer bits.  Looks up token type in array of types.
-    ULONG static encodeToken(RID rid, mdToken typ, const CMiniColDef ColDef, bool useLowBits);
+    ULONG encodeToken(RID rid, mdToken typ, const CMiniColDef ColDef);
 
     // Decode a token.
-    inline static mdToken decodeToken(mdToken val, const CMiniColDef ColDef, bool useLowBits)
+    inline mdToken decodeToken(mdToken val, const CMiniColDef ColDef)
     {
         _ASSERTE(ColDef.m_Type <= iCodedTokenMax);
         ULONG indexCodedToken = ColDef.m_Type - iCodedToken;
         const CCodedTokenDef *pCdTkn = &g_CodedTokens[indexCodedToken];
 
-        if (useLowBits) {
+        if (m_Schema.m_major <= 2) {
             //<TODO>@FUTURE: make compile-time calculation</TODO>
             ULONG32 ix = (ULONG32)(val & ~(-1 << m_cb[pCdTkn->m_cTokens]));
             // If the coded token has an invalid table index, return the first entry
@@ -1574,7 +1574,7 @@ public:
             TBL_Constant,
             colDef,
             ConstantRec::COL_Parent,
-            encodeToken(rid,typ,colDef,m_Schema.m_major<=2),
+            encodeToken(rid,typ,colDef),
             pFoundRid);
     }
     
@@ -1587,7 +1587,7 @@ public:
             TBL_FieldMarshal,
             colDef,
             FieldMarshalRec::COL_Parent,
-            encodeToken(rid,typ,colDef,m_Schema.m_major<=2),
+            encodeToken(rid,typ,colDef),
             pFoundRid);
     }
 
@@ -1663,7 +1663,7 @@ public:
             TBL_ImplMap,
             colDef,
             ImplMapRec::COL_MemberForwarded,
-            encodeToken(rid,typ,colDef,m_Schema.m_major<=2),
+            encodeToken(rid,typ,colDef),
             pFoundRid);
     }
 
@@ -1716,7 +1716,7 @@ public:
         CMiniColDef colDef = _COLDEF(GenericParam,Owner);
         return SearchTableForMultipleRows(TBL_GenericParam, 
                             colDef,
-                            encodeToken(rid, typ, colDef, m_Schema.m_major<=2),
+                            encodeToken(rid, typ, colDef),
                             pEnd, 
                             pFoundRid);
     }
@@ -1726,7 +1726,7 @@ public:
         CMiniColDef colDef = _COLDEF(MethodSpec,Method);
         return SearchTableForMultipleRows(TBL_MethodSpec,
                             colDef,
-                            encodeToken(rid, mdtMethodDef, colDef, m_Schema.m_major<=2),
+                            encodeToken(rid, mdtMethodDef, colDef),
                             pEnd, 
                             pFoundRid);
     }
@@ -1736,7 +1736,7 @@ public:
         CMiniColDef colDef = _COLDEF(MethodSpec,Method);
         return SearchTableForMultipleRows(TBL_MethodSpec, 
                             colDef,
-                            encodeToken(rid, mdtMemberRef, colDef, m_Schema.m_major<=2),
+                            encodeToken(rid, mdtMemberRef, colDef),
                             pEnd, 
                             pFoundRid);
     }
@@ -1798,7 +1798,7 @@ public:
         CMiniColDef colDef = _COLDEF(CustomAttribute,Parent);
         return SearchTableForMultipleRows(TBL_CustomAttribute,
                             colDef,
-                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef),
                             pEnd, 
                             pFoundRid);
     }
@@ -1818,7 +1818,7 @@ public:
         CMiniColDef colDef = _COLDEF(DeclSecurity,Parent);
         return SearchTableForMultipleRows(TBL_DeclSecurity,
                             colDef,
-                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef),
                             pEnd, 
                             pFoundRid);
     }
@@ -1870,7 +1870,7 @@ public:
         CMiniColDef colDef = _COLDEF(MethodSemantics,Association);
         return SearchTableForMultipleRows(TBL_MethodSemantics,
                             colDef,
-                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef, m_Schema.m_major<=2),
+                            encodeToken(RidFromToken(tk), TypeFromToken(tk), colDef),
                             pEnd, 
                             pFoundRid);
     }
