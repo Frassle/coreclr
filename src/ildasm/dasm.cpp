@@ -5771,9 +5771,10 @@ inline void TableSeenReset() { fTableSeen = 0;}
 
 void DumpTable(unsigned long Table, const char *TableName, void* GUICookie)
 {
+    char *szStr = &szString[0];
     const char **ppTableName = 0;
     int   size;
-    ULONG sizeRec, count, cols;
+    ULONG sizeRec, count;
 
     // Record that this table has been seen.
     TableSeen(Table);
@@ -5782,39 +5783,14 @@ void DumpTable(unsigned long Table, const char *TableName, void* GUICookie)
     if (!TableName)
         ppTableName = &TableName;
 
-    pITables->GetTableInfo(Table, &sizeRec, &count, &cols, NULL, ppTableName);
+    pITables->GetTableInfo(Table, &sizeRec, &count, NULL, NULL, ppTableName);
     if(count > 0)
     {
         metaSize += size = count * sizeRec;
         WritePerfDataInt(TableName,TableName,"count","count",count);
         WritePerfDataInt(TableName,TableName,"bytes","bytes",size);
         sprintf_s(szString,SZSTRING_SIZE,"//   %-14s- %4d (%d bytes)", TableName, count, size);
-        printLine(GUICookie,szString);
-
-        char *szStr = &szString[0];
-        szStr += sprintf_s(szStr,SZSTRING_REMAINING_SIZE(szStr),"//   RID: ");
-        for(ULONG col = 0; col < cols; ++col)
-        {
-            const char* pName;
-            pITables->GetColumnInfo(Table, col, NULL, NULL, NULL, &pName);
-            szStr += sprintf_s(szStr,SZSTRING_REMAINING_SIZE(szStr),"%-10s, ", pName);
-        }
-        printLine(GUICookie,szString);
-        szStr = &szString[0];
-    
-        for(ULONG rid = 1; rid <= count; ++rid)
-        {
-            szStr += sprintf_s(szStr,SZSTRING_REMAINING_SIZE(szStr),"//   %-3d: ", rid);
-
-            for(ULONG col = 0; col < cols; ++col)
-            {
-                ULONG val;
-                pITables->GetColumn(Table, col, rid, &val);
-                szStr += sprintf_s(szStr,SZSTRING_REMAINING_SIZE(szStr),"0x%08x, ", val);
-            }
-            printLine(GUICookie,szString);
-            szStr = &szString[0];
-        }
+        printLine(GUICookie,szStr);
     }
 }
 
