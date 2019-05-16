@@ -36,8 +36,6 @@
 #include "clrtocomcall.h"
 #endif
 
-#include "mdaassistants.h"
-
 #ifdef FEATURE_STACK_SAMPLING
 #include "stacksampler.h"
 #endif
@@ -739,12 +737,6 @@ PCODE MethodDesc::JitCompileCodeLockedEventWrapper(PrepareCodeConfig* pConfig, J
     ULONG sizeOfCode = 0;
     CORJIT_FLAGS flags;
 
-#ifdef MDA_SUPPORTED 
-    MdaJitCompilationStart* pProbe = MDA_GET_ASSISTANT(JitCompilationStart);
-    if (pProbe)
-        pProbe->NowCompiling(this);
-#endif // MDA_SUPPORTED
-
 #ifdef PROFILING_SUPPORTED 
     {
         BEGIN_PIN_PROFILER(CORProfilerTrackJITInfo());
@@ -818,6 +810,7 @@ PCODE MethodDesc::JitCompileCodeLockedEventWrapper(PrepareCodeConfig* pConfig, J
                 &methodName,
                 &methodSignature,
                 pCode,
+                pConfig->GetCodeVersion().GetILCodeVersionId(),
                 pConfig->GetCodeVersion().GetVersionId(),
                 pConfig->ProfilerRejectedPrecompiledCode(),
                 pConfig->ReadyToRunRejectedPrecompiledCode());

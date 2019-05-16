@@ -95,7 +95,7 @@
 
 #define NGEN_STATICS_ALLCLASSES_WERE_LOADED -1
 
-BOOL Module::HasInlineTrackingMap()
+BOOL Module::HasNativeOrReadyToRunInlineTrackingMap()
 {
     LIMITED_METHOD_DAC_CONTRACT;
 #ifdef FEATURE_READYTORUN
@@ -107,7 +107,7 @@ BOOL Module::HasInlineTrackingMap()
     return (m_pPersistentInlineTrackingMapNGen != NULL);
 }
 
-COUNT_T Module::GetInliners(PTR_Module inlineeOwnerMod, mdMethodDef inlineeTkn, COUNT_T inlinersSize, MethodInModule inliners[], BOOL *incompleteData)
+COUNT_T Module::GetNativeOrReadyToRunInliners(PTR_Module inlineeOwnerMod, mdMethodDef inlineeTkn, COUNT_T inlinersSize, MethodInModule inliners[], BOOL *incompleteData)
 {
     WRAPPER_NO_CONTRACT;
 #ifdef FEATURE_READYTORUN
@@ -123,11 +123,28 @@ COUNT_T Module::GetInliners(PTR_Module inlineeOwnerMod, mdMethodDef inlineeTkn, 
     return 0;
 }
 
+#if defined(PROFILING_SUPPORTED) && !defined(DACCESS_COMPILE) && !defined(CROSSGEN_COMPILE)
+BOOL Module::HasJitInlineTrackingMap()
+{
+    LIMITED_METHOD_CONTRACT;
 
-#ifndef DACCESS_COMPILE 
+    return m_pJitInlinerTrackingMap != NULL;
+}
 
+void Module::AddInlining(MethodDesc *inliner, MethodDesc *inlinee)
+{
+    STANDARD_VM_CONTRACT;
+    _ASSERTE(inliner != NULL && inlinee != NULL);
+    _ASSERTE(inlinee->GetModule() == this);
 
+    if (m_pJitInlinerTrackingMap != NULL)
+    {
+        m_pJitInlinerTrackingMap->AddInlining(inliner, inlinee);
+    }
+}
+#endif // defined(PROFILING_SUPPORTED) && !defined(DACCESS_COMPILE) && !defined(CROSSGEN_COMPILE)
 
+#ifndef DACCESS_COMPILE
 // ===========================================================================
 // Module
 // ===========================================================================
@@ -636,6 +653,14 @@ void Module::Initialize(AllocMemTracker *pamTracker, LPCWSTR szName)
     // module has EnC turned on.
     if (g_pConfig->ForceEnc() && IsEditAndContinueCapable())
         EnableEditAndContinue();
+
+#if defined(PROFILING_SUPPORTED) && !defined(DACCESS_COMPILE) && !defined(CROSSGEN_COMPILE)
+    m_pJitInlinerTrackingMap = NULL;
+    if (ReJitManager::IsReJITInlineTrackingEnabled())
+    {
+        m_pJitInlinerTrackingMap = new JITInlineTrackingMap(GetLoaderAllocator());
+    }
+#endif // defined (PROFILING_SUPPORTED) &&!defined(DACCESS_COMPILE) && !defined(CROSSGEN_COMPILE)
 
     LOG((LF_CLASSLOADER, LL_INFO10, "Loaded pModule: \"%ws\".\n", GetDebugName()));
 
@@ -7154,7 +7179,9 @@ TypeHandle Module::LoadIBCTypeHelper(DataImage *image, CORBBTPROF_BLOB_PARAM_SIG
     }
     EX_CATCH
     {
-        image->GetPreloader()->Error(pBlobSigEntry->blob.token, GET_EXCEPTION());
+        if (g_CorCompileVerboseLevel >= CORCOMPILE_VERBOSE)
+            image->GetPreloader()->Error(pBlobSigEntry->blob.token, GET_EXCEPTION());
+
         loadedType = TypeHandle();
     }
     EX_END_CATCH(SwallowAllExceptions)
@@ -7211,7 +7238,9 @@ MethodDesc* Module::LoadIBCMethodHelper(DataImage *image, CORBBTPROF_BLOB_PARAM_
     }
     EX_CATCH
     {
-        image->GetPreloader()->Error(pBlobSigEntry->blob.token, GET_EXCEPTION());
+        if (g_CorCompileVerboseLevel >= CORCOMPILE_VERBOSE)
+            image->GetPreloader()->Error(pBlobSigEntry->blob.token, GET_EXCEPTION());
+
         enclosingType = TypeHandle();
     }
     EX_END_CATCH(SwallowAllExceptions)
@@ -10668,9 +10697,9 @@ BOOL Module::FixupNativeEntry(CORCOMPILE_IMPORT_SECTION* pSection, SIZE_T fixupI
 // Profile data management
 //
 
-ICorJitInfo::ProfileBuffer * Module::AllocateProfileBuffer(mdToken _token, DWORD _count, DWORD _ILSize)
+ICorJitInfo::BlockCounts * Module::AllocateMethodBlockCounts(mdToken _token, DWORD _count, DWORD _ILSize)
 {
-    CONTRACT (ICorJitInfo::ProfileBuffer*)
+    CONTRACT (ICorJitInfo::BlockCounts*)
     {
         INSTANCE_CHECK;
         THROWS;
@@ -10707,7 +10736,7 @@ ICorJitInfo::ProfileBuffer * Module::AllocateProfileBuffer(mdToken _token, DWORD
     methodProfileList->next = m_methodProfileList;
     m_methodProfileList     = methodProfileList;
 
-    RETURN ((ICorJitInfo::ProfileBuffer *) &methodProfileData->method.block[0]);
+    RETURN ((ICorJitInfo::BlockCounts *) &methodProfileData->method.block[0]);
 }
 
 HANDLE Module::OpenMethodProfileDataLogFile(GUID mvid)
@@ -11770,7 +11799,7 @@ static void ProfileDataAllocateScenarioInfo(ProfileEmitter * pEmitter, LPCSTR sc
         // Get the managed command line.
         LPCWSTR pCmdLine = GetManagedCommandLine();
 
-        // If this process started as a service we won't have a managed command line
+        // Checkout https://github.com/dotnet/coreclr/pull/24433 for more information about this fall back.
         if (pCmdLine == nullptr)
         {
             // Use the result from GetCommandLineW() instead
@@ -11923,7 +11952,7 @@ static void ProfileDataAllocateMethodBlockCounts(ProfileEmitter * pEmitter, CORC
         }
         
         // Reset all of the basic block counts to zero
-        for (ULONG i=0; (i <  pInfo->method.cBlock); i++ )
+        for (UINT32 i=0; (i <  pInfo->method.cBlock); i++ )
         {
             //
             // If methodWasExecuted is false then every block's ExecutionCount should also be zero
