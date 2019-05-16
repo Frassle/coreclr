@@ -56,6 +56,8 @@ endif(WIN32)
 
 
 if(CLR_CMAKE_PLATFORM_UNIX)
+  add_compile_options(-Wno-delete-non-virtual-dtor)
+  add_compile_options(-Wno-deprecated-register)
   add_compile_options(-Wno-array-bounds)
   add_compile_options(-Wno-unused-label)
 endif(CLR_CMAKE_PLATFORM_UNIX)
