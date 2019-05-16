@@ -161,14 +161,10 @@ HRESULT CEECompileInfo::CreateDomain(ICorCompilationDomain **ppDomain,
     {
         GCX_COOP();
 
-        ENTER_DOMAIN_PTR(pCompilationDomain,ADV_COMPILATION)
-        {
-            pCompilationDomain->CreateFusionContext();
+        pCompilationDomain->CreateFusionContext();
 
-            pCompilationDomain->SetFriendlyName(W("Compilation Domain"));
-            SystemDomain::System()->LoadDomain(pCompilationDomain);
-        }
-        END_DOMAIN_TRANSITION;
+        pCompilationDomain->SetFriendlyName(W("Compilation Domain"));
+        SystemDomain::System()->LoadDomain(pCompilationDomain);
     }
 
     COOPERATIVE_TRANSITION_END();
@@ -198,54 +194,6 @@ HRESULT CEECompileInfo::DestroyDomain(ICorCompilationDomain *pDomain)
 #endif
 
     return S_OK;
-}
-
-HRESULT MakeCrossDomainCallbackWorker(
-    CROSS_DOMAIN_CALLBACK   pfnCallback,
-    LPVOID                  pArgs)
-{
-    STATIC_CONTRACT_MODE_COOPERATIVE;
-    STATIC_CONTRACT_SO_INTOLERANT;
-
-    HRESULT hrRetVal = E_UNEXPECTED;
-    BEGIN_SO_TOLERANT_CODE(GetThread());
-    hrRetVal = pfnCallback(pArgs);
-    END_SO_TOLERANT_CODE;
-    return hrRetVal;
-}
-
-HRESULT CEECompileInfo::MakeCrossDomainCallback(
-    ICorCompilationDomain*  pDomain,
-    CROSS_DOMAIN_CALLBACK   pfnCallback,
-    LPVOID                  pArgs)
-{
-    STANDARD_VM_CONTRACT;
-
-    HRESULT hrRetVal = E_UNEXPECTED;
-
-    COOPERATIVE_TRANSITION_BEGIN();
-
-    {
-        // Switch to cooperative mode to switch appdomains
-        GCX_COOP();
-
-        ENTER_DOMAIN_PTR((CompilationDomain*)pDomain,ADV_COMPILATION)
-        {
-            //
-            // Switch to preemptive mode on before calling back into
-            // the zapper
-            //
-            
-            GCX_PREEMP();
-            
-            hrRetVal = MakeCrossDomainCallbackWorker(pfnCallback, pArgs);
-        }
-        END_DOMAIN_TRANSITION;
-    }
-
-    COOPERATIVE_TRANSITION_END();
-
-    return hrRetVal;
 }
 
 #ifdef TRITON_STRESS_NEED_IMPL
@@ -363,7 +311,7 @@ HRESULT CEECompileInfo::LoadAssemblyByPath(
 #endif //FEATURE_COMINTEROP
 
             // If there is a host binder then use it to bind the assembly.
-            if (pDomain->HasLoadContextHostBinder() || isWinRT)
+            if (isWinRT)
             {
                 pAssemblyHolder = pDomain->BindAssemblySpec(&spec, TRUE, FALSE);
             }
@@ -585,6 +533,12 @@ HRESULT CEECompileInfo::SetCompilationTarget(CORINFO_ASSEMBLY_HANDLE     assembl
         {
             return NGEN_E_SYS_ASM_NI_MISSING;
         }
+    }
+
+    if (IsReadyToRunCompilation() && !pModule->GetFile()->IsILOnly())
+    {
+        GetSvcLogger()->Printf(LogLevel_Error, W("Error: ReadyToRun is not supported for mixed mode assemblies\n"));
+        return E_FAIL;
     }
 
     return S_OK;
@@ -964,7 +918,7 @@ void FakeGcScanRoots(MetaSig& msig, ArgIterator& argit, MethodDesc * pMD, BYTE *
     }
 }
 
-void CEECompileInfo::GetCallRefMap(CORINFO_METHOD_HANDLE hMethod, GCRefMapBuilder * pBuilder)
+void CEECompileInfo::GetCallRefMap(CORINFO_METHOD_HANDLE hMethod, GCRefMapBuilder * pBuilder, bool isDispatchCell)
 {
 #ifdef _DEBUG
     DWORD dwInitialLength = pBuilder->GetBlobLength();
@@ -973,7 +927,25 @@ void CEECompileInfo::GetCallRefMap(CORINFO_METHOD_HANDLE hMethod, GCRefMapBuilde
 
     MethodDesc *pMD = (MethodDesc *)hMethod;
 
-    MetaSig msig(pMD);
+    SigTypeContext typeContext(pMD);
+    PCCOR_SIGNATURE pSig;
+    DWORD cbSigSize;
+    pMD->GetSig(&pSig, &cbSigSize);
+    MetaSig msig(pSig, cbSigSize, pMD->GetModule(), &typeContext);
+
+    //
+    // Shared default interface methods (i.e. virtual interface methods with an implementation) require
+    // an instantiation argument. But if we're in a situation where we haven't resolved the method yet
+    // we need to pretent that unresolved default interface methods are like any other interface
+    // methods and don't have an instantiation argument.
+    // See code:CEEInfo::getMethodSigInternal
+    //
+    assert(!isDispatchCell || !pMD->RequiresInstArg() || pMD->GetMethodTable()->IsInterface());
+    if (pMD->RequiresInstArg() && !isDispatchCell)
+    {
+        msig.SetHasParamTypeArg();
+    }
+
     ArgIterator argit(&msig);
 
     UINT nStackBytes = argit.SizeOfFrameArgumentArray();
@@ -1000,7 +972,7 @@ void CEECompileInfo::GetCallRefMap(CORINFO_METHOD_HANDLE hMethod, GCRefMapBuilde
 
     nStackSlots = nStackBytes / sizeof(TADDR) + NUM_ARGUMENT_REGISTERS;
 #else
-    nStackSlots = (sizeof(TransitionBlock) + nStackBytes - TransitionBlock::GetOffsetOfArgumentRegisters()) / TARGET_POINTER_SIZE;
+    nStackSlots = (sizeof(TransitionBlock) + nStackBytes - TransitionBlock::GetOffsetOfFirstGCRefMapSlot()) / TARGET_POINTER_SIZE;
 #endif
 
     for (UINT pos = 0; pos < nStackSlots; pos++)
@@ -1012,7 +984,7 @@ void CEECompileInfo::GetCallRefMap(CORINFO_METHOD_HANDLE hMethod, GCRefMapBuilde
             (TransitionBlock::GetOffsetOfArgumentRegisters() + ARGUMENTREGISTERS_SIZE - (pos + 1) * sizeof(TADDR)) :
             (TransitionBlock::GetOffsetOfArgs() + (pos - NUM_ARGUMENT_REGISTERS) * sizeof(TADDR));
 #else
-        ofs = TransitionBlock::GetOffsetOfArgumentRegisters() + pos * TARGET_POINTER_SIZE;
+        ofs = TransitionBlock::GetOffsetOfFirstGCRefMapSlot() + pos * TARGET_POINTER_SIZE;
 #endif
 
         CORCOMPILE_GCREFMAP_TOKENS token = *(CORCOMPILE_GCREFMAP_TOKENS *)(pFrame + ofs);
@@ -1055,7 +1027,7 @@ void CEECompileInfo::GetCallRefMap(CORINFO_METHOD_HANDLE hMethod, GCRefMapBuilde
             (TransitionBlock::GetOffsetOfArgumentRegisters() + ARGUMENTREGISTERS_SIZE - (pos + 1) * sizeof(TADDR)) :
             (TransitionBlock::GetOffsetOfArgs() + (pos - NUM_ARGUMENT_REGISTERS) * sizeof(TADDR));
 #else
-        ofs = TransitionBlock::GetOffsetOfArgumentRegisters() + pos * TARGET_POINTER_SIZE;
+        ofs = TransitionBlock::GetOffsetOfFirstGCRefMapSlot() + pos * TARGET_POINTER_SIZE;
 #endif
 
         if (token != 0)
@@ -3037,7 +3009,7 @@ HRESULT NGenModulePdbWriter::WritePDBData()
 	// Currently DiaSymReader does not work properly generating NGEN PDBS unless 
 	// the DLL whose PDB is being generated ends in .ni.*.   Unfortunately, readyToRun
 	// images do not follow this convention and end up producing bad PDBS.  To fix
-	// this (without changing diasymreader.dll which ships indepdendently of .Net Core)
+	// this (without changing diasymreader.dll which ships indepdendently of .NET Core)
 	// we copy the file to somethign with this convention before generating the PDB
 	// and delete it when we are done.  
 	SString dllPath = pLoadedLayout->GetPath();
@@ -7203,7 +7175,6 @@ void ReportMissingDependency(Exception * e)
 PEAssembly *CompilationDomain::BindAssemblySpec(
     AssemblySpec *pSpec,
     BOOL fThrowOnFileNotFound,
-    StackCrawlMark *pCallerStackMark,
     BOOL fUseHostBinderIfAvailable)
 {
     PEAssembly *pFile = NULL;
@@ -7220,7 +7191,6 @@ PEAssembly *CompilationDomain::BindAssemblySpec(
         pFile = AppDomain::BindAssemblySpec(
             pSpec,
             fThrowOnFileNotFound,
-            pCallerStackMark,
             fUseHostBinderIfAvailable);
     }
     EX_HOOK

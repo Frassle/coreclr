@@ -2,15 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
-//
-
-using System;
-using System.Security;
-using System.Collections;
+#nullable enable
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 using Internal.Runtime.CompilerServices;
 
 namespace System.Runtime.InteropServices.WindowsRuntime
@@ -34,12 +28,11 @@ namespace System.Runtime.InteropServices.WindowsRuntime
         }
 
         // int Count { get }
-        internal int Count<K, V>()
+        internal int Count<K, V>() where K : object
         {
             object _this = Unsafe.As<object>(this);
 
-            IMap<K, V> _this_map = _this as IMap<K, V>;
-            if (_this_map != null)
+            if (_this is IMap<K, V> _this_map)
             {
                 uint size = _this_map.Size;
 
@@ -65,18 +58,17 @@ namespace System.Runtime.InteropServices.WindowsRuntime
         }
 
         // bool IsReadOnly { get }
-        internal bool IsReadOnly<K, V>()
+        internal bool IsReadOnly<K, V>() where K : object
         {
             return false;
         }
 
         // void Add(T item)
-        internal void Add<K, V>(KeyValuePair<K, V> item)
+        internal void Add<K, V>(KeyValuePair<K, V> item) where K : object
         {
             object _this = Unsafe.As<object>(this);
 
-            IDictionary<K, V> _this_dictionary = _this as IDictionary<K, V>;
-            if (_this_dictionary != null)
+            if (_this is IDictionary<K, V> _this_dictionary)
             {
                 _this_dictionary.Add(item.Key, item.Value);
             }
@@ -88,12 +80,11 @@ namespace System.Runtime.InteropServices.WindowsRuntime
         }
 
         // void Clear()
-        internal void Clear<K, V>()
+        internal void Clear<K, V>() where K : object
         {
             object _this = Unsafe.As<object>(this);
 
-            IMap<K, V> _this_map = _this as IMap<K, V>;
-            if (_this_map != null)
+            if (_this is IMap<K, V> _this_map)
             {
                 _this_map.Clear();
             }
@@ -105,12 +96,11 @@ namespace System.Runtime.InteropServices.WindowsRuntime
         }
 
         // bool Contains(T item)
-        internal bool Contains<K, V>(KeyValuePair<K, V> item)
+        internal bool Contains<K, V>(KeyValuePair<K, V> item) where K : object
         {
             object _this = Unsafe.As<object>(this);
 
-            IDictionary<K, V> _this_dictionary = _this as IDictionary<K, V>;
-            if (_this_dictionary != null)
+            if (_this is IDictionary<K, V> _this_dictionary)
             {
                 V value;
                 bool hasKey = _this_dictionary.TryGetValue(item.Key, out value);
@@ -130,7 +120,7 @@ namespace System.Runtime.InteropServices.WindowsRuntime
         }
 
         // void CopyTo(T[] array, int arrayIndex)
-        internal void CopyTo<K, V>(KeyValuePair<K, V>[] array, int arrayIndex)
+        internal void CopyTo<K, V>(KeyValuePair<K, V>[] array, int arrayIndex) where K : object
         {
             if (array == null)
                 throw new ArgumentNullException(nameof(array));
@@ -153,12 +143,11 @@ namespace System.Runtime.InteropServices.WindowsRuntime
         }
 
         // bool Remove(T item)
-        internal bool Remove<K, V>(KeyValuePair<K, V> item)
+        internal bool Remove<K, V>(KeyValuePair<K, V> item) where K : object
         {
             object _this = Unsafe.As<object>(this);
 
-            IDictionary<K, V> _this_dictionary = _this as IDictionary<K, V>;
-            if (_this_dictionary != null)
+            if (_this is IDictionary<K, V> _this_dictionary)
             {
                 return _this_dictionary.Remove(item.Key);
             }

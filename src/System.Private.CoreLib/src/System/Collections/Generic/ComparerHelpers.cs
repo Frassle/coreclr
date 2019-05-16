@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
 using System.Diagnostics;
 using static System.RuntimeTypeHandle;
 
@@ -30,7 +31,7 @@ namespace System.Collections.Generic
         {
             Debug.Assert(type != null && type is RuntimeType);
 
-            object result = null;
+            object? result = null;
             var runtimeType = (RuntimeType)type;
 
             // If T implements IComparable<T> return a GenericComparer<T>
@@ -60,7 +61,7 @@ namespace System.Collections.Generic
         /// Creates the default <see cref="Comparer{T}"/> for a nullable type.
         /// </summary>
         /// <param name="nullableType">The nullable type to create the default comparer for.</param>
-        private static object TryCreateNullableComparer(RuntimeType nullableType)
+        private static object? TryCreateNullableComparer(RuntimeType nullableType)
         {
             Debug.Assert(nullableType != null);
             Debug.Assert(nullableType.IsGenericType && nullableType.GetGenericTypeDefinition() == typeof(Nullable<>));
@@ -79,7 +80,7 @@ namespace System.Collections.Generic
         /// Creates the default <see cref="Comparer{T}"/> for an enum type.
         /// </summary>
         /// <param name="enumType">The enum type to create the default comparer for.</param>
-        private static object TryCreateEnumComparer(RuntimeType enumType)
+        private static object? TryCreateEnumComparer(RuntimeType enumType)
         {
             Debug.Assert(enumType != null);
             Debug.Assert(enumType.IsEnum);
@@ -96,16 +97,12 @@ namespace System.Collections.Generic
                 case TypeCode.SByte:
                 case TypeCode.Int16:
                 case TypeCode.Int32:
-                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(Int32EnumComparer<int>), enumType);
                 case TypeCode.Byte:
                 case TypeCode.UInt16:
                 case TypeCode.UInt32:
-                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(UInt32EnumComparer<uint>), enumType);
-                // 64-bit enums: Use `UnsafeEnumCastLong`
                 case TypeCode.Int64:
-                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(Int64EnumComparer<long>), enumType);
                 case TypeCode.UInt64:
-                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(UInt64EnumComparer<ulong>), enumType);
+                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(EnumComparer<>), enumType);
             }
             
             return null;
@@ -122,7 +119,7 @@ namespace System.Collections.Generic
         {
             Debug.Assert(type != null && type is RuntimeType);
 
-            object result = null;
+            object? result = null;
             var runtimeType = (RuntimeType)type;
 
             // Specialize for byte so Array.IndexOf is faster.
@@ -157,7 +154,7 @@ namespace System.Collections.Generic
         /// Creates the default <see cref="EqualityComparer{T}"/> for a nullable type.
         /// </summary>
         /// <param name="nullableType">The nullable type to create the default equality comparer for.</param>
-        private static object TryCreateNullableEqualityComparer(RuntimeType nullableType)
+        private static object? TryCreateNullableEqualityComparer(RuntimeType nullableType)
         {
             Debug.Assert(nullableType != null);
             Debug.Assert(nullableType.IsGenericType && nullableType.GetGenericTypeDefinition() == typeof(Nullable<>));
@@ -176,7 +173,7 @@ namespace System.Collections.Generic
         /// Creates the default <see cref="EqualityComparer{T}"/> for an enum type.
         /// </summary>
         /// <param name="enumType">The enum type to create the default equality comparer for.</param>
-        private static object TryCreateEnumEqualityComparer(RuntimeType enumType)
+        private static object? TryCreateEnumEqualityComparer(RuntimeType enumType)
         {
             Debug.Assert(enumType != null);
             Debug.Assert(enumType.IsEnum);
@@ -194,11 +191,10 @@ namespace System.Collections.Generic
                 case TypeCode.SByte:
                 case TypeCode.Byte:
                 case TypeCode.Int16:
-                case TypeCode.UInt16:
-                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(EnumEqualityComparer<int>), enumType);
                 case TypeCode.Int64:
                 case TypeCode.UInt64:
-                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(LongEnumEqualityComparer<long>), enumType);
+                case TypeCode.UInt16:
+                    return RuntimeTypeHandle.CreateInstanceForAnotherGenericParameter((RuntimeType)typeof(EnumEqualityComparer<>), enumType);
             }
             
             return null;

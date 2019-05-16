@@ -553,7 +553,6 @@ CHECK PEFile::CheckLoaded(BOOL bAllowNativeSkip/*=TRUE*/)
         INSTANCE_CHECK;
         NOTHROW;
         GC_NOTRIGGER;
-        SO_TOLERANT;
         MODE_ANY;
     }
     CONTRACT_CHECK_END;
@@ -791,7 +790,6 @@ void PEFile::ConvertMetadataToRWForEnC()
     {
         THROWS;
         GC_NOTRIGGER;
-        SO_INTOLERANT;
         MODE_ANY;
     }
     CONTRACTL_END;
@@ -951,15 +949,12 @@ void PEFile::SetNativeImage(PEImage *image)
                     DBG_ADDR(image->GetLoadedLayout()->GetPreferredBase()));
     }
 
-#ifdef FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS
-    // In Apollo, first ask if we're supposed to be ignoring the prejitted code &
+    // First ask if we're supposed to be ignoring the prejitted code &
     // structures in NGENd images. If so, bail now and do not set m_nativeImage. We've
-    // already set m_identity & m_openedILimage (possibly even pointing to the
-    // NGEN/Triton image), and will use those PEImages to find and JIT IL (even if they
-    // point to an NGENd/Tritonized image).
+    // already set m_identity & m_openedILimage), and will use those PEImages to find 
+    // and JIT IL.
     if (ShouldTreatNIAsMSIL())
         RETURN;
-#endif
 
     m_nativeImage = image;
     m_nativeImage->AddRef();
@@ -1102,7 +1097,6 @@ LPCWSTR CorCompileGetRuntimeDllName(CorCompileRuntimeDlls id)
         THROWS;
         GC_TRIGGERS;
         MODE_ANY;
-        SO_INTOLERANT;
         INJECT_FAULT(COMPlusThrowOM(););
     }
     CONTRACTL_END;
@@ -1117,9 +1111,6 @@ LPCWSTR CorCompileGetRuntimeDllName(CorCompileRuntimeDlls id)
 // Will always return a valid HMODULE for CLR_INFO, but will return NULL for NGEN_COMPILER_INFO
 // if the DLL has not yet been loaded (it does not try to cause a load).
 
-// Gets set by IJitManager::LoadJit (yes, this breaks the abstraction boundary).
-HMODULE s_ngenCompilerDll = NULL;
-
 extern HMODULE CorCompileGetRuntimeDll(CorCompileRuntimeDlls id)
 {
     CONTRACTL
@@ -1127,7 +1118,6 @@ extern HMODULE CorCompileGetRuntimeDll(CorCompileRuntimeDlls id)
         THROWS;
         GC_NOTRIGGER;
         MODE_ANY;
-        SO_INTOLERANT;
         INJECT_FAULT(COMPlusThrowOM(););
     }
     CONTRACTL_END;
@@ -1463,7 +1453,6 @@ void PEFile::GetNGENDebugFlags(BOOL *fAllowOpt)
 
 
 #ifndef DACCESS_COMPILE
-#ifdef FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS
 
 //---------------------------------------------------------------------------------------
 //
@@ -1506,8 +1495,6 @@ BOOL PEFile::ShouldTreatNIAsMSIL()
 
     return FALSE;
 }
-
-#endif // FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS
 
 #endif  //!DACCESS_COMPILE
 #endif  // FEATURE_PREJIT
@@ -1689,7 +1676,6 @@ void PEFile::FlushExternalLog()
 BOOL PEFile::GetResource(LPCSTR szName, DWORD *cbResource,
                                  PBYTE *pbInMemoryResource, DomainAssembly** pAssemblyRef,
                                  LPCSTR *szFileName, DWORD *dwLocation,
-                                 StackCrawlMark *pStackMark, BOOL fSkipSecurityCheck,
                                  BOOL fSkipRaiseResolveEvent, DomainAssembly* pDomainAssembly, AppDomain* pAppDomain)
 {
     CONTRACTL
@@ -1730,7 +1716,7 @@ BOOL PEFile::GetResource(LPCSTR szName, DWORD *cbResource,
         if (pAssembly == NULL)
             return FALSE;
 
-        pDomainAssembly = pAssembly->GetDomainAssembly(pAppDomain);
+        pDomainAssembly = pAssembly->GetDomainAssembly();
         pPEFile = pDomainAssembly->GetFile();
 
         if (FAILED(pAssembly->GetManifestImport()->FindManifestResourceByName(
@@ -1779,8 +1765,6 @@ BOOL PEFile::GetResource(LPCSTR szName, DWORD *cbResource,
                                                 pAssemblyRef,
                                                 szFileName,
                                                 dwLocation,
-                                                pStackMark,
-                                                fSkipSecurityCheck,
                                                 fSkipRaiseResolveEvent);
         }
 
@@ -1788,31 +1772,6 @@ BOOL PEFile::GetResource(LPCSTR szName, DWORD *cbResource,
         if (mdLinkRef == mdFileNil)
         {
             // The resource is embedded in the manifest file
-
-#ifndef CROSSGEN_COMPILE
-            if (!IsMrPublic(dwResourceFlags) && pStackMark && !fSkipSecurityCheck)
-            {
-                Assembly *pCallersAssembly = SystemDomain::GetCallersAssembly(pStackMark);
-
-                if (pCallersAssembly &&  // full trust for interop
-                    (!pCallersAssembly->GetManifestFile()->Equals(this)))
-                {
-                    RefSecContext sCtx(AccessCheckOptions::kMemberAccess);
-
-                    AccessCheckOptions accessCheckOptions(
-                        AccessCheckOptions::kMemberAccess,  /*accessCheckType*/
-                        NULL,                               /*pAccessContext*/
-                        FALSE,                              /*throwIfTargetIsInaccessible*/
-                        (MethodTable *) NULL                /*pTargetMT*/
-                        );
-
-                    // SL: return TRUE only if the caller is critical
-                    // Desktop: return TRUE only if demanding MemberAccess succeeds
-                    if (!accessCheckOptions.DemandMemberAccessOrFail(&sCtx, NULL, TRUE /*visibilityCheck*/))
-                        return FALSE;
-                }
-            }
-#endif // CROSSGEN_COMPILE
 
             if (dwLocation) {
                 *dwLocation = *dwLocation | 5; // ResourceLocation.embedded |
@@ -1927,10 +1886,7 @@ PEAssembly::PEAssembly(
   : PEFile(pBindResultInfo ? (pBindResultInfo->GetPEImage() ? pBindResultInfo->GetPEImage() : 
                                                               (pBindResultInfo->HasNativeImage() ? pBindResultInfo->GetNativeImage() : NULL)
                               ): pPEImageIL? pPEImageIL:(pPEImageNI? pPEImageNI:NULL), FALSE),
-    m_creator(clr::SafeAddRef(creator)),
-    m_bIsFromGAC(FALSE),
-    m_bIsOnTpaList(FALSE)
-    ,m_fProfileAssembly(0)
+    m_creator(clr::SafeAddRef(creator))
 {
     CONTRACTL
     {
@@ -1946,6 +1902,7 @@ PEAssembly::PEAssembly(
     if (system)
         m_flags |= PEFILE_SYSTEM;
 
+#ifdef FEATURE_PREJIT
     // We check the precondition above that either pBindResultInfo is null or both pPEImageIL and pPEImageNI are,
     // so we'll only get a max of one native image passed in.
     if (pPEImageNI != NULL)
@@ -1953,7 +1910,6 @@ PEAssembly::PEAssembly(
         SetNativeImage(pPEImageNI);
     }
 
-#ifdef FEATURE_PREJIT
     if (pBindResultInfo && pBindResultInfo->HasNativeImage())
         SetNativeImage(pBindResultInfo->GetNativeImage());
 #endif
@@ -1961,14 +1917,6 @@ PEAssembly::PEAssembly(
     // If we have no native image, we require a mapping for the file.
     if (!HasNativeImage() || !IsILOnly())
         EnsureImageOpened();
-
-    // Initialize the status of the assembly being in the GAC, or being part of the TPA list, before
-    // we start to do work (like strong name verification) that relies on those states to be valid.
-    if(pBindResultInfo != nullptr)
-    {
-        m_bIsFromGAC = pBindResultInfo->IsFromGAC();
-        m_bIsOnTpaList = pBindResultInfo->IsOnTpaList();
-    }
 
     // Open metadata eagerly to minimize failure windows
     if (pEmit == NULL)
@@ -2130,7 +2078,7 @@ PEAssembly *PEAssembly::DoOpenSystem(IUnknown * pAppCtx)
     IfFailThrow(CCoreCLRBinderHelper::BindToSystem(&pPrivAsm, !IsCompilationProcess() || g_fAllowNativeImages));
     if(pPrivAsm != NULL)
     {
-        bindResult.Init(pPrivAsm, TRUE, TRUE);
+        bindResult.Init(pPrivAsm);
     }
 
     RETURN new PEAssembly(&bindResult, NULL, NULL, TRUE, FALSE);
@@ -2217,7 +2165,7 @@ PEAssembly *PEAssembly::DoOpenMemory(
     CoreBindResult bindResult;
     ReleaseHolder<ICLRPrivAssembly> assembly;
     IfFailThrow(CCoreCLRBinderHelper::GetAssemblyFromImage(image, NULL, &assembly));
-    bindResult.Init(assembly,FALSE,FALSE);
+    bindResult.Init(assembly);
 
     RETURN new PEAssembly(&bindResult, NULL, pParentAssembly, FALSE);
 }
@@ -2300,52 +2248,11 @@ void PEAssembly::SetNativeImage(PEImage * image)
 
 #endif  // FEATURE_PREJIT
 
-
-BOOL PEAssembly::IsSourceGAC()
-{
-    WRAPPER_NO_CONTRACT;
-    return m_bIsFromGAC;
-};
-
-
 #endif // #ifndef DACCESS_COMPILE
 
 
 
 #ifndef DACCESS_COMPILE
-
-BOOL PEAssembly::IsProfileAssembly()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_TRIGGERS;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    //
-    // For now, cache the result of the check below. This cache should be removed once/if the check below 
-    // becomes cheap (e.g. does not access metadata anymore).
-    //
-    if (VolatileLoadWithoutBarrier(&m_fProfileAssembly) != 0)
-    {
-        return m_fProfileAssembly > 0;
-    }
-
-    //
-    // In order to be a platform (profile) assembly, you must be from a trusted location (TPA list)
-    // If we are binding by TPA list and this assembly is on it, IsSourceGAC is true => Assembly is Profile
-    // If the assembly is a WinMD, it is automatically trusted since all WinMD scenarios are full trust scenarios.
-    //
-    // The check for Silverlight strongname platform assemblies is legacy backdoor. It was introduced by accidental abstraction leak
-    // from the old Silverlight binder, people took advantage of it and we cannot easily get rid of it now. See DevDiv #710462.
-    //
-    BOOL bProfileAssembly = IsSourceGAC() && (IsSystem() || m_bIsOnTpaList);
-
-    m_fProfileAssembly = bProfileAssembly ? 1 : -1;
-    return bProfileAssembly;
-}
 
 // ------------------------------------------------------------
 // Descriptive strings

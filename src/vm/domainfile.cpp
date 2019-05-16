@@ -93,7 +93,6 @@ LoaderAllocator * DomainFile::GetLoaderAllocator()
     {
         NOTHROW;
         GC_NOTRIGGER;
-        SO_TOLERANT;
         MODE_ANY;
     }
     CONTRACTL_END;
@@ -274,8 +273,7 @@ void DomainFile::SetError(Exception *ex)
         SetProfilerNotified();
 
 #ifdef PROFILING_SUPPORTED
-        if (GetCurrentModule() != NULL
-            && !GetCurrentModule()->GetAssembly()->IsDomainNeutral())
+        if (GetCurrentModule() != NULL)
         {
             // Only send errors for non-shared assemblies; other assemblies might be successfully completed
             // in another app domain later.
@@ -383,7 +381,6 @@ DomainAssembly *DomainFile::GetDomainAssembly()
         SUPPORTS_DAC;
         NOTHROW;
         GC_NOTRIGGER;
-        SO_TOLERANT;
     }
     CONTRACTL_END;
 
@@ -515,7 +512,6 @@ BOOL DomainFile::DoIncrementalLoad(FileLoadLevel level)
     Thread *pThread;
     pThread = GetThread();
     _ASSERTE(pThread);
-    INTERIOR_STACK_PROBE_FOR(pThread, 8);
 
     switch (level)
     {
@@ -559,12 +555,12 @@ BOOL DomainFile::DoIncrementalLoad(FileLoadLevel level)
         EagerFixups();
         break;
 
-    case FILE_LOAD_VTABLE_FIXUPS:
-        VtableFixups();
-        break;
-
     case FILE_LOAD_DELIVER_EVENTS:
         DeliverSyncEvents();
+        break;
+
+    case FILE_LOAD_VTABLE_FIXUPS:
+        VtableFixups();
         break;
 
     case FILE_LOADED:
@@ -582,8 +578,6 @@ BOOL DomainFile::DoIncrementalLoad(FileLoadLevel level)
     default:
         UNREACHABLE();
     }
-
-    END_INTERIOR_STACK_PROBE;
 
 #ifdef FEATURE_MULTICOREJIT
     {
@@ -762,7 +756,7 @@ BOOL DomainFile::IsZapRequired()
     if (!m_pFile->HasMetadata() || !g_pConfig->RequireZap(GetSimpleName()))
         return FALSE;
 
-#if defined(_DEBUG) && defined(FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS)
+#if defined(_DEBUG)
     // If we're intentionally treating NIs as if they were MSIL assemblies, and the test
     // is flexible enough to accept that (e.g., complus_zaprequired=2), then zaps are not
     // required (i.e., it's ok for m_pFile->m_nativeImage to be NULL), but only if we
@@ -782,7 +776,7 @@ BOOL DomainFile::IsZapRequired()
             return FALSE;
         }
     }
-#endif // defined(_DEBUG) && defined(FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS)
+#endif // defined(_DEBUG)
 
     // Does this look like a resource-only assembly?  We assume an assembly is resource-only
     // if it contains no TypeDef (other than the <Module> TypeDef) and no MethodDef.
@@ -857,8 +851,7 @@ void DomainFile::CheckZapRequired()
     GetFile()->FlushExternalLog();
 
     StackSString ss;
-    ss.Printf("ZapRequire: Could not get native image for %s.\n"
-              "Use FusLogVw.exe to check the reason.",
+    ss.Printf("ZapRequire: Could not get native image for %s.\n",
               GetSimpleName());
 
 #if defined(_DEBUG)
@@ -1314,7 +1307,7 @@ DomainAssembly::~DomainAssembly()
             delete i.GetDomainFile();
     }
 
-    if (m_pAssembly != NULL && !m_pAssembly->IsDomainNeutral())
+    if (m_pAssembly != NULL)
     {
         delete m_pAssembly;
     }
@@ -1494,27 +1487,6 @@ void DomainAssembly::FindNativeImage()
     }
     CONTRACTL_END;
 
-    // For non-Apollo builds (i.e., when FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS is
-    // NOT defined), this is how we avoid use of NGEN when diagnostics requests it: By
-    // clearing it out and forcing a load of the MSIL assembly. For Apollo builds
-    // (FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS), though, this doesn't work, as we
-    // don't have MSIL assemblies handy (particularly for Fx Assemblies), so we need to
-    // keep the NGENd image loaded, but to treat it as if it were an MSIL assembly. See
-    // code:PEFile::SetNativeImage.
-#ifndef FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS
-    if (!NGENImagesAllowed())
-    {
-        GetFile()->SetCannotUseNativeImage();
-
-        if (GetFile()->HasNativeImage())
-            GetFile()->ClearNativeImage();
-
-        return;
-    }
-#endif // FEATURE_TREAT_NI_AS_MSIL_DURING_DIAGNOSTICS
-
-
-
     ClearNativeImageStress();
 
     // We already have an image - we just need to do a few more checks
@@ -1605,7 +1577,6 @@ void DomainAssembly::FindNativeImage()
 }
 #endif // FEATURE_PREJIT
 
-// This is where the decision whether an assembly is DomainNeutral (shared) nor not is made.
 void DomainAssembly::Allocate()
 {
     CONTRACTL
@@ -1681,7 +1652,6 @@ void DomainAssembly::DeliverAsyncEvents()
         NOTHROW;
         GC_TRIGGERS;
         MODE_ANY;
-        SO_INTOLERANT;
     }
     CONTRACTL_END;
 
@@ -1717,16 +1687,6 @@ void DomainAssembly::DeliverSyncEvents()
     {
         SetShouldNotifyDebugger();
 
-        if (m_pDomain->IsDebuggerAttached())
-        {
-            // If this is the first assembly in the AppDomain, it may be possible to get a better name than the
-            // default.
-            CollectibleAssemblyHolder<DomainAssembly *> pDomainAssembly;
-            m_pDomain->m_Assemblies.Get(m_pDomain, 0, pDomainAssembly.This());
-            if ((pDomainAssembly == this) && !m_pDomain->IsUserCreatedDomain())
-                m_pDomain->ResetFriendlyName();
-        }
-
         // Still work to do even if no debugger is attached.
         NotifyDebuggerLoad(ATTACH_ASSEMBLY_LOAD, FALSE);
 
@@ -1747,7 +1707,6 @@ void DomainAssembly::DeliverSyncEvents()
 BOOL DomainAssembly::GetResource(LPCSTR szName, DWORD *cbResource,
                                  PBYTE *pbInMemoryResource, DomainAssembly** pAssemblyRef,
                                  LPCSTR *szFileName, DWORD *dwLocation,
-                                 StackCrawlMark *pStackMark, BOOL fSkipSecurityCheck,
                                  BOOL fSkipRaiseResolveEvent)
 {
     CONTRACTL
@@ -1765,8 +1724,6 @@ BOOL DomainAssembly::GetResource(LPCSTR szName, DWORD *cbResource,
                                    pAssemblyRef,
                                    szFileName,
                                    dwLocation,
-                                   pStackMark,
-                                   fSkipSecurityCheck,
                                    fSkipRaiseResolveEvent,
                                    this,
                                    this->m_pDomain );
@@ -2449,6 +2406,12 @@ void DomainAssembly::EnumStaticGCRefs(promote_func* fn, ScanContext* sc)
          GCHeapUtilities::IsServerHeap()   &&
          IsGCSpecialThread());
 
+    if (IsCollectible())
+    {
+        // Collectible assemblies have statics stored in managed arrays, so they don't need special handlings
+        return;
+    }
+
     DomainModuleIterator i = IterateModules(kModIterIncludeLoaded);
     while (i.Next())
     {
@@ -2458,8 +2421,8 @@ void DomainAssembly::EnumStaticGCRefs(promote_func* fn, ScanContext* sc)
         {
             // We guarantee that at this point the module has it's DomainLocalModule set up
             // , as we create it while we load the module
-            _ASSERTE(pDomainFile->GetLoadedModule()->GetDomainLocalModule(this->GetAppDomain()));
-            pDomainFile->GetLoadedModule()->EnumRegularStaticGCRefs(this->GetAppDomain(), fn, sc);
+            _ASSERTE(pDomainFile->GetLoadedModule()->GetDomainLocalModule());
+            pDomainFile->GetLoadedModule()->EnumRegularStaticGCRefs(fn, sc);
 
             // We current to do not iterate over the ThreadLocalModules that correspond
             // to this Module. The GC discovers thread statics through the handle table.

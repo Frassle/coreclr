@@ -596,9 +596,10 @@ private:
     void OutputTypesTableForReadyToRun(IMDInternalImport * pMDImport);
     void OutputInliningTableForReadyToRun();
     void OutputProfileDataForReadyToRun();
+    void OutputManifestMetadataForReadyToRun();
 
     void CopyDebugDirEntry();
-    void CopyWin32VersionResource();
+    void CopyWin32Resources();
 
     void OutputManifestMetadata();
     void OutputTables();
@@ -691,6 +692,7 @@ public:
     }
 
     static void __stdcall TryCompileMethodStub(LPVOID pContext, CORINFO_METHOD_HANDLE hStub, CORJIT_FLAGS jitFlags);
+    static DWORD EncodeModuleHelper(LPVOID compileContext, CORINFO_MODULE_HANDLE referencedModule);
 
     BOOL IsVTableGapMethod(mdMethodDef md);
 

@@ -1958,7 +1958,6 @@ typedef enum
     nltAnsi         = 2,    // ansi keyword specified
     nltUnicode      = 3,    // unicode keyword specified
     nltAuto         = 4,    // auto keyword specified
-    nltOle          = 5,    // ole keyword specified
     nltMaxValue     = 7,    // used so we can assert how many bits are required for this enum
 } CorNativeLinkType;
 
@@ -2029,17 +2028,9 @@ typedef enum
 
 #ifndef DEBUG_NOINLINE
 #if defined(_DEBUG)
-#define DEBUG_NOINLINE __declspec(noinline)
+#define DEBUG_NOINLINE NOINLINE
 #else
 #define DEBUG_NOINLINE
-#endif
-#endif
-
-#ifndef DBG_NOINLINE_X86__RET_INLINE
-#if defined(_DEBUG) && defined(_X86_)
-#define DBG_NOINLINE_X86__RET_INLINE __declspec(noinline)
-#else
-#define DBG_NOINLINE_X86__RET_INLINE FORCEINLINE
 #endif
 #endif
 
@@ -2206,7 +2197,11 @@ inline ULONG CorSigUncompressData(      // return number of bytes of that compre
 
 
 #if !defined(SELECTANY)
+#if defined(__GNUC__)
+    #define SELECTANY extern __attribute__((weak))
+#else
     #define SELECTANY extern __declspec(selectany)
+#endif
 #endif
 
 SELECTANY const mdToken g_tkCorEncodeToken[4] ={mdtTypeDef, mdtTypeRef, mdtTypeSpec, mdtBaseType};

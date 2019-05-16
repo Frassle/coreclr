@@ -768,7 +768,7 @@ ClrDataAccess::GetThreadData(CLRDATA_ADDRESS threadAddr, struct DacpThreadData *
     threadData->fiberData = NULL;
 
     threadData->pFrame = PTR_CDADDR(thread->m_pFrame);
-    threadData->context = PTR_CDADDR(thread->m_Context);
+    threadData->context = PTR_CDADDR(thread->m_pDomain);
     threadData->domain = PTR_CDADDR(thread->m_pDomain);
     threadData->lockCount = thread->m_dwLockCount;
 #ifndef FEATURE_PAL
@@ -1417,8 +1417,7 @@ ClrDataAccess::GetDomainFromContext(CLRDATA_ADDRESS contextAddr, CLRDATA_ADDRESS
 
     SOSDacEnter();
 
-    Context* context = PTR_Context(TO_TADDR(contextAddr));
-    *domain = HOST_CDADDR(context->GetDomain());
+    *domain = contextAddr; // Context is same as the AppDomain in CoreCLR
 
     SOSDacLeave();
     return hr;
@@ -1735,7 +1734,7 @@ ClrDataAccess::GetMethodTableData(CLRDATA_ADDRESS mt, struct DacpMethodTableData
             MTData->cl = pMT->GetCl();
             MTData->dwAttrClass = pMT->GetAttrClass();
             MTData->bContainsPointers = pMT->ContainsPointers();
-            MTData->bIsShared = (pMT->IsDomainNeutral() ? TRUE : FALSE); // flags & enum_flag_DomainNeutral
+            MTData->bIsShared = FALSE;
             MTData->bIsDynamic = pMT->IsDynamicStatics();
         }
     }
@@ -2317,11 +2316,10 @@ ClrDataAccess::GetAppDomainData(CLRDATA_ADDRESS addr, struct DacpAppDomainData *
         if (pBaseDomain->IsAppDomain())
         {
             AppDomain * pAppDomain = pBaseDomain->AsAppDomain();
-            appdomainData->DomainLocalBlock = appdomainData->AppDomainPtr +
-                offsetof(AppDomain, m_sDomainLocalBlock);
-            appdomainData->pDomainLocalModules = PTR_CDADDR(pAppDomain->m_sDomainLocalBlock.m_pModuleSlots);
+            appdomainData->DomainLocalBlock = 0;
+            appdomainData->pDomainLocalModules = 0;
 
-            appdomainData->dwId = pAppDomain->GetId().m_dwId;
+            appdomainData->dwId = DefaultADID;
             appdomainData->appDomainStage = (DacpAppDomainDataStage)pAppDomain->m_Stage.Load();
             if (pAppDomain->IsActive())
             {
@@ -2614,12 +2612,9 @@ ClrDataAccess::GetAssemblyData(CLRDATA_ADDRESS cdBaseDomainPtr, CLRDATA_ADDRESS 
     assemblyData->ParentDomain = HOST_CDADDR(pAssembly->GetDomain());
     assemblyData->isDynamic = pAssembly->IsDynamic();
     assemblyData->ModuleCount = 0;
-    assemblyData->isDomainNeutral = pAssembly->IsDomainNeutral();
+    assemblyData->isDomainNeutral = FALSE;
 
-    if (pAssembly->GetManifestFile())
-    {
-        
-    }
+    pAssembly->GetManifestFile();
 
     ModuleIterator mi = pAssembly->IterateModules();
     while (mi.Next())
@@ -2791,11 +2786,14 @@ ClrDataAccess::GetGCHeapStaticData(struct DacpGcHeapDetails *detailsData)
         detailsData->generation_table[i].allocContextLimit = (CLRDATA_ADDRESS)alloc_context->alloc_limit;
     }
 
-    DPTR(dac_finalize_queue) fq = Dereference(g_gcDacGlobals->finalize_queue);
-    DPTR(uint8_t*) fillPointersTable = dac_cast<TADDR>(fq) + offsetof(dac_finalize_queue, m_FillPointers);
-    for (unsigned int i = 0; i<(*g_gcDacGlobals->max_gen + 2 + dac_finalize_queue::ExtraSegCount); i++)
+    if (g_gcDacGlobals->finalize_queue.IsValid())
     {
-        detailsData->finalization_fill_pointers[i] = (CLRDATA_ADDRESS)*TableIndex(fillPointersTable, i, sizeof(uint8_t*));
+        DPTR(dac_finalize_queue) fq = Dereference(g_gcDacGlobals->finalize_queue);
+        DPTR(uint8_t*) fillPointersTable = dac_cast<TADDR>(fq) + offsetof(dac_finalize_queue, m_FillPointers);
+        for (unsigned int i = 0; i<(*g_gcDacGlobals->max_gen + 2 + dac_finalize_queue::ExtraSegCount); i++)
+        {
+            detailsData->finalization_fill_pointers[i] = (CLRDATA_ADDRESS)*TableIndex(fillPointersTable, i, sizeof(uint8_t*));
+        }
     }
 
     SOSDacLeave();
@@ -2855,7 +2853,7 @@ ClrDataAccess::GetGCHeapList(unsigned int count, CLRDATA_ADDRESS heaps[], unsign
 #if !defined(FEATURE_SVR_GC)
         _ASSERTE(0);
 #else // !defined(FEATURE_SVR_GC)
-        int heapCount = GCHeapCount();
+        unsigned int heapCount = GCHeapCount();
         if (pNeeded)
             *pNeeded = heapCount;
 
@@ -3198,48 +3196,7 @@ ClrDataAccess::GetDomainLocalModuleDataFromModule(CLRDATA_ADDRESS addr, struct D
     SOSDacEnter();
 
     Module* pModule = PTR_Module(TO_TADDR(addr));
-    if( pModule->GetAssembly()->IsDomainNeutral() )
-    {
-        // The module is loaded domain-neutral, then we need to know the specific AppDomain in order to
-        // choose a DomainLocalModule instance.  Rather than try and guess an AppDomain (eg. based on
-        // whatever the current debugger thread is in), we'll fail and force the debugger to explicitly use
-        // a specific AppDomain.
-        hr = E_INVALIDARG;
-    }
-    else
-    {    
-        DomainLocalModule* pLocalModule = PTR_DomainLocalModule(pModule->GetDomainLocalModule(NULL));
-        if (!pLocalModule)
-        {
-            hr = E_INVALIDARG;
-        }
-        else
-        {
-            pLocalModuleData->pGCStaticDataStart    = TO_CDADDR(PTR_TO_TADDR(pLocalModule->GetPrecomputedGCStaticsBasePointer()));
-            pLocalModuleData->pNonGCStaticDataStart = TO_CDADDR(pLocalModule->GetPrecomputedNonGCStaticsBasePointer());
-            pLocalModuleData->pDynamicClassTable    = PTR_CDADDR(pLocalModule->m_pDynamicClassTable.Load());
-            pLocalModuleData->pClassData            = (TADDR) (PTR_HOST_MEMBER_TADDR(DomainLocalModule, pLocalModule, m_pDataBlob));
-        }
-    }
-
-    SOSDacLeave();
-    return hr;
-}
-
-HRESULT
-ClrDataAccess::GetDomainLocalModuleDataFromAppDomain(CLRDATA_ADDRESS appDomainAddr, int moduleID, struct DacpDomainLocalModuleData *pLocalModuleData)
-{
-    if (appDomainAddr == 0 || moduleID < 0 || pLocalModuleData == NULL)
-        return E_INVALIDARG;
-
-    SOSDacEnter();
-
-    pLocalModuleData->appDomainAddr = appDomainAddr;
-    pLocalModuleData->ModuleID = moduleID;
-
-    AppDomain *pAppDomain = PTR_AppDomain(TO_TADDR(appDomainAddr));
-    ModuleIndex index = Module::IDToIndex(moduleID);
-    DomainLocalModule* pLocalModule = pAppDomain->GetDomainLocalBlock()->GetModuleSlot(index);
+    DomainLocalModule* pLocalModule = PTR_DomainLocalModule(pModule->GetDomainLocalModule());
     if (!pLocalModule)
     {
         hr = E_INVALIDARG;
@@ -3256,8 +3213,12 @@ ClrDataAccess::GetDomainLocalModuleDataFromAppDomain(CLRDATA_ADDRESS appDomainAd
     return hr;
 }
 
-
-
+HRESULT
+ClrDataAccess::GetDomainLocalModuleDataFromAppDomain(CLRDATA_ADDRESS appDomainAddr, int moduleID, struct DacpDomainLocalModuleData *pLocalModuleData)
+{
+    // CoreCLR does not support multi-appdomain shared assembly loading. Thus, a non-pointer sized moduleID cannot exist.
+    return E_INVALIDARG;
+}
 
 HRESULT
 ClrDataAccess::GetThreadLocalModuleData(CLRDATA_ADDRESS thread, unsigned int index, struct DacpThreadLocalModuleData *pLocalModuleData)
@@ -3592,12 +3553,7 @@ ClrDataAccess::GetSyncBlockData(unsigned int SBNumber, struct DacpSyncBlockData 
             pSyncBlockData->MonitorHeld = pBlock->m_Monitor.GetMonitorHeldStateVolatile();
             pSyncBlockData->Recursion = pBlock->m_Monitor.GetRecursionLevel();
             pSyncBlockData->HoldingThread = HOST_CDADDR(pBlock->m_Monitor.GetHoldingThread());
-
-            if (pBlock->GetAppDomainIndex().m_dwIndex)
-            {
-                pSyncBlockData->appDomainPtr = PTR_HOST_TO_TADDR(
-                        SystemDomain::TestGetAppDomainAtIndex(pBlock->GetAppDomainIndex()));
-            }
+            pSyncBlockData->appDomainPtr = PTR_HOST_TO_TADDR(AppDomain::GetCurrentDomain());
 
             // TODO: Microsoft, implement the wait list
             pSyncBlockData->AdditionalThreadCount = 0;
@@ -3775,6 +3731,12 @@ ClrDataAccess::EnumWksGlobalMemoryRegions(CLRDataEnumMemoryFlags flags)
 {
     SUPPORTS_DAC;
 
+#ifdef FEATURE_SVR_GC
+    // If server GC, skip enumeration
+    if (g_gcDacGlobals->g_heaps != nullptr)
+        return;
+#endif
+
     Dereference(g_gcDacGlobals->ephemeral_heap_segment).EnumMem();
     g_gcDacGlobals->alloc_allocated.EnumMem();
     g_gcDacGlobals->gc_structures_invalid_cnt.EnumMem();
@@ -3796,7 +3758,6 @@ ClrDataAccess::EnumWksGlobalMemoryRegions(CLRDataEnumMemoryFlags flags)
                 while (seg)
                 {
                         DacEnumMemoryRegion(dac_cast<TADDR>(seg), sizeof(dac_heap_segment));
-
                         seg = seg->next;
                 }
             }

@@ -2,10 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using RuntimeTypeCache = System.RuntimeType.RuntimeTypeCache;
 
 namespace System.Reflection
@@ -17,48 +17,51 @@ namespace System.Reflection
         private IntPtr m_fieldHandle;
         private FieldAttributes m_fieldAttributes;
         // lazy caching
-        private string m_name;
-        private RuntimeType m_fieldType;
+        private string? m_name;
+        private RuntimeType? m_fieldType;
         private INVOCATION_FLAGS m_invocationFlags;
 
         internal INVOCATION_FLAGS InvocationFlags
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if ((m_invocationFlags & INVOCATION_FLAGS.INVOCATION_FLAGS_INITIALIZED) == 0)
-                {
-                    Type declaringType = DeclaringType;
-
-                    INVOCATION_FLAGS invocationFlags = 0;
-
-                    // first take care of all the NO_INVOKE cases
-                    if (declaringType != null && declaringType.ContainsGenericParameters)
-                    {
-                        invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_NO_INVOKE;
-                    }
-
-                    // If the invocationFlags are still 0, then
-                    // this should be an usable field, determine the other flags
-                    if (invocationFlags == 0)
-                    {
-                        if ((m_fieldAttributes & FieldAttributes.InitOnly) != (FieldAttributes)0)
-                            invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_SPECIAL_FIELD;
-
-                        if ((m_fieldAttributes & FieldAttributes.HasFieldRVA) != (FieldAttributes)0)
-                            invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_SPECIAL_FIELD;
-
-                        // find out if the field type is one of the following: Primitive, Enum or Pointer
-                        Type fieldType = FieldType;
-                        if (fieldType.IsPointer || fieldType.IsEnum || fieldType.IsPrimitive)
-                            invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_FIELD_SPECIAL_CAST;
-                    }
-
-                    // must be last to avoid threading problems
-                    m_invocationFlags = invocationFlags | INVOCATION_FLAGS.INVOCATION_FLAGS_INITIALIZED;
-                }
-
-                return m_invocationFlags;
+                return (m_invocationFlags & INVOCATION_FLAGS.INVOCATION_FLAGS_INITIALIZED) != 0 ?
+                    m_invocationFlags : InitializeInvocationFlags();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private INVOCATION_FLAGS InitializeInvocationFlags()
+        {
+            Type? declaringType = DeclaringType;
+
+            INVOCATION_FLAGS invocationFlags = 0;
+
+            // first take care of all the NO_INVOKE cases
+            if (declaringType != null && declaringType.ContainsGenericParameters)
+            {
+                invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_NO_INVOKE;
+            }
+
+            // If the invocationFlags are still 0, then
+            // this should be an usable field, determine the other flags
+            if (invocationFlags == 0)
+            {
+                if ((m_fieldAttributes & FieldAttributes.InitOnly) != (FieldAttributes)0)
+                    invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_SPECIAL_FIELD;
+
+                if ((m_fieldAttributes & FieldAttributes.HasFieldRVA) != (FieldAttributes)0)
+                    invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_SPECIAL_FIELD;
+
+                // find out if the field type is one of the following: Primitive, Enum or Pointer
+                Type fieldType = FieldType;
+                if (fieldType.IsPointer || fieldType.IsEnum || fieldType.IsPrimitive)
+                    invocationFlags |= INVOCATION_FLAGS.INVOCATION_FLAGS_FIELD_SPECIAL_CAST;
+            }
+
+            // must be last to avoid threading problems
+            return (m_invocationFlags = invocationFlags | INVOCATION_FLAGS.INVOCATION_FLAGS_INITIALIZED);
         }
         #endregion
 
@@ -84,7 +87,8 @@ namespace System.Reflection
         #endregion
 
         #region Internal Members
-        internal void CheckConsistency(object target)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        internal void CheckConsistency(object? target)
         {
             // only test instance fields
             if ((m_fieldAttributes & FieldAttributes.Static) != FieldAttributes.Static)
@@ -98,72 +102,21 @@ namespace System.Reflection
                     else
                     {
                         throw new ArgumentException(
-                            string.Format(CultureInfo.CurrentUICulture, SR.Arg_FieldDeclTarget,
+                            SR.Format(SR.Arg_FieldDeclTarget,
                                 Name, m_declaringType, target.GetType()));
                     }
                 }
             }
         }
 
-        internal override bool CacheEquals(object o)
+        internal override bool CacheEquals(object? o)
         {
-            RtFieldInfo m = o as RtFieldInfo;
+            RtFieldInfo? m = o as RtFieldInfo;
 
-            if ((object)m == null)
+            if (m is null)
                 return false;
 
             return m.m_fieldHandle == m_fieldHandle;
-        }
-
-        // UnsafeSetValue doesn't perform any consistency or visibility check.
-        // It is the caller's responsibility to ensure the operation is safe.
-        // When the caller needs to perform consistency checks they should 
-        // call CheckConsistency() before calling this method.
-        [DebuggerStepThroughAttribute]
-        [Diagnostics.DebuggerHidden]
-        internal void UnsafeSetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
-        {
-            RuntimeType declaringType = DeclaringType as RuntimeType;
-            RuntimeType fieldType = (RuntimeType)FieldType;
-            value = fieldType.CheckValue(value, binder, culture, invokeAttr);
-
-            bool domainInitialized = false;
-            if (declaringType == null)
-            {
-                RuntimeFieldHandle.SetValue(this, obj, value, fieldType, m_fieldAttributes, null, ref domainInitialized);
-            }
-            else
-            {
-                domainInitialized = declaringType.DomainInitialized;
-                RuntimeFieldHandle.SetValue(this, obj, value, fieldType, m_fieldAttributes, declaringType, ref domainInitialized);
-                declaringType.DomainInitialized = domainInitialized;
-            }
-        }
-
-        // UnsafeGetValue doesn't perform any consistency or visibility check.
-        // It is the caller's responsibility to ensure the operation is safe.
-        // When the caller needs to perform consistency checks they should 
-        // call CheckConsistency() before calling this method.
-        [DebuggerStepThroughAttribute]
-        [Diagnostics.DebuggerHidden]
-        internal object UnsafeGetValue(object obj)
-        {
-            RuntimeType declaringType = DeclaringType as RuntimeType;
-
-            RuntimeType fieldType = (RuntimeType)FieldType;
-
-            bool domainInitialized = false;
-            if (declaringType == null)
-            {
-                return RuntimeFieldHandle.GetValue(this, obj, fieldType, null, ref domainInitialized);
-            }
-            else
-            {
-                domainInitialized = declaringType.DomainInitialized;
-                object retVal = RuntimeFieldHandle.GetValue(this, obj, fieldType, declaringType, ref domainInitialized);
-                declaringType.DomainInitialized = domainInitialized;
-                return retVal;
-            }
         }
 
         #endregion
@@ -184,7 +137,7 @@ namespace System.Reflection
         {
             get
             {
-                return string.Format("{0}.{1}", DeclaringType.FullName, Name);
+                return DeclaringType!.FullName + "." + Name;
             }
         }
 
@@ -203,14 +156,14 @@ namespace System.Reflection
         #region FieldInfo Overrides
         [DebuggerStepThroughAttribute]
         [Diagnostics.DebuggerHidden]
-        public override object GetValue(object obj)
+        public override object? GetValue(object? obj)
         {
             INVOCATION_FLAGS invocationFlags = InvocationFlags;
-            RuntimeType declaringType = DeclaringType as RuntimeType;
+            RuntimeType? declaringType = DeclaringType as RuntimeType;
 
             if ((invocationFlags & INVOCATION_FLAGS.INVOCATION_FLAGS_NO_INVOKE) != 0)
             {
-                if (declaringType != null && DeclaringType.ContainsGenericParameters)
+                if (declaringType != null && DeclaringType!.ContainsGenericParameters)
                     throw new InvalidOperationException(SR.Arg_UnboundGenField);
 
                 throw new FieldAccessException();
@@ -218,14 +171,27 @@ namespace System.Reflection
 
             CheckConsistency(obj);
 
-            return UnsafeGetValue(obj);
+            RuntimeType fieldType = (RuntimeType)FieldType;
+
+            bool domainInitialized = false;
+            if (declaringType == null)
+            {
+                return RuntimeFieldHandle.GetValue(this, obj, fieldType, null, ref domainInitialized);
+            }
+            else
+            {
+                domainInitialized = declaringType.DomainInitialized;
+                object? retVal = RuntimeFieldHandle.GetValue(this, obj, fieldType, declaringType, ref domainInitialized);
+                declaringType.DomainInitialized = domainInitialized;
+                return retVal;
+            }
         }
 
         public override object GetRawConstantValue() { throw new InvalidOperationException(); }
 
         [DebuggerStepThroughAttribute]
         [Diagnostics.DebuggerHidden]
-        public override object GetValueDirect(TypedReference obj)
+        public override object? GetValueDirect(TypedReference obj)
         {
             if (obj.IsNull)
                 throw new ArgumentException(SR.Arg_TypedReference_Null);
@@ -233,16 +199,16 @@ namespace System.Reflection
             unsafe
             {
                 // Passing TypedReference by reference is easier to make correct in native code
-                return RuntimeFieldHandle.GetValueDirect(this, (RuntimeType)FieldType, &obj, (RuntimeType)DeclaringType);
+                return RuntimeFieldHandle.GetValueDirect(this, (RuntimeType)FieldType, &obj, (RuntimeType?)DeclaringType);
             }
         }
 
         [DebuggerStepThroughAttribute]
         [Diagnostics.DebuggerHidden]
-        public override void SetValue(object obj, object value, BindingFlags invokeAttr, Binder binder, CultureInfo culture)
+        public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, CultureInfo? culture)
         {
             INVOCATION_FLAGS invocationFlags = InvocationFlags;
-            RuntimeType declaringType = DeclaringType as RuntimeType;
+            RuntimeType? declaringType = DeclaringType as RuntimeType;
 
             if ((invocationFlags & INVOCATION_FLAGS.INVOCATION_FLAGS_NO_INVOKE) != 0)
             {
@@ -280,7 +246,7 @@ namespace System.Reflection
             unsafe
             {
                 // Passing TypedReference by reference is easier to make correct in native code
-                RuntimeFieldHandle.SetValueDirect(this, (RuntimeType)FieldType, &obj, value, (RuntimeType)DeclaringType);
+                RuntimeFieldHandle.SetValueDirect(this, (RuntimeType)FieldType, &obj, value, (RuntimeType?)DeclaringType);
             }
         }
 
@@ -307,13 +273,17 @@ namespace System.Reflection
 
         public override Type FieldType
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get
             {
-                if (m_fieldType == null)
-                    m_fieldType = new Signature(this, m_declaringType).FieldType;
-
-                return m_fieldType;
+                return m_fieldType ?? InitializeFieldType();
             }
+        }
+
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        private RuntimeType InitializeFieldType()
+        {
+            return (m_fieldType = new Signature(this, m_declaringType).FieldType);
         }
 
         public override Type[] GetRequiredCustomModifiers()

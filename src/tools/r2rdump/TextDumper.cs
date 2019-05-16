@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection.Metadata;
+using System.Reflection.Metadata.Ecma335;
 using System.Reflection.PortableExecutable;
 using System.Text;
 using System.Xml;
@@ -71,7 +73,7 @@ namespace R2RDump
 
                 foreach (R2RSection section in NormalizedSections())
                 {
-                    DumpSection(section);
+                    DumpSection(section, parentNode: null);
                 }
             }
             SkipLine();
@@ -83,7 +85,7 @@ namespace R2RDump
         internal override void DumpSection(R2RSection section, XmlNode parentNode = null)
         {
             WriteSubDivider();
-            _writer.WriteLine(section.ToString());
+            section.WriteTo(_writer, _options);
 
             if (_options.Raw)
             {
@@ -92,7 +94,7 @@ namespace R2RDump
             }
             if (_options.SectionContents)
             {
-                DumpSectionContents(section);
+                DumpSectionContents(section, parentNode);
                 SkipLine();
             }
         }
@@ -149,7 +151,7 @@ namespace R2RDump
         internal override void DumpRuntimeFunction(RuntimeFunction rtf, XmlNode parentNode = null)
         {
             _writer.WriteLine(rtf.Method.SignatureString);
-            _writer.Write($"{rtf}");
+            rtf.WriteTo(_writer, _options);
 
             if (_options.Disasm)
             {
@@ -178,6 +180,8 @@ namespace R2RDump
         /// </summary>
         internal override void DumpDisasm(RuntimeFunction rtf, int imageOffset, XmlNode parentNode = null)
         {
+            int indent = (_options.Naked ? 11 : 32);
+            string indentString = new string(' ', indent);
             int rtfOffset = 0;
             int codeOffset = rtf.CodeOffset;
             while (rtfOffset < rtf.Size)
@@ -190,10 +194,10 @@ namespace R2RDump
                     List<Amd64.UnwindCode> codes = ((Amd64.UnwindInfo)rtf.UnwindInfo).UnwindCodes[codeOffset];
                     foreach (Amd64.UnwindCode code in codes)
                     {
-                        _writer.Write($"                                {code.UnwindOp} {code.OpInfoStr}");
+                        _writer.Write($"{indentString}{code.UnwindOp} {code.OpInfoStr}");
                         if (code.NextFrameOffset != -1)
                         {
-                            _writer.WriteLine($"                                {code.NextFrameOffset}");
+                            _writer.WriteLine($"{indentString}{code.NextFrameOffset}");
                         }
                         _writer.WriteLine();
                     }
@@ -203,7 +207,7 @@ namespace R2RDump
                 {
                     foreach (BaseGcTransition transition in rtf.Method.GcInfo.Transitions[codeOffset])
                     {
-                        _writer.WriteLine($"                                {transition.ToString()}");
+                        _writer.WriteLine($"{indentString}{transition}");
                     }
                 }
 
@@ -326,7 +330,7 @@ namespace R2RDump
                     {
                         foreach (R2RImportSection importSection in _r2r.ImportSections)
                         {
-                            _writer.Write(importSection.ToString());
+                            importSection.WriteTo(_writer);
                             if (_options.Raw && importSection.Entries.Count != 0)
                             {
                                 if (importSection.SectionRVA != 0)
@@ -339,18 +343,35 @@ namespace R2RDump
                                     _writer.WriteLine("Signature Bytes:");
                                     DumpBytes(importSection.SignatureRVA, (uint)importSection.Entries.Count * sizeof(int));
                                 }
-                                if (importSection.AuxiliaryDataRVA != 0 && importSection.AuxiliaryData != null)
+                                if (importSection.AuxiliaryDataRVA != 0 && importSection.AuxiliaryDataSize != 0)
                                 {
                                     _writer.WriteLine("AuxiliaryData Bytes:");
-                                    DumpBytes(importSection.AuxiliaryDataRVA, (uint)importSection.AuxiliaryData.Size);
+                                    DumpBytes(importSection.AuxiliaryDataRVA, (uint)importSection.AuxiliaryDataSize);
                                 }
                             }
                             foreach (R2RImportSection.ImportSectionEntry entry in importSection.Entries)
                             {
-                                _writer.WriteLine(entry.ToString());
+                                entry.WriteTo(_writer, _options);
+                                _writer.WriteLine();
                             }
                             _writer.WriteLine();
                         }
+                    }
+                    break;
+                case R2RSection.SectionType.READYTORUN_SECTION_MANIFEST_METADATA:
+                    int assemblyRefCount = _r2r.MetadataReader.GetTableRowCount(TableIndex.AssemblyRef);
+                    _writer.WriteLine($"MSIL AssemblyRef's ({assemblyRefCount} entries):");
+                    for (int assemblyRefIndex = 1; assemblyRefIndex <= assemblyRefCount; assemblyRefIndex++)
+                    {
+                        AssemblyReference assemblyRef = _r2r.MetadataReader.GetAssemblyReference(MetadataTokens.AssemblyReferenceHandle(assemblyRefIndex));
+                        string assemblyRefName = _r2r.MetadataReader.GetString(assemblyRef.Name);
+                        _writer.WriteLine($"[ID 0x{assemblyRefIndex:X2}]: {assemblyRefName}");
+                    }
+
+                    _writer.WriteLine($"Manifest metadata AssemblyRef's ({_r2r.ManifestReferenceAssemblies.Count} entries):");
+                    for (int manifestAsmIndex = 0; manifestAsmIndex < _r2r.ManifestReferenceAssemblies.Count; manifestAsmIndex++)
+                    {
+                        _writer.WriteLine($"[ID 0x{manifestAsmIndex + assemblyRefCount + 2:X2}]: {_r2r.ManifestReferenceAssemblies[manifestAsmIndex]}");
                     }
                     break;
             }
@@ -358,18 +379,16 @@ namespace R2RDump
 
         private void DumpNakedImportSections()
         {
-            List<string> importSignatures = new List<string>();
+            List<R2RImportSection.ImportSectionEntry> entries = new List<R2RImportSection.ImportSectionEntry>();
             foreach (R2RImportSection importSection in _r2r.ImportSections)
             {
-                foreach (R2RImportSection.ImportSectionEntry entry in importSection.Entries)
-                {
-                    importSignatures.Add(entry.Signature);
-                }
+                entries.AddRange(importSection.Entries);
             }
-            importSignatures.Sort();
-            foreach (string sig in importSignatures)
+            entries.Sort((e1, e2) => e1.Signature.CompareTo(e2.Signature));
+            foreach (R2RImportSection.ImportSectionEntry entry in entries)
             {
-                _writer.WriteLine(sig);
+                entry.WriteTo(_writer, _options);
+                _writer.WriteLine();
             }
         }
 

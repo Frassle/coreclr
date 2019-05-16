@@ -2,6 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
 /*============================================================
 **
 ** Purpose: Default IComparer implementation.
@@ -35,7 +36,7 @@ namespace System.Collections
             if (info == null)
                 throw new ArgumentNullException(nameof(info));
 
-            _compareInfo = (CompareInfo)info.GetValue("CompareInfo", typeof(CompareInfo));
+            _compareInfo = (CompareInfo)info.GetValue("CompareInfo", typeof(CompareInfo))!;
         }
 
         public void GetObjectData(SerializationInfo info, StreamingContext context)
@@ -52,23 +53,20 @@ namespace System.Collections
         // If a doesn't implement IComparable and b does, -(b.CompareTo(a)) is returned.
         // Otherwise an exception is thrown.
         // 
-        public int Compare(object a, object b)
+        public int Compare(object? a, object? b)
         {
             if (a == b) return 0;
             if (a == null) return -1;
             if (b == null) return 1;
 
-            string sa = a as string;
-            string sb = b as string;
-            if (sa != null && sb != null)
+            string? sa = a as string;
+            if (sa != null && b is string sb)
                 return _compareInfo.Compare(sa, sb);
 
-            IComparable ia = a as IComparable;
-            if (ia != null)
+            if (a is IComparable ia)
                 return ia.CompareTo(b);
 
-            IComparable ib = b as IComparable;
-            if (ib != null)
+            if (b is IComparable ib)
                 return -ib.CompareTo(a);
 
             throw new ArgumentException(SR.Argument_ImplementIComparable);

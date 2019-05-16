@@ -579,7 +579,7 @@ void COMPlusThrowBoot(HRESULT hr);
 //
 // - Can be called with gc enabled or disabled.
 //   This allows a catch-all error path to post a generic catchall error
-//   message w/out bonking more specific error messages posted by inner functions.
+//   message w/out overwriting more specific error messages posted by inner functions.
 //==========================================================================
 VOID DECLSPEC_NORETURN ThrowTypeLoadException(LPCUTF8 pNameSpace, LPCUTF8 pTypeName,
                            LPCWSTR pAssemblyName, LPCUTF8 pMessageArg,
@@ -732,8 +732,6 @@ BOOL IsInFirstFrameOfHandler(Thread *pThread,
 //==========================================================================
 LONG FilterAccessViolation(PEXCEPTION_POINTERS pExceptionPointers, LPVOID lpvParam);
 
-bool IsContinuableException(Thread *pThread);
-
 bool IsInterceptableException(Thread *pThread);
 
 #ifdef DEBUGGING_SUPPORTED
@@ -857,32 +855,8 @@ public:
 #endif // FEATURE_CORRUPTING_EXCEPTIONS
 
 #ifndef DACCESS_COMPILE
-// Switches to the previous AppDomain on the thread. See implementation for detailed comments.
-BOOL ReturnToPreviousAppDomain();
-
-// This is a generic holder that will enable you to revert to previous execution context (e.g. an AD).
-// Set it up *once* you have transitioned to the target context.
-class ReturnToPreviousAppDomainHolder
-{
-protected: // protected so that derived holder classes can also use them
-    BOOL        m_fShouldReturnToPreviousAppDomain;
-    Thread    * m_pThread;
-#ifdef _DEBUG
-    AppDomain * m_pTransitionedToAD;
-#endif // _DEBUG
-
-    void Init();
-    void ReturnToPreviousAppDomain();
-        
-public:
-    ReturnToPreviousAppDomainHolder(); 
-    ~ReturnToPreviousAppDomainHolder();
-    void SuppressRelease();
-};
-
 // exception filter invoked for unhandled exceptions on the entry point thread (thread 0)
 LONG EntryPointFilter(PEXCEPTION_POINTERS pExceptionInfo, PVOID _pData);
-
 #endif // !DACCESS_COMPILE
 
 // Enum that defines the types of exception notification handlers

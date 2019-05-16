@@ -63,9 +63,6 @@ public:
     static FCDECL4(void, MakeTypedReference, TypedByRef * value, Object* targetUNSAFE, ArrayBase* fldsUNSAFE, ReflectClassBaseObject *pFieldType);
     static FCDECL2(void, SetTypedReference, TypedByRef * target, Object* objUNSAFE);
     static FCDECL1(Object*, TypedReferenceToObject, TypedByRef * value);
-#ifdef _DEBUG
-    static FCDECL1(FC_BOOL_RET, IsAddressInStack, void * ptr);
-#endif
 
 #ifdef FEATURE_COMINTEROP
     static FCDECL3(Object*, GetClassFromProgID, StringObject* classNameUNSAFE, StringObject* serverUNSAFE, CLR_BOOL bThrowOnError);
@@ -103,14 +100,6 @@ public:
     static FCDECL2(FC_BOOL_RET, InternalEquals, Object *pRefThis, Object* pRefTarget);
     static FCDECL2(FC_BOOL_RET, InternalHasFlag, Object *pRefThis, Object* pRefFlags);
     static FCDECL2(int, InternalCompareTo, Object *pRefThis, Object* pRefTarget);
-};
-
-class ReflectionBinder {
-public:
-    static FCDECL2(FC_BOOL_RET, DBCanConvertPrimitive, ReflectClassBaseObject* vSource, ReflectClassBaseObject* vTarget);
-    static FCDECL2(FC_BOOL_RET, DBCanConvertObjectPrimitive, Object* vSourceObj, ReflectClassBaseObject* vTarget);
-
-
 };
 
 #endif // _REFLECTIONINVOCATION_H_

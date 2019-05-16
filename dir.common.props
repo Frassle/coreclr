@@ -1,4 +1,4 @@
-<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project>
 
   <!-- This file contains build properties that apply to product
        projects and test projects. It's imported by
@@ -25,14 +25,17 @@
     <BuildOS Condition="'$(__BuildOS)' == '' And '$([MSBuild]::IsOSPlatform(Windows))' == 'true'">Windows_NT</BuildOS>
     <BuildOS Condition="'$(__BuildOS)' == '' And '$([MSBuild]::IsOSPlatform(Linux))' == 'true'">Linux</BuildOS>
     <BuildOS Condition="'$(__BuildOS)' == '' And '$([MSBuild]::IsOSPlatform(OSX))' == 'true'">OSX</BuildOS>
+    <!-- TODO: converge on one property for BuildOS and __BuildOS, and remove this extra line. -->
+    <__BuildOS>$(BuildOS)</__BuildOS>
 
     <Configuration Condition="'$(Configuration)' == ''">$(BuildType)</Configuration>
     <Platform Condition="'$(Platform)' == ''">$(BuildArch)</Platform>
+
+    <PlatformConfigPathPart>$(BuildOS).$(BuildArch).$(BuildType)</PlatformConfigPathPart>
   </PropertyGroup>
 
   <PropertyGroup>
     <RestorePackagesPath>$(PackagesDir)</RestorePackagesPath>
   </PropertyGroup>
-
 
 </Project>

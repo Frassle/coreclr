@@ -38,6 +38,10 @@ namespace R2RDump
             _ignoredProperties.Add(typeof(RuntimeFunction), "UnwindRVA", attrs);
             _ignoredProperties.Add(typeof(R2RSection), "RelativeVirtualAddress", attrs);
             _ignoredProperties.Add(typeof(R2RSection), "Size", attrs);
+
+            XmlAttributes ignoreAlways = new XmlAttributes();
+            ignoreAlways.XmlIgnore = true;
+            _ignoredProperties.Add(typeof(R2RReader), "ImportCellNames", ignoreAlways);
         }
 
         internal override void Begin()
@@ -315,7 +319,7 @@ namespace R2RDump
                             }
                             if (importSection.AuxiliaryDataRVA != 0)
                             {
-                                DumpBytes(importSection.AuxiliaryDataRVA, (uint)importSection.AuxiliaryData.Size, importSectionsNode, "AuxiliaryDataBytes");
+                                DumpBytes(importSection.AuxiliaryDataRVA, (uint)importSection.AuxiliaryDataSize, importSectionsNode, "AuxiliaryDataBytes");
                             }
                         }
                         foreach (R2RImportSection.ImportSectionEntry entry in importSection.Entries)

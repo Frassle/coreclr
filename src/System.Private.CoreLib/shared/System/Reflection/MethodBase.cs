@@ -2,8 +2,10 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 // See the LICENSE file in the project root for more information.
 
+#nullable enable
 using System.Globalization;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 
 namespace System.Reflection
 {
@@ -50,8 +52,8 @@ namespace System.Reflection
 
         [DebuggerHidden]
         [DebuggerStepThrough]
-        public object Invoke(object obj, object[] parameters) => Invoke(obj, BindingFlags.Default, binder: null, parameters: parameters, culture: null);
-        public abstract object Invoke(object obj, BindingFlags invokeAttr, Binder binder, object[] parameters, CultureInfo culture);
+        public object? Invoke(object? obj, object?[]? parameters) => Invoke(obj, BindingFlags.Default, binder: null, parameters: parameters, culture: null);
+        public abstract object? Invoke(object? obj, BindingFlags invokeAttr, Binder? binder, object?[]? parameters, CultureInfo? culture);
 
         public abstract RuntimeMethodHandle MethodHandle { get; }
 
@@ -59,28 +61,29 @@ namespace System.Reflection
         public virtual bool IsSecuritySafeCritical { get { throw NotImplemented.ByDesign; } }
         public virtual bool IsSecurityTransparent { get { throw NotImplemented.ByDesign; } }
 
-        public override bool Equals(object obj) => base.Equals(obj);
+        public override bool Equals(object? obj) => base.Equals(obj);
         public override int GetHashCode() => base.GetHashCode();
 
-        public static bool operator ==(MethodBase left, MethodBase right)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool operator ==(MethodBase? left, MethodBase? right)
         {
-            if (object.ReferenceEquals(left, right))
+            // Test "right" first to allow branch elimination when inlined for null checks (== null)
+            // so it can become a simple test
+            if (right is null)
+            {
+                // return true/false not the test result https://github.com/dotnet/coreclr/issues/914
+                return (left is null) ? true : false;
+            }
+
+            // Try fast reference equality and opposite null check prior to calling the slower virtual Equals
+            if ((object?)left == (object)right)
+            {
                 return true;
+            }
 
-            if ((object)left == null || (object)right == null)
-                return false;
-
-            MethodInfo method1, method2;
-            ConstructorInfo constructor1, constructor2;
-
-            if ((method1 = left as MethodInfo) != null && (method2 = right as MethodInfo) != null)
-                return method1 == method2;
-            else if ((constructor1 = left as ConstructorInfo) != null && (constructor2 = right as ConstructorInfo) != null)
-                return constructor1 == constructor2;
-
-            return false;
+            return (left is null) ? false : left.Equals(right);
         }
 
-        public static bool operator !=(MethodBase left, MethodBase right) => !(left == right);
+        public static bool operator !=(MethodBase? left, MethodBase? right) => !(left == right);
     }
 }

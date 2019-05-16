@@ -578,8 +578,6 @@ HRESULT TypeNameBuilder::AddAssemblySpec(LPCWSTR szAssemblySpec)
 
     HRESULT hr = S_OK;
     
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    
     m_parseState = ParseStateASSEMSPEC;
 
     if (szAssemblySpec && *szAssemblySpec)
@@ -599,8 +597,6 @@ HRESULT TypeNameBuilder::AddAssemblySpec(LPCWSTR szAssemblySpec)
         hr = S_OK;
     }
 
-    END_SO_INTOLERANT_CODE;
-    
     return hr;
 }
 
@@ -628,8 +624,6 @@ HRESULT TypeNameBuilder::Clear()
         MODE_ANY;
     }
     CONTRACTL_END;
-
-    CONTRACT_VIOLATION(SOToleranceViolation);
 
     if (m_pStr)
     {   
@@ -660,12 +654,10 @@ void TypeString::AppendTypeDef(SString& ss, IMDInternalImport *pImport, mdTypeDe
     }
     CONTRACT_END
 
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(COMPlusThrowSO());
     {
         TypeNameBuilder tnb(&ss, TypeNameBuilder::ParseStateNAME);
         AppendTypeDef(tnb, pImport, td, format);    
     }
-    END_SO_INTOLERANT_CODE;
 
     RETURN;
 }
@@ -745,14 +737,12 @@ void TypeString::AppendInst(SString& ss, Instantiation inst, DWORD format)
     }
     CONTRACT_END
 
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(COMPlusThrowSO());
     {
         TypeNameBuilder tnb(&ss, TypeNameBuilder::ParseStateNAME);
         if ((format & FormatAngleBrackets) != 0)
             tnb.SetUseAngleBracketsForGenerics(TRUE);
         AppendInst(tnb, inst, format);
     }
-    END_SO_INTOLERANT_CODE;
 
     RETURN;
 }
@@ -854,15 +844,13 @@ void TypeString::AppendType(SString& ss, TypeHandle ty, Instantiation typeInstan
         THROWS;        
     }
     CONTRACT_END
-    
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(COMPlusThrowSO());
+
     {
         TypeNameBuilder tnb(&ss);
         if ((format & FormatAngleBrackets) != 0)
             tnb.SetUseAngleBracketsForGenerics(TRUE);
         AppendType(tnb, ty, typeInstantiation, format);
     }
-    END_SO_INTOLERANT_CODE;
 
     RETURN;
 }
@@ -882,8 +870,6 @@ void TypeString::AppendType(TypeNameBuilder& tnb, TypeHandle ty, Instantiation t
         THROWS;        
     }
     CONTRACT_END
-
-    INTERIOR_STACK_PROBE_FOR_CHECK_THREAD(10);
 
     BOOL bToString = (format & (FormatNamespace|FormatFullInst|FormatAssembly)) == FormatNamespace;
 
@@ -1034,12 +1020,9 @@ void TypeString::AppendType(TypeNameBuilder& tnb, TypeHandle ty, Instantiation t
 
         tnb.AddAssemblySpec(pAssemblyName.GetUnicode());
 
-    }  
-    
-    END_INTERIOR_STACK_PROBE;
+    }
 
-
-  RETURN;
+    RETURN;
 }
 
 void TypeString::AppendMethod(SString& s, MethodDesc *pMD, Instantiation typeInstantiation, const DWORD format)
@@ -1089,7 +1072,6 @@ void TypeString::AppendMethodImpl(SString& ss, MethodDesc *pMD, Instantiation ty
     }
     CONTRACTL_END
 
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(COMPlusThrowSO());
     {
         TypeHandle th;
         
@@ -1165,7 +1147,6 @@ void TypeString::AppendMethodImpl(SString& ss, MethodDesc *pMD, Instantiation ty
             }
         }
     }
-    END_SO_INTOLERANT_CODE;
 }
 
 void TypeString::AppendField(SString& s, FieldDesc *pFD, Instantiation typeInstantiation, const DWORD format /* = FormatNamespace */)
@@ -1180,7 +1161,6 @@ void TypeString::AppendField(SString& s, FieldDesc *pFD, Instantiation typeInsta
     }
     CONTRACTL_END;
 
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(COMPlusThrowSO());
     {
         TypeHandle th(pFD->GetApproxEnclosingMethodTable());
         AppendType(s, th, typeInstantiation, format);
@@ -1188,7 +1168,6 @@ void TypeString::AppendField(SString& s, FieldDesc *pFD, Instantiation typeInsta
         s.AppendUTF8(NAMESPACE_SEPARATOR_STR);
         s.AppendUTF8(pFD->GetName());
     }
-    END_SO_INTOLERANT_CODE;
 }
 
 #ifdef _DEBUG
@@ -1231,7 +1210,6 @@ void TypeString::AppendTypeDebug(SString& ss, TypeHandle t)
         NOTHROW;
         PRECONDITION(CheckPointer(t));
         PRECONDITION(ss.Check());
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END
 
@@ -1261,7 +1239,6 @@ void TypeString::AppendTypeKeyDebug(SString& ss, TypeKey *pTypeKey)
         NOTHROW;
         PRECONDITION(CheckPointer(pTypeKey));
         PRECONDITION(ss.Check());
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END
 
@@ -1293,7 +1270,6 @@ void TypeString::AppendTypeKey(TypeNameBuilder& tnb, TypeKey *pTypeKey, DWORD fo
         THROWS;
         if (format & (FormatAssembly|FormatFullInst)) GC_TRIGGERS; else GC_NOTRIGGER;
         PRECONDITION(CheckPointer(pTypeKey));
-        SO_INTOLERANT;
     }
     CONTRACT_END
 
@@ -1417,13 +1393,11 @@ void TypeString::AppendTypeKey(SString& ss, TypeKey *pTypeKey, DWORD format)
         PRECONDITION(CheckPointer(pTypeKey));
     }
     CONTRACT_END
-    
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(COMPlusThrowSO());
+
     {
         TypeNameBuilder tnb(&ss);
         AppendTypeKey(tnb, pTypeKey, format);
     }
-    END_SO_INTOLERANT_CODE;
 
     RETURN;
 }
@@ -1462,266 +1436,4 @@ bool TypeString::ContainsReservedChar(LPCWSTR pTypeName)
     }
 
     return false;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::QueryInterface(REFIID riid, void **ppUnk)
-{
-    CONTRACTL
-    {
-        NOTHROW;
-        GC_NOTRIGGER;
-        MODE_ANY;
-        SO_TOLERANT;
-    }
-    CONTRACTL_END;
-
-    *ppUnk = 0;
-
-    if (riid == IID_IUnknown)
-        *ppUnk = (IUnknown *)this;
-    else if (riid == IID_ITypeNameBuilder)
-        *ppUnk = (ITypeNameBuilder*)this;
-    else
-        return (E_NOINTERFACE);
-
-    AddRef();
-    return S_OK;
-}
-
-ULONG STDMETHODCALLTYPE TypeNameBuilderWrapper::AddRef()
-{
-    CONTRACTL
-    {
-        NOTHROW;
-        GC_NOTRIGGER;
-        MODE_ANY;
-        SO_TOLERANT;
-    }
-    CONTRACTL_END;
-
-    return InterlockedIncrement(&m_ref);
-}
-
-ULONG STDMETHODCALLTYPE TypeNameBuilderWrapper::Release()
-{
-    CONTRACTL
-    {
-        NOTHROW;
-        GC_NOTRIGGER;
-        MODE_ANY;
-        SO_TOLERANT;
-        SUPPORTS_DAC_HOST_ONLY;
-    }
-    CONTRACTL_END;
-
-    LONG ref = 0;
-
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    
-    ref = InterlockedDecrement(&m_ref);
-    if (ref == 0)
-        delete this;
-
-    END_SO_INTOLERANT_CODE;
-
-    return ref;
-}
-
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::OpenGenericArguments()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.OpenGenericArguments();
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::CloseGenericArguments()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.CloseGenericArguments();
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::OpenGenericArgument()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.OpenGenericArgument();
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::CloseGenericArgument()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.CloseGenericArgument();
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::AddName(LPCWSTR szName)
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.AddName(szName);
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::AddPointer()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.AddPointer();
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::AddByRef()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.AddByRef();
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::AddSzArray()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.AddSzArray();
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::AddArray(DWORD rank)
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.AddArray(rank);
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::AddAssemblySpec(LPCWSTR szAssemblySpec)
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.AddAssemblySpec(szAssemblySpec);
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::ToString(BSTR* pszStringRepresentation)
-{
-    WRAPPER_NO_CONTRACT;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.ToString(pszStringRepresentation);
-    END_SO_INTOLERANT_CODE;
-    return hr;
-}
-
-HRESULT STDMETHODCALLTYPE TypeNameBuilderWrapper::Clear()
-{
-    CONTRACTL
-    {
-        THROWS;
-        GC_NOTRIGGER;
-        MODE_ANY;
-    }
-    CONTRACTL_END;
-
-    HRESULT hr;
-    BEGIN_SO_INTOLERANT_CODE_NO_THROW_CHECK_THREAD(return COR_E_STACKOVERFLOW);
-    hr = m_tnb.Clear();
-    END_SO_INTOLERANT_CODE;
-    return hr;
 }

@@ -95,6 +95,20 @@ public:
         DWORD     B;
         DWORD     C;
     };
+    struct Agnostic_CORINFO_METHODNAME_TOKENin
+    {
+        DWORDLONG ftn;
+        DWORD     className;
+        DWORD     namespaceName;
+        DWORD     enclosingClassName;
+    };
+    struct Agnostic_CORINFO_METHODNAME_TOKENout
+    {
+        DWORD methodName;
+        DWORD className;
+        DWORD namespaceName;
+        DWORD enclosingClassName;
+    };
     struct Agnostic_CORINFO_RESOLVED_TOKENin
     {
         DWORDLONG tokenContext;
@@ -625,11 +639,13 @@ public:
     void recGetMethodNameFromMetadata(CORINFO_METHOD_HANDLE ftn,
                                       char*                 methodname,
                                       const char**          moduleName,
-                                      const char**          namespaceName);
-    void dmpGetMethodNameFromMetadata(DLDD key, DDD value);
+                                      const char**          namespaceName,
+                                      const char**          enclosingClassName);
+    void dmpGetMethodNameFromMetadata(Agnostic_CORINFO_METHODNAME_TOKENin key, Agnostic_CORINFO_METHODNAME_TOKENout value);
     const char* repGetMethodNameFromMetadata(CORINFO_METHOD_HANDLE ftn,
                                              const char**          className,
-                                             const char**          namespaceName);
+                                             const char**          namespaceName,
+                                             const char**          enclosingClassName);
 
     void recGetJitFlags(CORJIT_FLAGS* jitFlags, DWORD sizeInBytes, DWORD result);
     void dmpGetJitFlags(DWORD key, DD value);
@@ -862,9 +878,10 @@ public:
 
     void recGetNewHelper(CORINFO_RESOLVED_TOKEN* pResolvedToken,
                          CORINFO_METHOD_HANDLE   callerHandle,
+                         bool* pHasSideEffects,
                          CorInfoHelpFunc         result);
-    void dmpGetNewHelper(const Agnostic_GetNewHelper& key, DWORD value);
-    CorInfoHelpFunc repGetNewHelper(CORINFO_RESOLVED_TOKEN* pResolvedToken, CORINFO_METHOD_HANDLE callerHandle);
+    void dmpGetNewHelper(const Agnostic_GetNewHelper& key, DD value);
+    CorInfoHelpFunc repGetNewHelper(CORINFO_RESOLVED_TOKEN* pResolvedToken, CORINFO_METHOD_HANDLE callerHandle, bool * pHasSideEffects);
 
     void recEmbedGenericHandle(CORINFO_RESOLVED_TOKEN*       pResolvedToken,
                                BOOL                          fEmbedParent,
@@ -1187,6 +1204,10 @@ public:
     void dmpMergeClasses(DLDL key, DWORDLONG value);
     CORINFO_CLASS_HANDLE repMergeClasses(CORINFO_CLASS_HANDLE cls1, CORINFO_CLASS_HANDLE cls2);
 
+    void recIsMoreSpecificType(CORINFO_CLASS_HANDLE cls1, CORINFO_CLASS_HANDLE cls2, BOOL result);
+    void dmpIsMoreSpecificType(DLDL key, DWORD value);
+    BOOL repIsMoreSpecificType(CORINFO_CLASS_HANDLE cls1, CORINFO_CLASS_HANDLE cls2);
+
     void recGetCookieForPInvokeCalliSig(CORINFO_SIG_INFO* szMetaSig, void** ppIndirection, LPVOID result);
     void dmpGetCookieForPInvokeCalliSig(const GetCookieForPInvokeCalliSigValue& key, DLDL value);
     LPVOID repGetCookieForPInvokeCalliSig(CORINFO_SIG_INFO* szMetaSig, void** ppIndirection);
@@ -1331,7 +1352,7 @@ private:
 };
 
 // ********************* Please keep this up-to-date to ease adding more ***************
-// Highest packet number: 173
+// Highest packet number: 174
 // *************************************************************************************
 enum mcPackets
 {
@@ -1477,6 +1498,7 @@ enum mcPackets
     Packet_IsValueClass                                  = 105,
     Packet_IsWriteBarrierHelperRequired                  = 106,
     Packet_MergeClasses                                  = 107,
+    Packet_IsMoreSpecificType                            = 174, // Added 2/14/2019
     Packet_PInvokeMarshalingRequired                     = 108,
     Packet_ResolveToken                                  = 109,
     Packet_ResolveVirtualMethod                          = 160, // Added 2/13/17

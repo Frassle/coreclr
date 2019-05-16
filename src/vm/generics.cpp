@@ -19,7 +19,6 @@
 #include "eeconfig.h"
 #include "generics.h"
 #include "genericdict.h"
-#include "stackprobe.h"
 #include "typestring.h"
 #include "typekey.h"
 #include "dumpcommon.h"
@@ -148,13 +147,6 @@ TypeHandle ClassLoader::LoadCanonicalGenericInstantiation(TypeKey *pTypeKey,
         ThrowHR(COR_E_OVERFLOW);
 
     TypeHandle ret = TypeHandle();
-    DECLARE_INTERIOR_STACK_PROBE;
-#ifndef DACCESS_COMPILE
-    if ((dwAllocSize/GetOsPageSize()+1) >= 2)
-    {
-        DO_INTERIOR_STACK_PROBE_FOR_NOTHROW_CHECK_THREAD((10+dwAllocSize/GetOsPageSize()+1), NO_FORBIDGC_LOADER_USE_ThrowSO(););
-    }
-#endif // DACCESS_COMPILE
     TypeHandle *repInst = (TypeHandle*) _alloca(dwAllocSize);
 
     for (DWORD i = 0; i < ntypars; i++)
@@ -166,7 +158,6 @@ TypeHandle ClassLoader::LoadCanonicalGenericInstantiation(TypeKey *pTypeKey,
     TypeKey canonKey(pTypeKey->GetModule(), pTypeKey->GetTypeToken(), Instantiation(repInst, ntypars));
     ret = ClassLoader::LoadConstructedTypeThrowing(&canonKey, fLoadTypes, level);
 
-    END_INTERIOR_STACK_PROBE;
     RETURN(ret);
 }
 
@@ -449,9 +440,10 @@ ClassLoader::CreateTypeHandleForNonCanonicalGenericInstantiation(
     if (!canShareVtableChunks)
     {
         // Need to assign the slots one by one to filter out jump thunks
+        MethodTable::MethodDataWrapper hOldMTData(MethodTable::GetMethodData(pOldMT, FALSE));
         for (DWORD i = 0; i < cSlots; i++)
         {
-            pMT->SetSlot(i, pOldMT->GetRestoredSlot(i));
+            pMT->CopySlotFrom(i, hOldMTData, pOldMT);
         }
     }
 
@@ -594,7 +586,6 @@ ClassLoader::CreateTypeHandleForNonCanonicalGenericInstantiation(
     // Check we've set up the flags correctly on the new method table
     _ASSERTE(!fContainsGenericVariables == !pMT->ContainsGenericVariables());
     _ASSERTE(!fHasGenericsStaticsInfo == !pMT->HasGenericsStaticsInfo());
-    _ASSERTE(!pLoaderModule->GetAssembly()->IsDomainNeutral() == !pMT->IsDomainNeutral());
 #ifdef FEATURE_COMINTEROP
     _ASSERTE(!fHasDynamicInterfaceMap == !pMT->HasDynamicInterfaceMap());
     _ASSERTE(!fHasRCWPerTypeData == !pMT->HasRCWPerTypeData());
@@ -1041,7 +1032,6 @@ BOOL GetExactInstantiationsOfMethodAndItsClassFromCallInformation(
     {
         NOTHROW;
         GC_NOTRIGGER;
-        SO_TOLERANT;
         CANNOT_TAKE_LOCK;
         PRECONDITION(CheckPointer(pRepMethod));
         SUPPORTS_DAC;
@@ -1080,7 +1070,6 @@ BOOL GetExactInstantiationsOfMethodAndItsClassFromCallInformation(
     {
         NOTHROW;
         GC_NOTRIGGER;
-        SO_TOLERANT;
         CANNOT_TAKE_LOCK;
         PRECONDITION(CheckPointer(pRepMethod));
         SUPPORTS_DAC;

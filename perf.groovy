@@ -41,7 +41,7 @@ def static getOSGroup(def os) {
                         def newJob = job(Utilities.getFullJobName(project, jobName, isPR)) {
                             // Set the label.
                             if (isSmoketest) {
-                                label('Windows.Amd64.ClientRS4.DevEx.15.8.Perf')
+                                label('Windows.10.Amd64.ClientRS4.DevEx.15.8.Open')
                                 python = "C:\\python3.7.0\\python.exe"
                             }
                             else {
@@ -463,9 +463,8 @@ def static getFullThroughputJobName(def project, def os, def arch, def isPR) {
             python = "python3.6"
             def buildCommands = []
             def newBuildJob = job(fullBuildJobName) {
-                def additionalOpts = "-e CAC_ROOTFS_DIR=/crossrootfs/x86"
                 def dockerImage = getDockerImageName(architecture, 'Ubuntu', true)
-                def dockerCmd = "docker run -i --rm -v \${WORKSPACE}:\${WORKSPACE} -w \${WORKSPACE} -e ROOTFS_DIR=/crossrootfs/${architecture} ${additionalOpts} ${dockerImage} "
+                def dockerCmd = "docker run -i --rm -v \${WORKSPACE}:\${WORKSPACE} -w \${WORKSPACE} -e ROOTFS_DIR=/crossrootfs/${architecture} ${dockerImage} "
 
                 buildCommands += "${dockerCmd}\${WORKSPACE}/build.sh release ${architecture} cross"
 
@@ -768,7 +767,7 @@ def static getFullThroughputJobName(def project, def os, def arch, def isPR) {
     ['x64', 'x86'].each { arch ->
         def architecture = arch
         def newJob = job(Utilities.getFullJobName(project, "sizeondisk_${arch}", false)) {
-            label('Windows.Amd64.ClientRS4.DevEx.15.8.Perf')
+            label('Windows.10.Amd64.ClientRS4.DevEx.15.8.Open')
 
             wrappers {
                 credentialsBinding {
@@ -854,7 +853,7 @@ def static getFullThroughputJobName(def project, def os, def arch, def isPR) {
                 ['full_opt'].each { opt_level ->
                     def architecture = arch
                     def newJob = job(Utilities.getFullJobName(project, "perf_illink_${os}_${arch}_${opt_level}_${jit}", isPR)) {
-                        label('Windows.Amd64.ClientRS4.DevEx.15.8.Perf')
+                        label('Windows.10.Amd64.ClientRS4.DevEx.15.8.Open')
 
                         def testEnv = ""
                         def python = "C:\\python3.7.0\\python.exe"

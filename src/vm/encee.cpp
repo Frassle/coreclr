@@ -683,6 +683,7 @@ HRESULT EditAndContinueModule::ResumeInUpdatedFunction(
     // If we fail for any reason we have already potentially trashed with new locals and we have also unwound any
     // Win32 handlers on the stack so cannot ever return from this function. 
     EEPOLICY_HANDLE_FATAL_ERROR(CORDBG_E_ENC_INTERNAL_ERROR);
+    return hr;
 }
 
 //---------------------------------------------------------------------------------------
@@ -1088,7 +1089,6 @@ EnCAddedField *EnCAddedField::Allocate(OBJECTREF thisPointer, EnCFieldDesc *pFD)
     EnCAddedField *pEntry = new EnCAddedField;
     pEntry->m_pFieldDesc = pFD;
 
-    _ASSERTE(!pFD->GetApproxEnclosingMethodTable()->IsDomainNeutral());
     AppDomain *pDomain = (AppDomain*) pFD->GetApproxEnclosingMethodTable()->GetDomain();
 
     // We need to associate the contents of the new field with the object it is attached to 
@@ -1146,7 +1146,7 @@ EnCAddedField *EnCAddedField::Allocate(OBJECTREF thisPointer, EnCFieldDesc *pFD)
         IGCHandleManager *mgr = GCHandleUtilities::GetGCHandleManager();
         OBJECTREF pHelperObj = ObjectToOBJECTREF(mgr->GetDependentHandleSecondary(pEntry->m_FieldData));
         OBJECTREF *pHelperRef = (OBJECTREF *)pHelperField->GetAddress( pHelperObj->GetAddress() );
-        SetObjectReference( pHelperRef, obj, pDomain );
+        SetObjectReference( pHelperRef, obj);
 
         GCPROTECT_END ();
     }
@@ -1367,7 +1367,6 @@ void EnCSyncBlockInfo::Cleanup()
     {
         NOTHROW;
         GC_NOTRIGGER;
-        SO_TOLERANT;
         MODE_ANY;
     }
     CONTRACTL_END;
@@ -1398,7 +1397,6 @@ EnCAddedStaticField *EnCAddedStaticField::Allocate(EnCFieldDesc *pFD)
     }
     CONTRACTL_END;
 
-    _ASSERTE(!pFD->GetEnclosingMethodTable()->IsDomainNeutral());
     AppDomain *pDomain = (AppDomain*) pFD->GetApproxEnclosingMethodTable()->GetDomain();
 
     // Compute the size of the fieldData entry
@@ -1427,7 +1425,7 @@ EnCAddedStaticField *EnCAddedStaticField::Allocate(EnCFieldDesc *pFD)
         OBJECTREF **pOR = (OBJECTREF**)&pEntry->m_FieldData;
         *pOR = pDomain->AllocateStaticFieldObjRefPtrs(1);
         OBJECTREF obj = AllocateObject(pFD->GetFieldTypeHandleThrowing().GetMethodTable());
-        SetObjectReference( *pOR, obj, pDomain );
+        SetObjectReference( *pOR, obj);
     } 
     else if (pFD->GetFieldType() == ELEMENT_TYPE_CLASS) 
     {

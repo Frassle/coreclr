@@ -1414,7 +1414,7 @@ VOID StubLinkerCPU::X86EmitSPIndexPush(__int32 ofs)
         // The offset can be expressed in a byte (can use the byte
         // form of the push esp instruction)
 
-        BYTE code[] = {0xff, 0x74, 0x24, ofs8};
+        BYTE code[] = {0xff, 0x74, 0x24, (BYTE)ofs8};
         EmitBytes(code, sizeof(code));   
     }
     else
@@ -5840,7 +5840,7 @@ static void EncodeOneGCOffset(CPUSTUBLINKER *pSl, ULONG delta, BOOL maybeInterio
     // by shifting and gaining a free high-bit.
     ULONG encodedDelta = delta >> 1;
 #else
-    // For 32-bit, we just limit our frame size to <2GB. (I know, such a bummer!)
+    // For 32-bit, we just limit our frame size to <2GB.
     ULONG encodedDelta = delta;
 #endif
     _ASSERTE((encodedDelta & 0x80000003) == 0);
@@ -6430,7 +6430,7 @@ Stub * StubLinkerCPU::CreateTailCallCopyArgsThunk(CORINFO_SIG_INFO * pSig,
         EncodeGCOffsets(pSl, gcLayout);
     }
 
-    LoaderHeap* pHeap = pMD->GetLoaderAllocatorForCode()->GetStubHeap();
+    LoaderHeap* pHeap = pMD->GetLoaderAllocator()->GetStubHeap();
     return pSl->Link(pHeap);
 }
 #endif // DACCESS_COMPILE
@@ -6805,7 +6805,7 @@ BOOL ThisPtrRetBufPrecode::SetTargetInterlocked(TADDR target, TADDR expected)
     _ASSERTE(m_rel32 == REL32_JMP_SELF);
 
     // Use pMD == NULL to allocate the jump stub in non-dynamic heap that has the same lifetime as the precode itself
-    INT32 newRel32 = rel32UsingJumpStub(&m_rel32, target, NULL /* pMD */, ((MethodDesc *)GetMethodDesc())->GetLoaderAllocatorForCode());
+    INT32 newRel32 = rel32UsingJumpStub(&m_rel32, target, NULL /* pMD */, ((MethodDesc *)GetMethodDesc())->GetLoaderAllocator());
 
     _ASSERTE(IS_ALIGNED(&m_rel32, sizeof(INT32)));
     FastInterlockExchange((LONG *)&m_rel32, (LONG)newRel32);

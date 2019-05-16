@@ -62,10 +62,6 @@ extern "C" HRESULT STDMETHODCALLTYPE AttachProfiler(
         GC_TRIGGERS;
         MODE_PREEMPTIVE;
         CAN_TAKE_LOCK;
-
-        // This is the entrypoint into the EE by a trigger process.  As such, this
-        // is profiling-specific and not considered mainline EE code.
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -193,7 +189,7 @@ HRESULT ProfilingAPIAttachClient::AttachProfiler(
 
     HRESULT hr;
 
-    // Is cbClientData just crazy-sick-overflow big?
+    // Is cbClientData just huge?
     if (cbClientData >= 0xFFFFffffUL - sizeof(AttachRequestMessage))
     {
         return E_OUTOFMEMORY;

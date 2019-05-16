@@ -15,7 +15,7 @@
 #include <mmsystem.h>
 #endif //FEATURE_PAL
 
-#define NUM_NANOSECONDS_IN_1_MS (1000000)
+const unsigned long NUM_NANOSECONDS_IN_1_MS = 1000000;
 
 Volatile<BOOL> SampleProfiler::s_profilingEnabled = false;
 Thread* SampleProfiler::s_pSamplingThread = NULL;
@@ -36,7 +36,7 @@ HINSTANCE SampleProfiler::s_hMultimediaLib = NULL;
 typedef MMRESULT (WINAPI *TimePeriodFnPtr) (UINT uPeriod);
 #endif //FEATURE_PAL
 
-void SampleProfiler::Enable()
+void SampleProfiler::Enable(EventPipeProviderCallbackDataQueue* pEventPipeProviderCallbackDataQueue)
 {
     CONTRACTL
     {
@@ -48,12 +48,12 @@ void SampleProfiler::Enable()
         PRECONDITION(EventPipe::GetLock()->OwnedByCurrentThread());
     }
     CONTRACTL_END;
-    
+
     LoadDependencies();
 
     if(s_pEventPipeProvider == NULL)
     {
-        s_pEventPipeProvider = EventPipe::CreateProvider(SL(s_providerName));
+        s_pEventPipeProvider = EventPipe::CreateProvider(SL(s_providerName), nullptr, nullptr, pEventPipeProviderCallbackDataQueue);
         s_pThreadTimeEvent = s_pEventPipeProvider->AddEvent(
             0, /* eventID */
             0, /* keywords */
@@ -113,15 +113,23 @@ void SampleProfiler::Disable()
         return;
     }
 
-    // Reset the event before shutdown.
-    s_threadShutdownEvent.Reset();
+    // If g_fProcessDetach is true, the sampling profiler thread probably got
+    // ripped because someone called ExitProcess(). This check is an attempt 
+    // to recognize that case and avoid waiting for the (already dead) sampling
+    // profiler thread to tell us it is terminated.
+    if (!g_fProcessDetach)
+    {
+        // Reset the event before shutdown.
+        s_threadShutdownEvent.Reset();
 
-    // The sampling thread will watch this value and exit
-    // when profiling is disabled.
-    s_profilingEnabled = false;
+        // The sampling thread will watch this value and exit
+        // when profiling is disabled.
+        s_profilingEnabled = false;
 
-    // Wait for the sampling thread to clean itself up.
-    s_threadShutdownEvent.Wait(0, FALSE /* bAlertable */);
+        // Wait for the sampling thread to clean itself up.
+        s_threadShutdownEvent.Wait(INFINITE, FALSE /* bAlertable */);
+        s_threadShutdownEvent.CloseEvent();
+    }
 
     if(s_timePeriodIsSet)
     {

@@ -107,7 +107,6 @@ inline BOOL CORProfilerFunctionIDMapperEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -125,7 +124,6 @@ inline BOOL CORProfilerTrackJITInfo()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -140,7 +138,6 @@ inline BOOL CORProfilerTrackCacheSearches()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -155,7 +152,6 @@ inline BOOL CORProfilerTrackModuleLoads()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -170,7 +166,6 @@ inline BOOL CORProfilerTrackAssemblyLoads()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -185,7 +180,6 @@ inline BOOL CORProfilerTrackAppDomainLoads()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -200,7 +194,6 @@ inline BOOL CORProfilerTrackThreads()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -215,7 +208,6 @@ inline BOOL CORProfilerTrackClasses()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -230,7 +222,6 @@ inline BOOL CORProfilerTrackGC()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -245,7 +236,6 @@ inline BOOL CORProfilerTrackAllocationsEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -266,13 +256,27 @@ inline BOOL CORProfilerTrackAllocations()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
     return
             (CORProfilerTrackAllocationsEnabled() &&
             ((&g_profControlBlock)->dwEventMask & COR_PRF_MONITOR_OBJECT_ALLOCATED));
+}
+
+inline BOOL CORProfilerTrackLargeAllocations()
+{
+    CONTRACTL
+    {
+        NOTHROW;
+        GC_NOTRIGGER;
+        CANNOT_TAKE_LOCK;
+    }
+    CONTRACTL_END;
+
+    return
+            (CORProfilerPresent() &&
+            ((&g_profControlBlock)->dwEventMaskHigh & COR_PRF_HIGH_MONITOR_LARGEOBJECT_ALLOCATED));
 }
 
 inline BOOL CORProfilerEnableRejit()
@@ -282,7 +286,6 @@ inline BOOL CORProfilerEnableRejit()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -297,7 +300,6 @@ inline BOOL CORProfilerTrackExceptions()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -312,7 +314,6 @@ inline BOOL CORProfilerTrackCLRExceptions()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -327,7 +328,6 @@ inline BOOL CORProfilerTrackTransitions()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -342,7 +342,6 @@ inline BOOL CORProfilerTrackEnterLeave()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -362,7 +361,6 @@ inline BOOL CORProfilerTrackCCW()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -377,7 +375,6 @@ inline BOOL CORProfilerTrackRemoting()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -392,7 +389,6 @@ inline BOOL CORProfilerTrackRemotingCookie()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -409,7 +405,6 @@ inline BOOL CORProfilerTrackRemotingAsync()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -426,7 +421,6 @@ inline BOOL CORProfilerTrackSuspends()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -441,7 +435,6 @@ inline BOOL CORProfilerDisableInlining()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -456,7 +449,6 @@ inline BOOL CORProfilerJITMapEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -471,7 +463,6 @@ inline BOOL CORProfilerDisableOptimizations()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
         SUPPORTS_DAC;
     }
     CONTRACTL_END;
@@ -487,7 +478,6 @@ inline BOOL CORProfilerUseProfileImages()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -548,7 +538,6 @@ inline BOOL CORProfilerELT3SlowPathEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -563,7 +552,6 @@ inline BOOL CORProfilerELT3SlowPathEnterEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -578,7 +566,6 @@ inline BOOL CORProfilerELT3SlowPathLeaveEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -593,7 +580,6 @@ inline BOOL CORProfilerELT3SlowPathTailcallEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -608,7 +594,6 @@ inline BOOL CORProfilerELT2FastPathEnterEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -623,7 +608,6 @@ inline BOOL CORProfilerELT2FastPathLeaveEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -638,7 +622,6 @@ inline BOOL CORProfilerELT2FastPathTailcallEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -653,7 +636,6 @@ inline BOOL CORProfilerFunctionArgsEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -668,7 +650,6 @@ inline BOOL CORProfilerFunctionReturnValueEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -683,7 +664,6 @@ inline BOOL CORProfilerFrameInfoEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -698,7 +678,6 @@ inline BOOL CORProfilerStackSnapshotEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -713,7 +692,6 @@ inline BOOL CORProfilerAddsAssemblyReferences()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -728,7 +706,6 @@ inline BOOL CORProfilerInMemorySymbolsUpdatesEnabled()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -743,7 +720,6 @@ inline BOOL CORProfilerIsMonitoringDynamicFunctionUnloads()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
@@ -758,13 +734,40 @@ inline BOOL CORProfilerDisableTieredCompilation()
         NOTHROW;
         GC_NOTRIGGER;
         CANNOT_TAKE_LOCK;
-        SO_NOT_MAINLINE;
     }
     CONTRACTL_END;
 
 
     return (CORProfilerPresent() &&
          ((&g_profControlBlock)->dwEventMaskHigh & COR_PRF_HIGH_DISABLE_TIERED_COMPILATION));
+}
+
+inline BOOL CORProfilerTrackBasicGC()
+{
+    CONTRACTL 
+    {
+        NOTHROW;
+        GC_NOTRIGGER;
+        CANNOT_TAKE_LOCK;
+    }
+    CONTRACTL_END;
+
+    return (CORProfilerPresent() &&
+         ((&g_profControlBlock)->dwEventMaskHigh & COR_PRF_HIGH_BASIC_GC));
+}
+
+inline BOOL CORProfilerTrackGCMovedObjects()
+{
+    CONTRACTL 
+    {
+        NOTHROW;
+        GC_NOTRIGGER;
+        CANNOT_TAKE_LOCK;
+    }
+    CONTRACTL_END;
+
+    return (CORProfilerPresent() &&
+         ((&g_profControlBlock)->dwEventMaskHigh & COR_PRF_HIGH_MONITOR_GC_MOVED_OBJECTS));
 }
 
 #if defined(PROFILING_SUPPORTED) && !defined(CROSSGEN_COMPILE)
@@ -783,7 +786,7 @@ inline BOOL CORProfilerDisableTieredCompilation()
 // See code:ProfilingAPIUtility::InitializeProfiling#LoadUnloadCallbackSynchronization.
 // 
 typedef Wrapper<Thread *, ProfilingAPIUtility::IncEvacuationCounter, ProfilingAPIUtility::DecEvacuationCounter, 
-    (UINT_PTR)0, CompareDefault<Thread *>, HSV_NoValidation> EvacuationCounterHolder;
+    (UINT_PTR)0, CompareDefault<Thread *>> EvacuationCounterHolder;
 
 
 //---------------------------------------------------------------------------------------

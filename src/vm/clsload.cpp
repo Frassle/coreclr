@@ -30,13 +30,11 @@
 #include "jitinterface.h"
 #include "vars.hpp"
 #include "assembly.hpp"
-#include "perfcounters.h"
 #include "eeprofinterfaces.h"
 #include "eehash.h"
 #include "typehash.h"
 #include "comdelegate.h"
 #include "array.h"
-#include "stackprobe.h"
 #include "posterror.h"
 #include "wrappers.h"
 #include "generics.h"
@@ -86,7 +84,6 @@ PTR_Module ClassLoader::ComputeLoaderModuleWorker(
         MODE_ANY;
         PRECONDITION(CheckPointer(pDefinitionModule, NULL_OK));
         POSTCONDITION(CheckPointer(RETVAL));
-        SO_INTOLERANT;
         SUPPORTS_DAC;
     }
     CONTRACT_END
@@ -110,23 +107,13 @@ PTR_Module ClassLoader::ComputeLoaderModuleWorker(
 #endif // FEATURE_PREJIT
 #endif // #ifndef DACCESS_COMPILE
 
-    Module *pFirstNonSharedLoaderModule = NULL;
-    Module *pFirstNonSystemSharedModule = NULL;
     Module *pLoaderModule = NULL;
 
     if (pDefinitionModule)
     {
         if (pDefinitionModule->IsCollectible())
             goto ComputeCollectibleLoaderModule;
-        if (!pDefinitionModule->GetAssembly()->IsDomainNeutral())
-        {
-            pFirstNonSharedLoaderModule = pDefinitionModule;
-        }
-        else
-        if (!pDefinitionModule->IsSystem())
-        {
-            pFirstNonSystemSharedModule = pDefinitionModule;
-        }
+        pLoaderModule = pDefinitionModule;
     }
 
     for (DWORD i = 0; i < classInst.GetNumArgs(); i++)
@@ -136,17 +123,8 @@ PTR_Module ClassLoader::ComputeLoaderModuleWorker(
         Module* pModule = classArg.GetLoaderModule();
         if (pModule->IsCollectible())
             goto ComputeCollectibleLoaderModule;
-        if (!pModule->GetAssembly()->IsDomainNeutral())
-        {
-            if (pFirstNonSharedLoaderModule == NULL)
-                pFirstNonSharedLoaderModule = pModule;
-        }
-        else
-        if (!pModule->IsSystem())
-        {
-            if (pFirstNonSystemSharedModule == NULL)
-                pFirstNonSystemSharedModule = pModule;
-        }
+        if (pLoaderModule == NULL)
+            pLoaderModule = pModule;
     }
 
     for (DWORD i = 0; i < methodInst.GetNumArgs(); i++)
@@ -156,32 +134,11 @@ PTR_Module ClassLoader::ComputeLoaderModuleWorker(
         Module *pModule = methodArg.GetLoaderModule();
         if (pModule->IsCollectible())
             goto ComputeCollectibleLoaderModule;
-        if (!pModule->GetAssembly()->IsDomainNeutral())
-        {
-            if (pFirstNonSharedLoaderModule == NULL)
-                pFirstNonSharedLoaderModule = pModule;
-        }
-        else
-        if (!pModule->IsSystem())
-        {
-            if (pFirstNonSystemSharedModule == NULL)
-                pFirstNonSystemSharedModule = pModule;
-        }
+        if (pLoaderModule == NULL)
+            pLoaderModule = pModule;
     }
 
-    // RULE: Prefer modules in non-shared assemblies.
-    // This ensures safety of app-domain unloading.
-    if (pFirstNonSharedLoaderModule != NULL)
-    {
-        pLoaderModule = pFirstNonSharedLoaderModule;
-    }
-    else if (pFirstNonSystemSharedModule != NULL)
-    {
-        // Use pFirstNonSystemSharedModule just so C<object> ends up in module C - it
-        // shouldn't actually matter at all though.
-        pLoaderModule = pFirstNonSystemSharedModule;
-    }
-    else
+    if (pLoaderModule == NULL)
     {
         CONSISTENCY_CHECK(MscorlibBinder::GetModule() && MscorlibBinder::GetModule()->IsSystem());
 
@@ -249,7 +206,6 @@ PTR_Module ClassLoader::ComputeLoaderModuleForCompilation(
         MODE_ANY;
         PRECONDITION(CheckPointer(pDefinitionModule, NULL_OK));
         POSTCONDITION(CheckPointer(RETVAL));
-        SO_INTOLERANT;
     }
     CONTRACT_END
 
@@ -569,8 +525,6 @@ TypeHandle ClassLoader::LoadTypeHandleThrowIfFailed(NameHandle* pName, ClassLoad
 #endif
 
 #ifndef DACCESS_COMPILE
-            COUNTER_ONLY(GetPerfCounters().m_Loading.cLoadFailures++);
-
             m_pAssembly->ThrowTypeLoadException(pName, IDS_CLASSLOAD_GENERAL);
 #else
             DacNotImpl();
@@ -889,7 +843,8 @@ void ClassLoader::GetClassValue(NameHandleTable nhTable,
             continue;
 
 #ifdef FEATURE_READYTORUN
-        if (nhTable == nhCaseSensitive && pCurrentClsModule->IsReadyToRun() && pCurrentClsModule->GetReadyToRunInfo()->HasHashtableOfTypes())
+        if (nhTable == nhCaseSensitive && pCurrentClsModule->IsReadyToRun() && pCurrentClsModule->GetReadyToRunInfo()->HasHashtableOfTypes() &&
+            pCurrentClsModule->GetAvailableClassHash() == NULL)
         {
             // For R2R modules, we only search the hashtable of token types stored in the module's image, and don't fallback
             // to searching m_pAvailableClasses or m_pAvailableClassesCaseIns (in fact, we don't even allocate them for R2R modules).
@@ -1190,7 +1145,6 @@ TypeHandle ClassLoader::LoadConstructedTypeThrowing(TypeKey *pKey,
         if (FORBIDGC_LOADER_USE_ENABLED()) GC_NOTRIGGER; else GC_TRIGGERS;
         if (FORBIDGC_LOADER_USE_ENABLED()) FORBID_FAULT; else { INJECT_FAULT(COMPlusThrowOM()); }
         if (FORBIDGC_LOADER_USE_ENABLED() || fLoadTypes != LoadTypes) { LOADS_TYPE(CLASS_LOAD_BEGIN); } else { LOADS_TYPE(level); }
-        if (fLoadTypes == DontLoadTypes) SO_TOLERANT; else SO_INTOLERANT;
         PRECONDITION(CheckPointer(pKey));
         PRECONDITION(level > CLASS_LOAD_BEGIN && level <= CLASS_LOADED);
         PRECONDITION(CheckPointer(pInstContext, NULL_OK));
@@ -1278,8 +1232,6 @@ void ClassLoader::EnsureLoaded(TypeHandle typeHnd, ClassLoadLevel level)
 
     if (typeHnd.GetLoadLevel() < level)
     {
-        INTERIOR_STACK_PROBE_CHECK_THREAD;
-
 #ifdef FEATURE_PREJIT
         if (typeHnd.GetLoadLevel() == CLASS_LOAD_UNRESTOREDTYPEKEY)
         {
@@ -1293,8 +1245,6 @@ void ClassLoader::EnsureLoaded(TypeHandle typeHnd, ClassLoadLevel level)
             Module *pLoaderModule = ComputeLoaderModule(&typeKey);
             pLoaderModule->GetClassLoader()->LoadTypeHandleForTypeKey(&typeKey, typeHnd, level);
         }
-
-        END_INTERIOR_STACK_PROBE;
     }
 
 #endif // DACCESS_COMPILE
@@ -1680,7 +1630,7 @@ BOOL ClassLoader::FindClassModuleThrowing(
 
     EEClassHashEntry_t * pBucket = foundEntry.GetClassHashBasedEntryValue();
 
-    if (pBucket == NULL && needsToBuildHashtable)
+    if (pBucket == NULL)
     {
         AvailableClasses_LockHolder lh(this);
 
@@ -1690,7 +1640,7 @@ BOOL ClassLoader::FindClassModuleThrowing(
         pBucket = foundEntry.GetClassHashBasedEntryValue();
 
 #ifndef DACCESS_COMPILE
-        if ((pBucket == NULL) && (m_cUnhashedModules > 0))
+        if (needsToBuildHashtable && (pBucket == NULL) && (m_cUnhashedModules > 0))
         {
             _ASSERT(needsToBuildHashtable);
 
@@ -1712,6 +1662,7 @@ BOOL ClassLoader::FindClassModuleThrowing(
 #endif
     }
 
+    // Same check as above, but this time we've checked with the lock so the table will be populated
     if (pBucket == NULL)
     {
 #if defined(_DEBUG_IMPL) && !defined(DACCESS_COMPILE)
@@ -1831,8 +1782,6 @@ ClassLoader::LoadTypeHandleThrowing(
     } CONTRACT_END
 
     TypeHandle typeHnd;
-    INTERIOR_STACK_PROBE_NOTHROW_CHECK_THREAD(RETURN_FROM_INTERIOR_PROBE(TypeHandle()));
-
     Module * pFoundModule = NULL;
     mdToken FoundCl;
     HashedTypeEntry foundEntry;
@@ -1995,7 +1944,6 @@ ClassLoader::LoadTypeHandleThrowing(
 #endif // !DACCESS_COMPILE
     }
 
-    END_INTERIOR_STACK_PROBE;
     RETURN typeHnd;
 } // ClassLoader::LoadTypeHandleThrowing
 
@@ -2303,10 +2251,10 @@ TypeHandle ClassLoader::LookupTypeDefOrRefInModule(Module *pModule, mdToken cl, 
     RETURN(typeHandle);
 }
 
-DomainAssembly *ClassLoader::GetDomainAssembly(AppDomain *pDomain/*=NULL*/)
+DomainAssembly *ClassLoader::GetDomainAssembly()
 {
     WRAPPER_NO_CONTRACT;
-    return GetAssembly()->GetDomainAssembly(pDomain);
+    return GetAssembly()->GetDomainAssembly();
 }
 
 #ifndef DACCESS_COMPILE
@@ -2594,10 +2542,6 @@ TypeHandle ClassLoader::LoadTypeDefThrowing(Module *pModule,
             RETURN(typeHnd);
     }
 
-    // We don't want to probe on any threads except for those with a managed thread.  This function
-    // can be called from the GC thread etc. so need to control how we probe.
-    INTERIOR_STACK_PROBE_NOTHROW_CHECK_THREAD(goto Exit;);
-
     IMDInternalImport *pInternalImport = pModule->GetMDImport();
 
 #ifndef DACCESS_COMPILE
@@ -2722,11 +2666,6 @@ TypeHandle ClassLoader::LoadTypeDefThrowing(Module *pModule,
 #endif // !DACCESS_COMPILE
     }
 
-// If stack guards are disabled, then this label is unreferenced and produces a compile error.
-#if defined(FEATURE_STACK_PROBE) && !defined(DACCESS_COMPILE)
-Exit:
-#endif
-
 #ifndef DACCESS_COMPILE
     if ((fUninstantiated == FailIfUninstDefOrRef) && !typeHnd.IsNull() && typeHnd.IsGenericTypeDefinition())
     {
@@ -2741,7 +2680,6 @@ Exit:
     }
 #endif
     ;
-    END_INTERIOR_STACK_PROBE;
     
     RETURN(typeHnd);
 }
@@ -3741,10 +3679,6 @@ void ClassLoader::Notify(TypeHandle typeHnd)
             typeHnd.NotifyDebuggerLoad(NULL, FALSE);
         }
 #endif // DEBUGGING_SUPPORTED
-
-#if defined(ENABLE_PERF_COUNTERS)
-        GetPerfCounters().m_Loading.cClassesLoaded ++;
-#endif
     }
 }
 
@@ -3822,15 +3756,6 @@ TypeHandle ClassLoader::LoadTypeHandleForTypeKey(TypeKey *pTypeKey,
 
     GCX_PREEMP();
 
-    // Type loading can be recursive.  Probe for sufficient stack.
-    //
-    // Execution of the FINALLY in LoadTypeHandleForTypeKey_Body can eat 
-    // a lot of stack because LoadTypeHandleForTypeKey_Inner can rethrow 
-    // any non-SO exceptions that it takes, ensure that we have plenty 
-    // of stack before getting into it (>24 pages on AMD64, remember 
-    // that num pages probed is 2*N on AMD64).
-    INTERIOR_STACK_PROBE_FOR(GetThread(),20);
-
 #ifdef _DEBUG
     if (LoggingOn(LF_CLASSLOADER, LL_INFO1000))
     {
@@ -3864,8 +3789,6 @@ TypeHandle ClassLoader::LoadTypeHandleForTypeKey(TypeKey *pTypeKey,
 
     PushFinalLevels(typeHnd, targetLevel, pInstContext);
 
-    END_INTERIOR_STACK_PROBE;
-
     return typeHnd;
 }
 
@@ -3891,9 +3814,6 @@ TypeHandle ClassLoader::LoadTypeHandleForTypeKeyNoLock(TypeKey *pTypeKey,
 
     TypeHandle typeHnd = TypeHandle();
 
-    // Type loading can be recursive.  Probe for sufficient stack.
-    INTERIOR_STACK_PROBE_FOR(GetThread(),8);
-
     ClassLoadLevel currentLevel = CLASS_LOAD_BEGIN;
     ClassLoadLevel targetLevelUnderLock = targetLevel < CLASS_DEPENDENCIES_LOADED ? targetLevel : (ClassLoadLevel) (CLASS_DEPENDENCIES_LOADED-1);
     while (currentLevel < targetLevelUnderLock)
@@ -3904,8 +3824,6 @@ TypeHandle ClassLoader::LoadTypeHandleForTypeKeyNoLock(TypeKey *pTypeKey,
     }
 
     PushFinalLevels(typeHnd, targetLevel, pInstContext);
-
-    END_INTERIOR_STACK_PROBE;
 
     return typeHnd;
 }
@@ -4210,7 +4128,6 @@ ClassLoader::LoadArrayTypeThrowing(
         if (FORBIDGC_LOADER_USE_ENABLED()) GC_NOTRIGGER; else GC_TRIGGERS;
         if (FORBIDGC_LOADER_USE_ENABLED()) FORBID_FAULT; else { INJECT_FAULT(COMPlusThrowOM()); }
         if (FORBIDGC_LOADER_USE_ENABLED() || fLoadTypes != LoadTypes) { LOADS_TYPE(CLASS_LOAD_BEGIN); } else { LOADS_TYPE(level); }
-        if (fLoadTypes == DontLoadTypes) SO_TOLERANT; else SO_INTOLERANT;
         MODE_ANY;
         SUPPORTS_DAC;
         POSTCONDITION(CheckPointer(RETVAL, ((fLoadTypes == LoadTypes) ? NULL_NOT_OK : NULL_OK)));
@@ -4294,6 +4211,15 @@ VOID ClassLoader::AddAvailableClassDontHaveLock(Module *pModule,
 #endif
 
     CrstHolder ch(&m_AvailableClassLock);
+
+    // R2R pre-computes an export table and tries to avoid populating a class hash at runtime. However the profiler can
+    // still add new types on the fly by calling here. If that occurs we fallback to the slower path of creating the
+    // in memory hashtable as usual.
+    if (!pModule->IsResource() && pModule->GetAvailableClassHash() == NULL)
+    {
+        LazyPopulateCaseSensitiveHashTables();
+    }
+
     AddAvailableClassHaveLock(
         pModule, 
         classdef, 
@@ -4490,6 +4416,15 @@ VOID ClassLoader::AddExportedTypeDontHaveLock(Module *pManifestModule,
     CONTRACTL_END
 
     CrstHolder ch(&m_AvailableClassLock);
+        
+    // R2R pre-computes an export table and tries to avoid populating a class hash at runtime. However the profiler can
+    // still add new types on the fly by calling here. If that occurs we fallback to the slower path of creating the
+    // in memory hashtable as usual.
+    if (!pManifestModule->IsResource() && pManifestModule->GetAvailableClassHash() == NULL)
+    {
+        LazyPopulateCaseSensitiveHashTables();
+    }
+
     AddExportedTypeHaveLock(
         pManifestModule,
         cl,
@@ -5323,9 +5258,6 @@ BOOL ClassLoader::CanAccess(                            // TRUE if access is all
         MODE_ANY;
     }
     CONTRACT_END;
-    
-    // Recursive: CanAccess->CheckAccessMember->CanAccessClass->CanAccess
-    INTERIOR_STACK_PROBE(GetThread());
 
     AccessCheckOptions accessCheckOptionsNoThrow(accessCheckOptions, FALSE);
 
@@ -5377,13 +5309,11 @@ BOOL ClassLoader::CanAccess(                            // TRUE if access is all
         if (!canAccess)
         {
             BOOL fail = accessCheckOptions.FailOrThrow(pContext);
-            RETURN_FROM_INTERIOR_PROBE(fail);
+            RETURN(fail);
         }
     }
 
-    RETURN_FROM_INTERIOR_PROBE(TRUE);
-
-    END_INTERIOR_STACK_PROBE;
+    RETURN(TRUE);
 } // BOOL ClassLoader::CanAccess()
 
 //******************************************************************************
