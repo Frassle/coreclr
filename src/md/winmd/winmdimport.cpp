@@ -1463,6 +1463,13 @@ class WinMDImport : public IMetaDataImport2
         return m_pRawImport->GetGenericParamConstraintProps(gpc, ptGenericParam, ptkConstraintType);
     }
 
+    STDMETHODIMP GetGenericParamIndirection( 
+        mdGenericParam gp,
+        mdGenericParamIndirection *ptkIndirection)
+    {
+        return m_pRawImport->GetGenericParamIndirection(gp, ptkIndirection);
+    }
+
     
     STDMETHODIMP GetPEKind(                   // S_OK or error.
         DWORD* pdwPEKind,                   // [OUT] The kind of PE (0 - not a PE)

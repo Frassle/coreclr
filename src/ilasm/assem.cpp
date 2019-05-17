@@ -1179,6 +1179,17 @@ void Assembler::EmitTypeParameters(mdToken token, int numTyPars, TyParDescr* tyP
     int i;
     mdToken* ptk;
     mdToken tk;
+    // If token is a generic param we need to define it's type paramaters via an indirection
+    if (TypeFromToken(token) == mdtGenericParam) 
+    {
+        if(FAILED(m_pEmitter->DefineGenericParamIndirection(token,&tk)))
+        {
+            report->error("Unable to define generic param'\n");
+            return;
+        }
+        token = tk;
+    }
+
     for(i = 0; i < numTyPars; i++)
     {
         TyParDescr* tyPar = &tyPars[i];

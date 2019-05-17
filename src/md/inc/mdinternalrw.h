@@ -603,6 +603,11 @@ public:
         mdGenericParam *ptGenericParam,     // [OUT] GenericParam that is constrained
         mdToken      *ptkConstraintType);    // [OUT] TypeDef/Ref/Spec constraint
 
+    __checkReturn
+    STDMETHODIMP GetGenericParamIndirection(        // S_OK or error.
+        mdGenericParam gp,                          // [IN] The attribute.
+        mdGenericParamIndirection *ptkIndirection); // [OUT] Put indirection token here.
+
     //**********************************
     // find a particular associate of a property or an event
     //**********************************

@@ -253,6 +253,7 @@ const TblIndex g_TblIndex[TBL_COUNT] =
     {(ULONG) -1,        (ULONG) -1,     mdtGenericParam},   // GenericParam
     {(ULONG) -1,        (ULONG) -1,     mdtMethodSpec},     // MethodSpec
     {(ULONG) -1,        (ULONG) -1,     mdtGenericParamConstraint},// GenericParamConstraint
+    {(ULONG) -1,        (ULONG) -1,     mdtGenericParamIndirection},// GenericParamIndirection
 };
 
 ULONG CMiniMdRW::m_TruncatedEncTables[] =

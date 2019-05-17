@@ -407,5 +407,11 @@
     SCHEMA_ITEM_RID(GenericParamConstraint, Owner, GenericParam)
     SCHEMA_ITEM_CDTKN(GenericParamConstraint, Constraint, TypeDefOrRef)
     SCHEMA_TABLE_END(GenericParamConstraint)
+
+    //-------------------------------------------------------------------------
+    // GenericParamIndirection
+    SCHEMA_TABLE_START(GenericParamIndirection)
+    SCHEMA_ITEM_RID(GenericParamIndirection, Owner, GenericParam)
+    SCHEMA_TABLE_END(GenericParamIndirection)
     
 // eof ------------------------------------------------------------------------

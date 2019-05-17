@@ -3021,7 +3021,7 @@ BOOL PrettyPrintGP(                     // prints name of generic param, or retu
     int n)                              // Index of generic param 
 {
     BOOL ret = FALSE;
-    if(tkOwner && ((TypeFromToken(tkOwner)==mdtTypeDef)||(TypeFromToken(tkOwner)==mdtMethodDef)||(TypeFromToken(tkOwner)==mdtGenericParam)))
+    if(tkOwner && ((TypeFromToken(tkOwner)==mdtTypeDef)||(TypeFromToken(tkOwner)==mdtMethodDef)||(TypeFromToken(tkOwner)==mdtGenericParamIndirection)))
     {
         DWORD           NumTyPars;
         HENUMInternal   hEnumTyPar;

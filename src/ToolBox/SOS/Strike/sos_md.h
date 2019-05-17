@@ -769,6 +769,10 @@ DECLARE_INTERFACE_(IMDInternalImport, IUnknown)
         mdGenericParam *ptGenericParam,         // [OUT] GenericParam that is constrained
         mdToken      *ptkConstraintType) PURE;  // [OUT] TypeDef/Ref/Spec constraint
 
+    STDMETHOD(GetGenericParamIndirection)(               // S_OK or error.
+        mdGenericParam rd,                               // [IN] The attribute.
+        mdGenericParamIndirection *ptkIndirection) PURE; // [OUT] Put indirection token here.
+
     //*****************************************************************************
     // This function gets the "built for" version of a metadata scope.
     //  NOTE: if the scope has never been saved, it will not have a built-for

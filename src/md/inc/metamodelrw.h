@@ -412,6 +412,7 @@ public:
     AddTblRecord(GenericParam)
     AddTblRecord(MethodSpec)
     AddTblRecord(GenericParamConstraint)
+    AddTblRecord(GenericParamIndirection)
 
     // Specialized AddXxxToYyy() functions.
     __checkReturn HRESULT AddMethodToTypeDef(RID td, RID md);

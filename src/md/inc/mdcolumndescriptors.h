@@ -49,3 +49,4 @@ static const BYTE s_NestedClassCol[];
 static const BYTE s_GenericParamCol[];
 static const BYTE s_MethodSpecCol[];
 static const BYTE s_GenericParamConstraintCol[];
+static const BYTE s_GenericParamIndirectionCol[];

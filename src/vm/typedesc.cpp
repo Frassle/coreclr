@@ -1432,9 +1432,15 @@ Instantiation TypeVarTypeDesc::GetTypicalInstantiation(PTR_Module pModule, mdGen
 {
     IMDInternalImport * pInternalImport = pModule->GetMDImport();
 
+    // Lookup the indirection table
+    mdGenericParamIndirection tkGenericParamIndirection;
+    HRESULT hr = pInternalImport->GetGenericParamIndirection(tkParam, &tkGenericParamIndirection);
+    if (FAILED(hr))
+        pModule->GetAssembly()->ThrowTypeLoadException(pInternalImport, tkParam, IDS_CLASSLOAD_BADFORMAT);
+
     // Enumerate the formal type parameters
     HENUMInternal hEnumGenericPars;
-    HRESULT hr = pInternalImport->EnumInit(mdtGenericParam, tkParam, &hEnumGenericPars);
+    hr = pInternalImport->EnumInit(mdtGenericParam, tkGenericParamIndirection, &hEnumGenericPars);
     if (FAILED(hr))
         pModule->GetAssembly()->ThrowTypeLoadException(pInternalImport, tkParam, IDS_CLASSLOAD_BADFORMAT);
 

@@ -757,6 +757,20 @@ HRESULT ProfilerMetadataEmitValidator::DefineGenericParam(
     return m_pInner->DefineGenericParam(tk, ulParamSeq, dwParamFlags, szname, reserved, rtkConstraints, pgp);
 }
 
+HRESULT ProfilerMetadataEmitValidator::DefineGenericParamIndirection(
+        mdToken      tk,
+        mdGenericParamIndirection *pgpi)
+{
+    LIMITED_METHOD_CONTRACT;
+    //modifying pre-existing methods/types is not allowed
+    if ((TypeFromToken(tk) == mdtGenericParam && tk <= maxInitialGenericParam))
+    {
+        return COR_E_NOTSUPPORTED;
+    }
+    return m_pInner->DefineGenericParamIndirection(tk, pgpi);
+}
+
+
 HRESULT ProfilerMetadataEmitValidator::SetGenericParamProps(
         mdGenericParam gp,
         DWORD        dwParamFlags,
@@ -1613,6 +1627,14 @@ HRESULT ProfilerMetadataEmitValidator::GetGenericParamConstraintProps(
 {
     LIMITED_METHOD_CONTRACT;
     return m_pInnerImport->GetGenericParamConstraintProps(gpc, ptGenericParam, ptkConstraintType);
+}
+
+HRESULT ProfilerMetadataEmitValidator::GetGenericParamIndirection(
+    mdGenericParam gp,
+    mdGenericParamIndirection *ptkIndirection)
+{
+    LIMITED_METHOD_CONTRACT;
+    return m_pInnerImport->GetGenericParamIndirection(gp, ptkIndirection);
 }
 
 HRESULT ProfilerMetadataEmitValidator::GetPEKind(

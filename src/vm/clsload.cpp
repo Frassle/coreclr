@@ -405,7 +405,7 @@ BOOL ClassLoader::IsTypicalInstantiation(Module *pModule, mdToken token, Instant
         PRECONDITION(
             TypeFromToken(token) == mdtTypeDef ||
             TypeFromToken(token) == mdtMethodDef ||
-            TypeFromToken(token) == mdtGenericParam );
+            TypeFromToken(token) == mdtGenericParamIndirection );
         SUPPORTS_DAC;
     }
     CONTRACTL_END

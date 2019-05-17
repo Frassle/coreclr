@@ -1520,6 +1520,17 @@ public:
     };
 };
 
+class GenericParamIndirectionRec
+{
+public:
+    enum {
+
+        COL_Owner,                      // genericParam
+        COL_COUNT,
+        COL_KEY = COL_Owner
+    };
+};
+
 #include <poppack.h>
 
 // List of MiniMd tables.
@@ -1570,6 +1581,7 @@ public:
     MiniMdTable(GenericParam)     \
     MiniMdTable(MethodSpec)     \
     MiniMdTable(GenericParamConstraint) \
+    MiniMdTable(GenericParamIndirection) \
 
 #undef MiniMdTable
 #define MiniMdTable(x) TBL_##x,
@@ -1577,7 +1589,8 @@ enum {
     MiniMdTables()
     TBL_COUNT,                              // Highest table.
     TBL_COUNT_V1 = TBL_NestedClass + 1,    // Highest table in v1.0 database
-    TBL_COUNT_V2 = TBL_GenericParamConstraint + 1 // Highest in v2.0 database
+    TBL_COUNT_V2 = TBL_GenericParamConstraint + 1, // Highest in v2.0 database
+    TBL_COUNT_V3 = TBL_GenericParamIndirection + 1 // Highest in v3.0 database
 };
 #undef MiniMdTable
 

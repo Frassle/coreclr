@@ -65,6 +65,25 @@ INT32 QCALLTYPE COMDynamicWrite::DefineGenericParam(QCall::ModuleHandle pModule,
     return (INT32)classE;    
 }
 
+INT32 QCALLTYPE COMDynamicWrite::DefineGenericParamIndirection(QCall::ModuleHandle pModule,
+                                                               INT32 tkParent)
+{
+    QCALL_CONTRACT;
+    
+    mdTypeDef           classE = mdTokenNil; 
+    
+    BEGIN_QCALL;
+
+    RefClassWriter * pRCW = pModule->GetReflectionModule()->GetClassWriter();
+    _ASSERTE(pRCW);
+
+    IfFailThrow(pRCW->GetEmitter()->DefineGenericParamIndirection(tkParent, &classE));
+
+    END_QCALL;
+
+    return (INT32)classE;    
+}
+
 INT32 QCALLTYPE COMDynamicWrite::DefineType(QCall::ModuleHandle pModule,
                                             LPCWSTR wszFullName, 
                                             INT32 tkParent,                               

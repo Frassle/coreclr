@@ -164,6 +164,9 @@ const BYTE CMiniMdBase::s_MethodSpecCol[] = {2,
 const BYTE CMiniMdBase::s_GenericParamConstraintCol[] = {1,
   42,0,2,  64,2,2,
 };
+const BYTE CMiniMdBase::s_GenericParamIndirectionCol[] = {1,
+  42,0,2,
+};
 
 const BYTE* const CMiniMdBase::s_TableColumnDescriptors[] = {
 s_ModuleCol,
@@ -210,5 +213,6 @@ s_ManifestResourceCol,
 s_NestedClassCol,
 s_GenericParamCol,
 s_MethodSpecCol,
-s_GenericParamConstraintCol
+s_GenericParamConstraintCol,
+s_GenericParamIndirectionCol
 };

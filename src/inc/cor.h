@@ -685,6 +685,10 @@ DECLARE_INTERFACE_(IMetaDataEmit2, IMetaDataEmit)
         mdToken      rtkConstraints[],      // [IN] Array of type constraints (TypeDef,TypeRef,TypeSpec)
         mdGenericParam *pgp) PURE;          // [OUT] Put GenericParam token here
 
+    STDMETHOD(DefineGenericParamIndirection)(  // S_OK or error.
+        mdToken   tk,                          // [IN] GenericParam
+        mdGenericParamIndirection *pgpi) PURE; // [OUT] Put GenericParamIndirection token here
+
     STDMETHOD(SetGenericParamProps)(        // S_OK or error.
         mdGenericParam gp,                  // [IN] GenericParam
         DWORD        dwParamFlags,          // [IN] Flags, for future use (e.g. variance)
@@ -1174,6 +1178,10 @@ DECLARE_INTERFACE_(IMetaDataImport2, IMetaDataImport)
         mdGenericParamConstraint gpc,       // [IN] GenericParamConstraint
         mdGenericParam *ptGenericParam,     // [OUT] GenericParam that is constrained
         mdToken      *ptkConstraintType) PURE; // [OUT] TypeDef/Ref/Spec constraint
+
+    STDMETHOD(GetGenericParamIndirection)(               // S_OK or error.
+        mdGenericParam gp,                               // [IN] GenericParam
+        mdGenericParamIndirection *ptkIndirection) PURE; // [OUT] TypeDef/Ref/Spec constraint
 
     STDMETHOD(GetPEKind)(                   // S_OK or error.
         DWORD* pdwPEKind,                   // [OUT] The kind of PE (0 - not a PE)

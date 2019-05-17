@@ -476,6 +476,10 @@ public:
     __checkReturn 
     HRESULT FindPropertyMapFor(RID ridParent, RID *pFoundRid);
 
+    // Return RID to GenericParamIndirection, given the rid to a GenericParam.
+    __checkReturn
+    HRESULT FindGenericParamIndirectionFor(RID ridOwner, RID *pFoundRid);
+
 #if BIGENDIAN
     // Swap a constant
     __checkReturn 
@@ -1704,7 +1708,7 @@ public:
     HRESULT getGenericParamsFor(mdToken typ, RID rid, RID *pEnd, RID *pFoundRid)
     { 
         // If we don't support generic generics and we get asked for generic params for a generic we just return that there are none.
-        if (!SupportsGenericGenerics() && TypeFromToken(typ) == mdtGenericParam) {
+        if (!SupportsGenericGenerics() && TypeFromToken(typ) == mdtGenericParamIndirection) {
             if (pEnd != NULL)
             {
                 *pEnd = 0;
@@ -2085,6 +2089,9 @@ public:
                 break;
             case mdtGenericParamConstraint:
                 bRet = (rid <= getCountGenericParamConstraints());
+                break;
+            case mdtGenericParamIndirection:
+                bRet = (rid <= getCountGenericParamIndirections());
                 break;
             case mdtMethodSpec:
                 bRet = (rid <= getCountMethodSpecs());

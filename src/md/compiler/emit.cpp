@@ -1709,6 +1709,18 @@ STDMETHODIMP RegMeta::DeleteToken(
             m_pStgdb->m_MiniMd.SetSorted(TBL_GenericParamConstraint, false);
             break;
         }
+    case mdtGenericParamIndirection:
+        {
+            GenericParamIndirectionRec *pRecord;
+            IfFailGo(m_pStgdb->m_MiniMd.GetGenericParamIndirectionRecord(RidFromToken(tkObj), &pRecord));
+
+            // Replace the Param column of the GenericIndirection record with a zero RID.
+            IfFailGo(m_pStgdb->m_MiniMd.PutCol(TBL_GenericParamIndirection, GenericParamIndirectionRec::COL_Owner, pRecord, 0));
+
+            // Now the GenericIndirection table is no longer sorted
+            m_pStgdb->m_MiniMd.SetSorted(TBL_GenericParamIndirection, false);
+            break;
+        }
     case mdtPermission:
         {
             mdToken         tkParent;
@@ -1845,10 +1857,10 @@ ErrExit:
 } // RegMeta::DefineNestedType
 
 //*****************************************************************************
-// Define a formal type parameter for the given TypeDef, MethodDef, or GenericParam token.
+// Define a formal type parameter for the given TypeDef, MethodDef, or GenericParamIndirection token.
 //*****************************************************************************
 STDMETHODIMP RegMeta::DefineGenericParam(   // S_OK or error.
-        mdToken      tkOwner,               // [IN] TypeDef or MethodDef or GenericParam
+        mdToken      tkOwner,               // [IN] TypeDef or MethodDef or GenericParamIndirection
         ULONG        ulParamSeq,            // [IN] Index of the type parameter
         DWORD        dwParamFlags,          // [IN] Flags, for future use (e.g. variance)
         LPCWSTR      szName,                // [IN] Name
@@ -1880,10 +1892,10 @@ STDMETHODIMP RegMeta::DefineGenericParam(   // S_OK or error.
     if (!m_pStgdb->m_MiniMd.SupportsGenerics())
         IfFailGo(CLDB_E_INCOMPATIBLE);
 
-    if ((tkOwnerType == mdtTypeDef) || (tkOwnerType == mdtMethodDef) || (tkOwnerType == mdtGenericParam))
+    if ((tkOwnerType == mdtTypeDef) || (tkOwnerType == mdtMethodDef) || (tkOwnerType == mdtGenericParamIndirection))
     {
         // See if this version of the metadata can do Generic Generics
-        if ((tkOwnerType == mdtGenericParam) && !m_pStgdb->m_MiniMd.SupportsGenericGenerics())
+        if ((tkOwnerType == mdtGenericParamIndirection) && !m_pStgdb->m_MiniMd.SupportsGenericGenerics())
             IfFailGo(CLDB_E_INCOMPATIBLE);
 
         // 1. Find/create GP (unique tkOwner+ulParamSeq)  = tkRet
@@ -1947,6 +1959,86 @@ ErrExit:
     return hr;
 #endif //!FEATURE_METADATA_EMIT_IN_DEBUGGER
 } // RegMeta::DefineGenericParam
+
+
+//*****************************************************************************
+// Define an indirection for a GenericParam token.
+//*****************************************************************************
+STDMETHODIMP RegMeta::DefineGenericParamIndirection(   // S_OK or error.
+        mdToken      tkOwner,               // [IN] GenericParam
+        mdGenericParamIndirection *pgpi)               // [OUT] Put GenericParamIndirection token here
+{
+#ifdef FEATURE_METADATA_EMIT_IN_DEBUGGER
+    return E_NOTIMPL;
+#else //!FEATURE_METADATA_EMIT_IN_DEBUGGER
+    HRESULT hr = S_OK;
+
+    BEGIN_ENTRYPOINT_NOTHROW;
+
+    mdToken       tkRet = mdGenericParamIndirectionNil;
+    mdToken tkOwnerType = TypeFromToken(tkOwner);
+
+    LOG((LOGMD, "RegMeta::DefineGenericParamIndirection(0x%08x)\n", tkOwner));
+    START_MD_PERF();
+    LOCKWRITE();
+    
+    IfFailGo(m_pStgdb->m_MiniMd.PreUpdate());
+    
+    // See if this version of the metadata can do Generic Generics
+    if (!m_pStgdb->m_MiniMd.SupportsGenericGenerics())
+        IfFailGo(CLDB_E_INCOMPATIBLE);
+
+    if (tkOwnerType == mdtGenericParam)
+    {
+        // 1. Find/create GPI (unique tkOwner)  = tkRet
+        GenericParamIndirectionRec *pGenericParamIndirection = NULL;
+        RID         iGenericParamIndirection,rid;
+
+        // See if this GenericParam has already been defined.
+        if (CheckDups(MDDupGenericParamIndirection))
+        {
+            IfFailGo(m_pStgdb->m_MiniMd.FindGenericParamIndirectionFor(tkOwner, &rid));
+            if (rid != 0) 
+            {
+                tkRet = TokenFromRid(rid,mdtGenericParamIndirection);
+                // This is a duplicate.  If not ENC, just return 'DUPLICATE'.  If ENC, overwrite.
+                if (!IsENCOn())
+                {
+                    IfFailGo(META_S_DUPLICATE);
+                }
+            }
+        }
+        else
+        {   // Clear foundRid, so we no we didn't find one.
+            rid = 0;
+        }
+
+        // If none was found, create one.
+        if(rid == 0)
+        {
+            IfFailGo(m_pStgdb->m_MiniMd.AddGenericParamIndirectionRecord(&pGenericParamIndirection, &iGenericParamIndirection));
+            IfFailGo(m_pStgdb->m_MiniMd.PutToken(TBL_GenericParamIndirection, GenericParamIndirectionRec::COL_Owner,
+                                                pGenericParamIndirection, tkOwner));
+            tkRet = TokenFromRid(iGenericParamIndirection,mdtGenericParamIndirection);
+        }
+
+        // 2. Set its props
+        IfFailGo(UpdateENCLog(tkRet));
+    }
+    else
+        hr =  META_E_BAD_INPUT_PARAMETER;
+
+ErrExit:
+
+    if(pgpi != NULL)
+        *pgpi = tkRet;
+    STOP_MD_PERF(DefineGenericParamIndirection);
+
+    END_ENTRYPOINT_NOTHROW;
+
+    return hr;
+#endif //!FEATURE_METADATA_EMIT_IN_DEBUGGER
+} // RegMeta::DefineGenericParamIndirection
 
 //*****************************************************************************
 // Set props of a formal type parameter.

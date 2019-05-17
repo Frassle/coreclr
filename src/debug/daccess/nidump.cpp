@@ -391,6 +391,7 @@ void AppendNilToken( mdToken token, SString& buf )
         mdNilEnt(mdGenericParamNil);
         mdNilEnt(mdGenericParamConstraintNil);
         mdNilEnt(mdMethodSpecNil);
+        mdNilEnt(mdGenericParamIndirectionNil);
 
         mdNilEnt(mdStringNil);
 #undef mdNilEnt
@@ -588,6 +589,7 @@ static unsigned s_tableTypes[] =
     mdtGenericParam,
     mdtMethodSpec,
     mdtGenericParamConstraint,
+    mdtGenericParamIndirection,
 };
 
 const NativeImageDumper::EnumMnemonics s_CorHdrFlags[] =

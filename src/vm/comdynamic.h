@@ -44,6 +44,9 @@ public:
                                        INT32 position, 
                                        INT32 * pConstraintTokens);
 
+    static
+    INT32 QCALLTYPE DefineGenericParamIndirection(QCall::ModuleHandle pModule, INT32 tkParent);
+
     // This function will reset the parent class in metadata
     static
     void QCALLTYPE SetParentType(QCall::ModuleHandle pModule, INT32 tdType, INT32 tkParent);

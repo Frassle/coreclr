@@ -1478,6 +1478,14 @@ ErrExit:
         return m_pRawInternalImport->GetGenericParamConstraintProps(rd, ptGenericParam, ptkConstraintType);
     }
 
+    __checkReturn
+    STDMETHODIMP GetGenericParamIndirection(
+        mdGenericParam gp,
+        mdGenericParamIndirection *ptkIndirection)
+    {
+        return m_pRawInternalImport->GetGenericParamIndirection(gp, ptkIndirection);    
+    }
+
     //*****************************************************************************
     // This function gets the "built for" version of a metadata scope.
     //  NOTE: if the scope has never been saved, it will not have a built-for

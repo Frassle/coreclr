@@ -256,6 +256,7 @@ enum SectionFormat
     GenericParamProfilingData           = FirstTokenFlagSection + (mdtGenericParam >> 24),
     MethodSpecProfilingData             = FirstTokenFlagSection + (mdtMethodSpec >> 24),
     GenericParamConstraintProfilingData = FirstTokenFlagSection + (mdtGenericParamConstraint >> 24),
+    GenericParamIndirectionProfilingData = FirstTokenFlagSection + (mdtGenericParamIndirection >> 24),
 
     StringPoolProfilingData,
     GuidPoolProfilingData,

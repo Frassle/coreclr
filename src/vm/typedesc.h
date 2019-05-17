@@ -457,7 +457,7 @@ public:
 
 #ifndef DACCESS_COMPILE
 
-    // FRASER TODO: genericParamParent could be mdtGenericParam
+    // FRASER TODO: genericParamParent could be mdtGenericParamIndirection
     TypeVarTypeDesc(PTR_Module pModule, mdToken genericParamParent, unsigned int index, mdGenericParam token, Instantiation inst) :
         TypeDesc(TypeFromToken(genericParamParent) == mdtMethodDef ? ELEMENT_TYPE_MVAR : ELEMENT_TYPE_VAR)
     {
@@ -469,7 +469,7 @@ public:
             PRECONDITION(
                 TypeFromToken(genericParamParent) == mdtTypeDef ||
                 TypeFromToken(genericParamParent) == mdtMethodDef ||
-                TypeFromToken(genericParamParent) == mdtGenericParam);
+                TypeFromToken(genericParamParent) == mdtGenericParamIndirection);
             PRECONDITION(index >= 0);
             PRECONDITION(TypeFromToken(token) == mdtGenericParam);
         }

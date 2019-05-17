@@ -355,6 +355,10 @@ public:
         mdToken      rtkConstraints[],
         mdGenericParam *pgp);
 
+    virtual HRESULT STDMETHODCALLTYPE DefineGenericParamIndirection(
+        mdToken                   tk,
+        mdGenericParamIndirection *pgpi);
+
     virtual HRESULT STDMETHODCALLTYPE SetGenericParamProps(
         mdGenericParam gp,
         DWORD        dwParamFlags,
@@ -896,6 +900,10 @@ public:
         mdGenericParamConstraint gpc,       // [IN] GenericParamConstraint
         mdGenericParam *ptGenericParam,     // [OUT] GenericParam that is constrained
         mdToken      *ptkConstraintType); // [OUT] TypeDef/Ref/Spec constraint
+
+    virtual HRESULT STDMETHODCALLTYPE GetGenericParamIndirection( // S_OK or error.
+        mdGenericParam rd,                                        // [IN] The attribute.
+        mdGenericParamIndirection *ptkIndirection);               // [OUT] Put indirection token here.
 
     virtual HRESULT STDMETHODCALLTYPE GetPEKind(                   // S_OK or error.
         DWORD* pdwPEKind,                   // [OUT] The kind of PE (0 - not a PE)

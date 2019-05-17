@@ -937,7 +937,7 @@ void TypeString::AppendType(TypeNameBuilder& tnb, TypeHandle ty, Instantiation t
         _ASSERTE(
             TypeFromToken(mdOwner) == mdtTypeDef ||
             TypeFromToken(mdOwner) == mdtMethodDef ||
-            TypeFromToken(mdOwner) == mdtGenericParam);
+            TypeFromToken(mdOwner) == mdtGenericParamIndirection);
             
         LPCSTR szPrefix;
         if (!(format & FormatGenericParam))
@@ -1321,7 +1321,7 @@ void TypeString::AppendTypeKey(TypeNameBuilder& tnb, TypeKey *pTypeKey, DWORD fo
             _ASSERTE(
                 TypeFromToken(mdOwner) == mdtTypeDef ||
                 TypeFromToken(mdOwner) == mdtMethodDef ||
-                TypeFromToken(mdOwner) == mdtGenericParam);
+                TypeFromToken(mdOwner) == mdtGenericParamIndirection);
 
             LPCSTR szPrefix;
             if (!(format & FormatGenericParam))

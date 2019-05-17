@@ -407,6 +407,7 @@ FCFuncStart(gCOMCustomAttributeFuncs)
 FCFuncEnd()
 
 FCFuncStart(gCOMClassWriter)
+    QCFuncElement("DefineGenericParamIndirection", COMDynamicWrite::DefineGenericParamIndirection)
     QCFuncElement("DefineGenericParam", COMDynamicWrite::DefineGenericParam)
     QCFuncElement("DefineType", COMDynamicWrite::DefineType)
     QCFuncElement("SetParentType", COMDynamicWrite::SetParentType)

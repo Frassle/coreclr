@@ -175,7 +175,9 @@
     MD_FUNC(GetGenericParamConstraintProps)\
     MD_FUNC(GetPEKind)\
     MD_FUNC(GetVersionString)\
-    MD_FUNC(GetAssemblyUnification)
+    MD_FUNC(GetAssemblyUnification) \
+    MD_FUNC(DefineGenericParamIndirection) \
+    MD_FUNC(GetGenericParamIndirection)
 
 //-----------------------------------------------------------------------------
 // Create an enum of all the API names. This is the index to access the APIs.

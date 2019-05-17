@@ -70,6 +70,7 @@ typedef mdToken mdTypeSpec;             // TypeSpec object
 typedef mdToken mdGenericParam;         // formal parameter to generic type or method
 typedef mdToken mdMethodSpec;           // instantiation of a generic method
 typedef mdToken mdGenericParamConstraint; // constraint on a formal generic parameter
+typedef mdToken mdGenericParamIndirection; // indirection table for generic generics
 
 // Application string.
 typedef mdToken mdString;               // User literal string token.
@@ -1321,6 +1322,7 @@ typedef enum CorCheckDuplicatesFor
     MDDupGenericParam           = 0x00080000,
     MDDupMethodSpec             = 0x00100000,
     MDDupGenericParamConstraint = 0x00200000,
+    MDDupGenericParamIndirection = 0x00400000,
     // gap for debug junk
     MDDupAssembly               = 0x10000000,
 
@@ -1502,7 +1504,8 @@ typedef enum CorTokenType
     mdtManifestResource     = 0x28000000,       //
     mdtGenericParam         = 0x2a000000,       //
     mdtMethodSpec           = 0x2b000000,       //
-    mdtGenericParamConstraint = 0x2c000000,
+    mdtGenericParamConstraint = 0x2c000000,     //
+    mdtGenericParamIndirection = 0x2d000000,    //
 
     mdtString               = 0x70000000,       //
     mdtName                 = 0x71000000,       //
@@ -1546,6 +1549,7 @@ typedef enum CorTokenType
 #define mdGenericParamNil           ((mdGenericParam)mdtGenericParam)
 #define mdGenericParamConstraintNil ((mdGenericParamConstraint)mdtGenericParamConstraint)
 #define mdMethodSpecNil             ((mdMethodSpec)mdtMethodSpec)
+#define mdGenericParamIndirectionNil ((mdGenericParamIndirection)mdtGenericParamIndirection)
 
 #define mdStringNil                 ((mdString)mdtString)
 

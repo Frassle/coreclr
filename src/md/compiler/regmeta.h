@@ -625,6 +625,10 @@ public:
         mdGenericParam *ptGenericParam,     // [OUT] GenericParam that is constrained
         mdToken      *ptkConstraintType);   // [OUT] TypeDef/Ref/Spec constraint
 
+    STDMETHODIMP GetGenericParamIndirection(        // S_OK or error.
+        mdGenericParam gp,                          // [IN] The attribute.
+        mdGenericParamIndirection *ptkIndirection); // [OUT] Put indirection token here.
+
     STDMETHODIMP GetMethodSpecProps(
         mdMethodSpec mi,                    // [IN] The method instantiation
         mdToken *tkParent,                  // [OUT] MethodDef or MemberRef
@@ -1099,6 +1103,10 @@ public:
         DWORD        reserved,              // [IN] For future use (e.g. non-type parameters)
         mdToken      rtkConstraints[],      // [IN] Array of type constraints (TypeDef,TypeRef,TypeSpec)
         mdGenericParam *pgp);               // [OUT] Put GenericParam token here
+
+    STDMETHODIMP DefineGenericParamIndirection(  // S_OK or error.
+        mdToken   tk,                          // [IN] GenericParam
+        mdGenericParamIndirection *pgpi); // [OUT] Put GenericParamIndirection token here
 
     STDMETHODIMP SetGenericParamProps(      // S_OK or error.
         mdGenericParam gp,                  // [IN] GenericParam

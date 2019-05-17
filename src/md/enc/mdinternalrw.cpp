@@ -720,6 +720,9 @@ ULONG MDInternalRW::GetCountWithTokenKind(     // return hresult
     case mdtGenericParamConstraint:
         ulCount = m_pStgdb->m_MiniMd.getCountGenericParamConstraints();
         break;
+    case mdtGenericParamIndirection:
+        ulCount = m_pStgdb->m_MiniMd.getCountGenericParamIndirections();
+        break;
     case mdtMethodSpec:
         ulCount = m_pStgdb->m_MiniMd.getCountMethodSpecs();
         break;
@@ -3569,6 +3572,40 @@ HRESULT MDInternalRW::GetGenericParamConstraintProps(      // S_OK or error.
 ErrExit:
     return hr;
 } // MDInternalRW::GetGenericParamConstraintProps
+
+//*****************************************************************************
+// This routine gets the GenericParamIndirection token for a given GenericParam.
+//*****************************************************************************
+__checkReturn
+HRESULT MDInternalRW::GetGenericParamIndirection(  // S_OK or error.
+        mdGenericParam gp,                         // [IN] The generic param token
+        mdGenericParamIndirection *ptkIndirection) // [OUT] TypeDef/Ref/Spec constraint
+{
+    HRESULT         hr = NOERROR;
+    CMiniMdRW       *pMiniMd = NULL;
+    RID rid;
+
+    pMiniMd = &(m_pStgdb->m_MiniMd);
+
+    // See if this version of the metadata can do Generics generics, else return no indirection
+    if (!pMiniMd->SupportsGenericGenerics())
+    {
+        *ptkIndirection = TokenFromRid(0, mdtGenericParamIndirection);
+        return hr;
+    }
+
+    if((TypeFromToken(gp) == mdtGenericParam) && (RidFromToken(gp) != 0))
+    {
+        IfFailGo(pMiniMd->FindGenericParamIndirectionFor(gp, &rid));
+        *ptkIndirection = TokenFromRid(rid, mdtGenericParamIndirection);
+    }
+    else
+        hr =  META_E_BAD_INPUT_PARAMETER;
+
+ErrExit:    
+    return hr;
+} // HRESULT MDInternalRW::GetGenericParamIndirection()
+
 
 //*****************************************************************************
 // Find methoddef of a particular associate with a property or an event

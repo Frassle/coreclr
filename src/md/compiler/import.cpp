@@ -3314,6 +3314,50 @@ ErrExit:
 } // HRESULT RegMeta::GetGenericParamConstraintProps()
 
 //*****************************************************************************
+// This routine gets the GenericParamIndirection token for a given GenericParam.
+//*****************************************************************************
+HRESULT RegMeta::GetGenericParamIndirection(       // S_OK or error.
+        mdGenericParam gp,                         // [IN] The generic param token
+        mdGenericParamIndirection *ptkIndirection) // [OUT] TypeDef/Ref/Spec constraint
+{
+    HRESULT         hr = NOERROR;
+
+    BEGIN_ENTRYPOINT_NOTHROW;
+
+    CMiniMdRW       *pMiniMd = NULL;
+    RID rid;
+
+    LOG((LOGMD, "MD RegMeta::GetGenericParamIndirection(0x%08x, 0x%08x)\n", 
+        gp, ptkIndirection));
+
+    START_MD_PERF();
+    LOCKREAD();
+
+    pMiniMd = &(m_pStgdb->m_MiniMd);
+
+    // See if this version of the metadata can do Generics generics, else return no indirection
+    if (!pMiniMd->SupportsGenericGenerics())
+    {
+        *ptkIndirection = TokenFromRid(0, mdtGenericParamIndirection);
+        return hr;
+    }
+
+    if((TypeFromToken(gp) == mdtGenericParam) && (RidFromToken(gp) != 0))
+    {
+        IfFailGo(pMiniMd->FindGenericParamIndirectionFor(gp, &rid));
+        *ptkIndirection = TokenFromRid(rid, mdtGenericParamIndirection);
+    }
+    else
+        hr =  META_E_BAD_INPUT_PARAMETER;
+
+ErrExit:
+    STOP_MD_PERF(GetGenericParamIndirection);
+    END_ENTRYPOINT_NOTHROW;
+    
+    return hr;
+} // HRESULT RegMeta::GetGenericParamIndirection()
+
+//*****************************************************************************
 // This routine gets the properties for the given MethodSpec token.
 //*****************************************************************************
 HRESULT RegMeta::GetMethodSpecProps(         // S_OK or error.

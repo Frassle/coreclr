@@ -413,9 +413,9 @@ HRESULT MDInternalRO::EnumInit(     // return S_FALSE if record not found
         break;
 
     case mdtGenericParam:
-        _ASSERTE(TypeFromToken(tkParent) == mdtTypeDef || TypeFromToken(tkParent) == mdtMethodDef || TypeFromToken(tkParent) == mdtGenericParam);
+        _ASSERTE(TypeFromToken(tkParent) == mdtTypeDef || TypeFromToken(tkParent) == mdtMethodDef || TypeFromToken(tkParent) == mdtGenericParamIndirection);
 
-        if (TypeFromToken(tkParent) != mdtTypeDef && TypeFromToken(tkParent) != mdtMethodDef && TypeFromToken(tkParent) != mdtGenericParam)
+        if (TypeFromToken(tkParent) != mdtTypeDef && TypeFromToken(tkParent) != mdtMethodDef && TypeFromToken(tkParent) != mdtGenericParamIndirection)
             IfFailGo(CLDB_E_FILE_CORRUPT);
         
         IfFailGo(m_LiteWeightStgdb.m_MiniMd.getGenericParamsFor(
@@ -2758,6 +2758,40 @@ HRESULT MDInternalRO::GetGenericParamConstraintProps(      // S_OK or error.
 ErrExit:
     return hr;
 } // MDInternalRO::GetGenericParamConstraintProps
+
+//*****************************************************************************
+// This routine gets the GenericParamIndirection token for a given GenericParam.
+//*****************************************************************************
+__checkReturn
+HRESULT MDInternalRO::GetGenericParamIndirection(  // S_OK or error.
+        mdGenericParam gp,                         // [IN] The generic param token
+        mdGenericParamIndirection *ptkIndirection) // [OUT] TypeDef/Ref/Spec constraint
+{
+    HRESULT         hr = NOERROR;
+    CMiniMd        *pMiniMd = NULL;
+    RID rid;
+
+    pMiniMd = &(m_LiteWeightStgdb.m_MiniMd);
+
+    // See if this version of the metadata can do Generics generics, else return no indirection
+    if (!pMiniMd->SupportsGenericGenerics())
+    {
+        *ptkIndirection = TokenFromRid(0, mdtGenericParamIndirection);
+        return hr;
+    }
+
+    if((TypeFromToken(gp) == mdtGenericParam) && (RidFromToken(gp) != 0))
+    {
+        IfFailGo(pMiniMd->FindGenericParamIndirectionFor(gp, &rid));
+        *ptkIndirection = TokenFromRid(rid, mdtGenericParamIndirection);
+    }
+    else
+        hr =  META_E_BAD_INPUT_PARAMETER;
+
+ErrExit:    
+    return hr;
+} // HRESULT MDInternalRO::GetGenericParamIndirection()
+
 
 //*****************************************************************************
 // Find methoddef of a particular associate with a property or an event

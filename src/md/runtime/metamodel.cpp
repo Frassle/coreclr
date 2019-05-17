@@ -408,7 +408,7 @@ const mdToken CMiniMdBase::mdtTypeOrMethodDef[2] = {
 const mdToken CMiniMdBase::mdtGenericParamParent[3] = {
     mdtTypeDef,
     mdtMethodDef,
-    mdtGenericParam
+    mdtGenericParamIndirection
 };
 
 const int CMiniMdBase::m_cb[] = {0,1,1,2,2,3,3,3,3,4,4,4,4,4,4,4,4,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5,5}; 
@@ -468,7 +468,7 @@ CMiniMdBase::CMiniMdBase()
     MiniMdTables()
 
     m_TblCount = TBL_COUNT;
-    _ASSERTE(TBL_COUNT == TBL_COUNT_V2); // v2 counts.
+    _ASSERTE(TBL_COUNT == TBL_COUNT_V3); // v3 counts.
 
     m_fVerifiedByTrustedSource = FALSE;
 
@@ -497,6 +497,7 @@ CMiniMdBase::CMiniMdBase()
     _ASSERTE((TypeFromToken(mdtGenericParam) >> 24)     == TBL_GenericParam);
     _ASSERTE((TypeFromToken(mdtMethodSpec) >> 24)       == TBL_MethodSpec);
     _ASSERTE((TypeFromToken(mdtGenericParamConstraint) >> 24) == TBL_GenericParamConstraint);
+    _ASSERTE((TypeFromToken(mdtGenericParamIndirection) >> 24) == TBL_GenericParamIndirection);
 } // CMiniMdBase::CMiniMdBase
 
 
@@ -1052,6 +1053,50 @@ CMiniMdBase::SwapConstant(
     return hr;
 } // CMiniMdBase::SwapConstant
 #endif //BIGENDIAN
+
+HRESULT 
+CMiniMdBase::FindGenericParamIndirectionFor(
+    RID  ridOwner, 
+    RID *pFoundRid)
+{
+    HRESULT hr;
+    ULONG   i;
+    ULONG   iCount;
+    void   *pRec;
+    RID     rid;
+
+    // If the table is sorted, use binary search.  However we can only trust
+    // the sorted bit if we have verified it (see definition in MetaModel.h)
+    if (IsVerified() && m_Schema.IsSorted(TBL_GenericParamIndirection))
+    {
+        return vSearchTable(TBL_GenericParamIndirection, 
+                            _COLDEF(GenericParamIndirection,Owner),
+                            ridOwner,
+                            pFoundRid);
+    }
+    else
+    {
+        iCount = GetCountRecs(TBL_GenericParamIndirection);
+
+        // loop through all
+        for (i = 1; i <= iCount; i++)
+        {
+            IfFailRet(vGetRow(TBL_GenericParamIndirection, i, &pRec));
+
+            // linear search for indirection record
+            rid = getIX(pRec, _COLDEF(GenericParamIndirection,Owner));
+            if (rid == ridOwner)
+            {
+                *pFoundRid = i;
+                return S_OK;
+            }
+        }
+
+        *pFoundRid = 0;
+        return S_OK;
+    }
+
+} // CMiniMdBase::FindGenericIndirectionFor
 
 //*****************************************************************************
 // It is non-trivial to sort propertymap. VB is generating properties in 
