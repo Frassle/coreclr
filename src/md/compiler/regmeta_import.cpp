@@ -352,8 +352,15 @@ STDMETHODIMP RegMeta::EnumGenericParams(HCORENUM *phEnum, mdToken tkOwner,
     }
 
     
-    _ASSERTE(TypeFromToken(tkOwner) == mdtTypeDef || TypeFromToken(tkOwner) == mdtMethodDef || TypeFromToken(tkOwner) == mdtGenericParamIndirection);
+    _ASSERTE(TypeFromToken(tkOwner) == mdtTypeDef || TypeFromToken(tkOwner) == mdtMethodDef || TypeFromToken(tkOwner) == mdtGenericParam);
 
+    if (TypeFromToken(tkOwner) == mdtGenericParam)
+    {
+        // Lookup the indirection table
+        RID rid;
+        IfFailGo(pMiniMd->FindGenericParamIndirectionFor(RidFromToken(tkOwner), &rid));
+        tkOwner = TokenFromRid(rid, mdtGenericParamIndirection);
+    }
 
     if ( *ppmdEnum == 0 )
     {
