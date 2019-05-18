@@ -635,93 +635,11 @@ public:
 
 }; // class CStableSortMiniMdRW
 
-class CSelfSortMiniMdRW : public CQuickSortMiniMdRW
-{
-public:
-    CSelfSortMiniMdRW(
-        CMiniMdRW   &MiniMd,                // MiniMd with the data.
-        ULONG       ixTbl,                  // The table.
-        ULONG       ixCol,                  // The column.
-        bool        bMapToken)              // Is MapToken handling desired.
-        :   CQuickSortMiniMdRW(MiniMd, ixTbl, ixCol, bMapToken)
-    {}
-
-    //*****************************************************************************
-    // Call to sort the array.
-    //*****************************************************************************
-    __checkReturn 
-    HRESULT Sort()
-    {
-        HRESULT hr = S_OK;
-
-        _ASSERTE(m_MiniMd.IsSortable(m_ixTbl));
-        m_iCount = m_MiniMd.GetCountRecs(m_ixTbl);
-        mdToken tableTyp = m_MiniMd.GetTokenForTable(m_ixTbl);
-
-        // If remap notifications are desired, prepare to collect the info in a RIDMAP.
-        IfFailGo(PrepMapTokens());
-        
-        for (int i=m_iCount; i>1; --i)
-        {
-            int bSwap = 0;
-            int bReset = 0;
-            for (int j=1; j<i; ++j)
-            {
-                int nResult;
-                IfFailGo(Compare(j, j+1, &nResult));
-                if (nResult > 0)
-                {
-                    IfFailGo(Swap(j, j+1));
-                    bSwap = 1;
-
-                    for(int k=1; k<=m_iCount; ++k) {
-                        void* pRow;
-                        m_MiniMd.getRow(m_ixTbl, i, &pRow);
-                        mdToken tk = m_MiniMd.GetToken(m_ixTbl, m_ixCol, pRow);
-                        RID rid = RidFromToken(tk);
-                        mdToken typ = TypeFromToken(tk);
-
-                        if (typ == tableTyp && rid == j)
-                        {
-                            IfFailGo(m_MiniMd.PutToken(m_ixTbl, m_ixCol, pRow, TokenFromRid(j+1, tableTyp)));
-                            bReset = 1;
-                        }
-                        else if (typ == tableTyp && rid == j+1)
-                        {
-                            IfFailGo(m_MiniMd.PutToken(m_ixTbl, m_ixCol, pRow, TokenFromRid(j, tableTyp)));
-                            bReset = 1;
-                        }
-                    }
-                }
-            }
-
-            // If we had to remap row we need to start sorting again
-            if (bReset)
-                i = m_iCount + 1; // +1 because the end of loop will decrement it
-                
-            // If made a full pass w/o swaps, done.
-            if (!bSwap)
-                break;
-        }
-        
-        // The table is sorted until its next change.
-        SetSorted();
-        
-        // If remap notifications were desired, send them.
-        IfFailGo(DoMapTokens());
-        
-    ErrExit:
-        return hr;
-    } // CStableSortMiniMdRW::Sort
-
-}; // class CSelfSortMiniMdRW
-
 //-------------------------------------------------------------------------
 #define SORTER(tbl,key) CQuickSortMiniMdRW sort##tbl(*this, TBL_##tbl, tbl##Rec::COL_##key, false);
 #define SORTER_WITHREMAP(tbl,key) CQuickSortMiniMdRW sort##tbl(*this, TBL_##tbl, tbl##Rec::COL_##key, true);
 #define STABLESORTER(tbl,key)   CStableSortMiniMdRW sort##tbl(*this, TBL_##tbl, tbl##Rec::COL_##key, false);
 #define STABLESORTER_WITHREMAP(tbl,key)   CStableSortMiniMdRW sort##tbl(*this, TBL_##tbl, tbl##Rec::COL_##key, true);
-#define SELFSORTER_WITHREMAP(tbl,key)   CSelfSortMiniMdRW sort##tbl(*this, TBL_##tbl, tbl##Rec::COL_##key, true);
 //-------------------------------------------------------------------------
 
 
@@ -3118,14 +3036,14 @@ CMiniMdRW::PreSaveFull()
         {
             // Sort the GenericParam table by the Owner.
             // Don't disturb the sequence ordering within Owner
-            // Also fixes up Owner references to other GenericParams as it goes
-            SELFSORTER_WITHREMAP(GenericParam, Owner);
+            STABLESORTER_WITHREMAP(GenericParam, Owner);
 
             IfFailGo(sortGenericParam.Sort());
 
             // The GenericParamConstraint is parented to the GenericParam table,
             //  so it need fixups after sorting GenericParam table.
             IfFailGo(FixUpTable(TBL_GenericParamConstraint));
+            IfFailGo(FixUpTable(TBL_GenericParamIndirection));
         }
         
         // Sort the InterfaceImpl table by class.
@@ -3147,6 +3065,9 @@ CMiniMdRW::PreSaveFull()
             // Don't disturb the sequence ordering within Owner
             STABLESORTER_WITHREMAP(GenericParamConstraint, Owner);
             IfFailGo(sortGenericParamConstraint.Sort());
+
+            STABLESORTER_WITHREMAP(GenericParamIndirection, Owner);
+            IfFailGo(sortGenericParamIndirection.Sort());
         }
     }
     // Fixup the custom attribute table.  After this, do not sort any table
