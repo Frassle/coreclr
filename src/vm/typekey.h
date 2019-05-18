@@ -79,14 +79,14 @@ public:
     }
 
     // Constructor for instantiated types or open generic generics
-    TypeKey(Module *pModule, mdTypeDef token, Instantiation inst = Instantiation())
+    TypeKey(Module *pModule, mdToken token, Instantiation inst = Instantiation())
     {
         WRAPPER_NO_CONTRACT;
         PRECONDITION(CheckPointer(pModule));
-        PRECONDITION(TypeFromToken(token) == mdtTypeDef || TypeFromToken(token) == mdtTypeDef);
+        PRECONDITION(TypeFromToken(token) == mdtGenericParamIndirection || TypeFromToken(token) == mdtTypeDef);
         PRECONDITION(!IsNilToken(token));
 
-        if(TypeFromToken(token) == mdtGenericParam)
+        if(TypeFromToken(token) == mdtGenericParamIndirection)
         {
             m_kind = ELEMENT_TYPE_VAR;
         }
