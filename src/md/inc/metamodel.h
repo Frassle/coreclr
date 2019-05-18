@@ -539,22 +539,14 @@ public:
         ULONG indexCodedToken = ColDef.m_Type - iCodedToken;
         const CCodedTokenDef *pCdTkn = &g_CodedTokens[indexCodedToken];
 
-        if (m_Schema.m_major <= 2) {
-            //<TODO>@FUTURE: make compile-time calculation</TODO>
-            ULONG32 ix = (ULONG32)(val & ~(-1 << m_cb[pCdTkn->m_cTokens]));
-            // If the coded token has an invalid table index, return the first entry
-            //  from the array of valid token types.  It would be preferable to
-            //  return an error or to raise an exception.
-            if (ix >= pCdTkn->m_cTokens)
-                return pCdTkn->m_pTokens[0];
-            return TokenFromRid(val >> m_cb[pCdTkn->m_cTokens], pCdTkn->m_pTokens[ix]);
-        } else {
-            size_t shift = (ColDef.m_cbColumn * 8) - m_cb[pCdTkn->m_cTokens];
-            ULONG32 ix = val >> shift;
-            if (ix >= pCdTkn->m_cTokens)
-                return pCdTkn->m_pTokens[0];
-            return TokenFromRid(val & ((1<<shift)-1), pCdTkn->m_pTokens[ix]);
-        }
+        //<TODO>@FUTURE: make compile-time calculation</TODO>
+        ULONG32 ix = (ULONG32)(val & ~(-1 << m_cb[pCdTkn->m_cTokens]));
+        // If the coded token has an invalid table index, return the first entry
+        //  from the array of valid token types.  It would be preferable to
+        //  return an error or to raise an exception.
+        if (ix >= pCdTkn->m_cTokens)
+            return pCdTkn->m_pTokens[0];
+        return TokenFromRid(val >> m_cb[pCdTkn->m_cTokens], pCdTkn->m_pTokens[ix]);
     }
     static const int m_cb[];
 

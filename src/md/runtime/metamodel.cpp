@@ -439,13 +439,8 @@ CMiniMdBase::encodeToken(
     if (ix >= cTokens)
         return mdTokenNil;
 
-    if (m_Schema.m_major <= 2) {
-        //<TODO>@FUTURE: make compile-time calculation</TODO>
-        return (ULONG)((rid << m_cb[cTokens]) | ix);
-    } else {
-        size_t shift = (ColDef.m_cbColumn * 8) - m_cb[cTokens];
-        return (ULONG)((ix << shift) | rid);
-    }
+    //<TODO>@FUTURE: make compile-time calculation</TODO>
+    return (ULONG)((rid << m_cb[cTokens]) | ix);
 } // CMiniMd::encodeToken
 
 
