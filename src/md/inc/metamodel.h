@@ -1699,6 +1699,7 @@ public:
     __checkReturn 
     HRESULT getGenericParamsFor(mdToken typ, RID rid, RID *pEnd, RID *pFoundRid)
     { 
+        _ASSERTE(TypeFromToken(typ) == mdtTypeDef || TypeFromToken(typ) == mdtMethodDef || TypeFromToken(typ) == mdtGenericParamIndirection);
         // If we don't support generic generics and we get asked for generic params for a generic we just return that there are none.
         if (!SupportsGenericGenerics() && TypeFromToken(typ) == mdtGenericParamIndirection) {
             if (pEnd != NULL)
