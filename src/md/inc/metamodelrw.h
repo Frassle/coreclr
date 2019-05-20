@@ -970,6 +970,7 @@ public:
     __checkReturn 
     HRESULT GetGenericParamsForToken(mdToken tk, RID *pRidStart, RID *pRidEnd = 0)
     {
+        _ASSERTE(TypeFromToken(tk) == mdtTypeDef || TypeFromToken(tk) == mdtMethodDef || TypeFromToken(tk) == mdtGenericParamIndirection);
         VirtualSort* pVS = m_pVS[TBL_MethodSpec];
         CMiniColDef colDef = m_TableDefs[TBL_MethodSpec].m_pColDefs[pVS->m_ixCol];
         return LookUpTableByCol(
