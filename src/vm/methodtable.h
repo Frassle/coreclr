@@ -534,6 +534,8 @@ SystemVClassificationType CorInfoType2UnixAmd64Classification(CorElementType eeT
         SystemVClassificationTypeUnknown,               // ELEMENT_TYPE_CMOD_REQD
         SystemVClassificationTypeUnknown,               // ELEMENT_TYPE_CMOD_OPT
         SystemVClassificationTypeUnknown,               // ELEMENT_TYPE_INTERNAL
+
+        SystemVClassificationTypeIntegerReference,      // ELEMENT_TYPE_HOLE
     };
 
     _ASSERTE(sizeof(toSystemVAmd64ClassificationTypeMap) == ELEMENT_TYPE_MAX);

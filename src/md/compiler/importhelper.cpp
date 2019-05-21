@@ -1672,6 +1672,7 @@ ImportHelper::MergeUpdateTokenInFieldSig(
 
         case ELEMENT_TYPE_MVAR:
         case ELEMENT_TYPE_VAR:
+        case ELEMENT_TYPE_HOLE:
             // syntax : VAR <n>
             // syntax : MVAR <n>
 

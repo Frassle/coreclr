@@ -118,6 +118,7 @@ SELECTANY const ti_types g_ti_types_map[CORINFO_TYPE_COUNT] = {
     TI_REF,    // CORINFO_TYPE_CLASS           = 0x14,
     TI_STRUCT, // CORINFO_TYPE_REFANY          = 0x15,
     TI_REF,    // CORINFO_TYPE_VAR             = 0x16,
+    TI_REF,    // CORINFO_TYPE_HOLE            = 0x17,
 };
 #ifdef _MSC_VER
 }

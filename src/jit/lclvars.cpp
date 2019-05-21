@@ -1198,6 +1198,7 @@ void Compiler::lvaInitVarDsc(LclVarDsc*              varDsc,
                              CORINFO_SIG_INFO*       varSig)
 {
     noway_assert(varDsc == &lvaTable[varNum]);
+    noway_assert(corInfoType != CORINFO_TYPE_HOLE);    
 
     switch (corInfoType)
     {

@@ -719,6 +719,9 @@ enum CorInfoType
     // the JIT in "import only" mode.
 
     CORINFO_TYPE_VAR             = 0x16,
+
+    // CORINFO_TYPE_HOLEis a generic type hole. Like CORINFO_TYPE_VAR it only appears in verification.
+    CORINFO_TYPE_HOLE            = 0x17,
     CORINFO_TYPE_COUNT,                         // number of jit types
 };
 

@@ -170,6 +170,7 @@ inline var_types JITtype2varType(CorInfoType type)
         // verification types and CLASS_HANDLEs to track the difference.
 
         TYP_REF, // CORINFO_TYPE_VAR             = 0x16,
+        TYP_REF, // CORINFO_TYPE_HOLE            = 0x17,
     };
 
     // spot check to make certain enumerations have not changed

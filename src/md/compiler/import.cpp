@@ -3757,7 +3757,8 @@ HRESULT RegMeta::_SearchOneArgForCallConv(// S_OK, -1 if found, or error.
             break;
 
         case ELEMENT_TYPE_VAR : 
-        case ELEMENT_TYPE_MVAR : 
+        case ELEMENT_TYPE_MVAR :
+        case ELEMENT_TYPE_HOLE :
         // skip over index
             cbTotal += CorSigUncompressData(&pbSig[cbTotal], &ulData);
             break;

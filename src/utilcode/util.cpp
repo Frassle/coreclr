@@ -1969,6 +1969,7 @@ HRESULT validateOneArg(
                 break;
                 case ELEMENT_TYPE_VAR:
                 case ELEMENT_TYPE_MVAR:
+                case ELEMENT_TYPE_HOLE:
                     // Validate that index is present.
                     if (FAILED(pSig->GetData(&ulIndex)))
                     {

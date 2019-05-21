@@ -2210,6 +2210,7 @@ HRESULT WinMDAdapter::RewriteTypeInSignature(
         // Read a number
     case ELEMENT_TYPE_VAR:     // a class type variable VAR <number>
     case ELEMENT_TYPE_MVAR:    // a method type variable MVAR <number>
+    case ELEMENT_TYPE_HOLE:
         {
             pSigBuilder->AppendByte(elementType);
             

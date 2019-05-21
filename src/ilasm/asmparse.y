@@ -1688,6 +1688,7 @@ type                    : CLASS_ className                    { if($2 == PASM->m
                                                                   $$->append($1);
                                                                   corEmitInt($$, corCountArgs($3));
                                                                   $$->append($3); delete $1; delete $3; }}
+                        | '@' int32                           { $$ = new BinStr(); $$->appendInt8(ELEMENT_TYPE_HOLE); corEmitInt($$, $2); }
                         | '!' '!' int32                       { //if(PASM->m_pCurMethod)  {
                                                                 //  if(($3 < 0)||((DWORD)$3 >= PASM->m_pCurMethod->m_NumTyPars))
                                                                 //    PASM->report->error("Invalid method type parameter '%d'\n",$3);

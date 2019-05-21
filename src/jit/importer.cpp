@@ -925,6 +925,7 @@ GenTreeArgList* Compiler::impPopList(unsigned count, CORINFO_SIG_INFO* sig, GenT
         if (sig->retTypeSigClass != nullptr && sig->retType != CORINFO_TYPE_CLASS &&
             sig->retType != CORINFO_TYPE_BYREF && sig->retType != CORINFO_TYPE_PTR && sig->retType != CORINFO_TYPE_VAR)
         {
+            assert(sig->retType != CORINFO_TYPE_HOLE);
             // Make sure that all valuetypes (including enums) that we push are loaded.
             // This is to guarantee that if a GC is triggerred from the prestub of this methods,
             // all valuetypes in the method signature are already loaded.
@@ -962,6 +963,7 @@ GenTreeArgList* Compiler::impPopList(unsigned count, CORINFO_SIG_INFO* sig, GenT
             if (corType != CORINFO_TYPE_CLASS && corType != CORINFO_TYPE_BYREF && corType != CORINFO_TYPE_PTR &&
                 corType != CORINFO_TYPE_VAR && (argRealClass = info.compCompHnd->getArgClass(sig, argLst)) != nullptr)
             {
+                assert(corType != CORINFO_TYPE_HOLE);
                 // Everett MC++ could generate IL with a mismatched valuetypes. It used to work with Everett JIT,
                 // but it stopped working in Whidbey when we have started passing simple valuetypes as underlying
                 // primitive types.
@@ -4738,6 +4740,7 @@ typeInfo Compiler::verMakeTypeInfo(CorInfoType ciType, CORINFO_CLASS_HANDLE clsH
             }
             break;
         case CORINFO_TYPE_VAR:
+        case CORINFO_TYPE_HOLE:
             return verMakeTypeInfo(clsHnd);
 
         case CORINFO_TYPE_PTR: // for now, pointers are treated as an error
@@ -7935,6 +7938,7 @@ var_types Compiler::impImportCall(OPCODE                  opcode,
                     sig->retType != CORINFO_TYPE_BYREF && sig->retType != CORINFO_TYPE_PTR &&
                     sig->retType != CORINFO_TYPE_VAR)
                 {
+                    assert(sig->retType != CORINFO_TYPE_HOLE);
                     // Make sure that all valuetypes (including enums) that we push are loaded.
                     // This is to guarantee that if a GC is triggerred from the prestub of this methods,
                     // all valuetypes in the method signature are already loaded.

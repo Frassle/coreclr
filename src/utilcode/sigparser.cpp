@@ -39,6 +39,7 @@ HRESULT SigParser::SkipExactlyOne()
                 break;
             case ELEMENT_TYPE_VAR:
             case ELEMENT_TYPE_MVAR:
+            case ELEMENT_TYPE_HOLE:
                 IfFailRet(GetData(NULL));      // Skip variable number
                 break;
             case ELEMENT_TYPE_VAR_ZAPSIG:

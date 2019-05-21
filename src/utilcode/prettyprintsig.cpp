@@ -362,6 +362,11 @@ static PCCOR_SIGNATURE PrettyPrintType(
         appendStrW(out, W("!"));  
         appendStrNumW(out, CorSigUncompressData(typePtr));
         break;
+
+    case ELEMENT_TYPE_HOLE:  
+        appendStrW(out, W("@"));  
+        appendStrNumW(out, CorSigUncompressData(typePtr));
+        break;
         
     case ELEMENT_TYPE_GENERICINST:
         {

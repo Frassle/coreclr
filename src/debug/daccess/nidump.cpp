@@ -2866,6 +2866,10 @@ IMetaDataImport2 * NativeImageDumper::TypeToString(PTR_CCOR_SIGNATURE &sig,
         buf.AppendPrintf( W("!%d"), DacSigUncompressData(sig));
         break;
 
+    case ELEMENT_TYPE_HOLE:
+        buf.AppendPrintf( W("@%d"), DacSigUncompressData(sig));
+        break;
+
     case ELEMENT_TYPE_VAR_ZAPSIG:
         {
             buf.Append( W("var ") );

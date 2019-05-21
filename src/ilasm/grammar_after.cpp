@@ -1271,6 +1271,7 @@ AGAIN:
 
         case ELEMENT_TYPE_VAR:
         case ELEMENT_TYPE_MVAR:
+        case ELEMENT_TYPE_HOLE:
                 CorSigUncompressData((PCCOR_SIGNATURE&) ptr);  // bound
                 break;
         
