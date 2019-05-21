@@ -83,10 +83,10 @@ public:
     {
         WRAPPER_NO_CONTRACT;
         PRECONDITION(CheckPointer(pModule));
-        PRECONDITION(TypeFromToken(token) == mdtGenericParamIndirection || TypeFromToken(token) == mdtTypeDef);
+        PRECONDITION(TypeFromToken(token) == mdtGenericParam || TypeFromToken(token) == mdtTypeDef);
         PRECONDITION(!IsNilToken(token));
 
-        if(TypeFromToken(token) == mdtGenericParamIndirection)
+        if(TypeFromToken(token) == mdtGenericParam)
         {
             m_kind = ELEMENT_TYPE_VAR;
         }
