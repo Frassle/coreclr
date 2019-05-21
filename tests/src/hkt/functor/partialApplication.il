@@ -6,7 +6,7 @@
 {
 }
 
-.assembly genericClass
+.assembly partialApplication
 {
 }
 
@@ -48,7 +48,7 @@
 
   // Now with a partial instantiation
 
-  ldtoken class KindedClass`1<class [mscorlib]System.Collections.Generic.Dictionary`2<int8, @1>>
+  ldtoken class KindedClass`1<class [mscorlib]System.Collections.Generic.Dictionary`2<int8, #1>>
   call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
   stloc typClass
 
