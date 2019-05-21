@@ -469,7 +469,7 @@ public:
             PRECONDITION(
                 TypeFromToken(genericParamParent) == mdtTypeDef ||
                 TypeFromToken(genericParamParent) == mdtMethodDef ||
-                TypeFromToken(genericParamParent) == mdtGenericParamIndirection);
+                TypeFromToken(genericParamParent) == mdtGenericParam);
             PRECONDITION(index >= 0);
             PRECONDITION(TypeFromToken(token) == mdtGenericParam);
         }

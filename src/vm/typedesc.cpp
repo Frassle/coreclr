@@ -1468,7 +1468,7 @@ Instantiation TypeVarTypeDesc::GetTypicalInstantiation(PTR_Module pModule, mdGen
 
             // Do NOT use the alloc tracker for this memory as we need it stay allocated even if the load fails.
             void *mem = (void *)pHeap->AllocMem(S_SIZE_T(sizeof(TypeVarTypeDesc)));
-            pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, tkGenericParamIndirection, i, tkVarParam, varInst);
+            pTypeVarTypeDesc = new (mem) TypeVarTypeDesc(pModule, tkParam, i, tkVarParam, varInst);
 
             // No race here - the row in GenericParam table is owned exclusively by this type and we
             // are holding a lock preventing other threads from concurrently loading it.

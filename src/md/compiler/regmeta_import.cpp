@@ -352,7 +352,11 @@ STDMETHODIMP RegMeta::EnumGenericParams(HCORENUM *phEnum, mdToken tkOwner,
     }
 
     
-    _ASSERTE(TypeFromToken(tkOwner) == mdtTypeDef || TypeFromToken(tkOwner) == mdtMethodDef || TypeFromToken(tkOwner) == mdtGenericParam);
+    _ASSERTE(
+        TypeFromToken(tkOwner) == mdtTypeDef ||
+        TypeFromToken(tkOwner) == mdtMethodDef ||
+        TypeFromToken(tkOwner) == mdtGenericParam ||
+        TypeFromToken(tkOwner) == mdtGenericParamIndirection);
 
     if (TypeFromToken(tkOwner) == mdtGenericParam)
     {
