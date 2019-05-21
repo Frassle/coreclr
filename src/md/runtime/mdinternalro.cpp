@@ -2782,7 +2782,7 @@ HRESULT MDInternalRO::GetGenericParamIndirection(  // S_OK or error.
 
     if((TypeFromToken(gp) == mdtGenericParam) && (RidFromToken(gp) != 0))
     {
-        IfFailGo(pMiniMd->FindGenericParamIndirectionFor(gp, &rid));
+        IfFailGo(pMiniMd->FindGenericParamIndirectionFor(RidFromToken(gp), &rid));
         *ptkIndirection = TokenFromRid(rid, mdtGenericParamIndirection);
     }
     else

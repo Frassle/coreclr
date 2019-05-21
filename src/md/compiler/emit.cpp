@@ -1997,7 +1997,7 @@ STDMETHODIMP RegMeta::DefineGenericParamIndirection(   // S_OK or error.
         // See if this GenericParam has already been defined.
         if (CheckDups(MDDupGenericParamIndirection))
         {
-            IfFailGo(m_pStgdb->m_MiniMd.FindGenericParamIndirectionFor(tkOwner, &rid));
+            IfFailGo(m_pStgdb->m_MiniMd.FindGenericParamIndirectionFor(RidFromToken(tkOwner), &rid));
             if (rid != 0) 
             {
                 tkRet = TokenFromRid(rid,mdtGenericParamIndirection);
