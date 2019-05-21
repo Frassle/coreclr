@@ -626,6 +626,12 @@ PCCOR_SIGNATURE PrettyPrintType(
                     appendStrNum(out, n);
                 break;
 
+            case ELEMENT_TYPE_HOLE:
+                appendChar(out, '%');
+                n = CorSigUncompressData(typePtr);
+                appendStrNum(out, n);
+                break;
+
             case ELEMENT_TYPE_FNPTR :   
                 appendStr(out, KEYWORD("method "));  
                 typePtr = PrettyPrintSignature(typePtr, 0x7FFF, "*", out, pIMDI, NULL);
