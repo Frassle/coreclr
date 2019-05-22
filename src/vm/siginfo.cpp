@@ -126,6 +126,7 @@ DEFINEELEMENTTYPEINFO(ELEMENT_TYPE_MVAR,           -1,                   TYPE_GC
 DEFINEELEMENTTYPEINFO(ELEMENT_TYPE_CMOD_REQD,      -1,                   TYPE_GC_NONE,  1)
 DEFINEELEMENTTYPEINFO(ELEMENT_TYPE_CMOD_OPT,       -1,                   TYPE_GC_NONE,  1)
 DEFINEELEMENTTYPEINFO(ELEMENT_TYPE_INTERNAL,       -1,                   TYPE_GC_NONE,  0)
+DEFINEELEMENTTYPEINFO(ELEMENT_TYPE_HOLE,           -1,                   TYPE_GC_OTHER, 1)
 };
 
 unsigned GetSizeForCorElementType(CorElementType etyp)
@@ -221,6 +222,7 @@ void SigPointer::ConvertToInternalExactlyOne(Module* pSigModule, SigTypeContext 
                 break;
             case ELEMENT_TYPE_VAR:
             case ELEMENT_TYPE_MVAR:
+            case ELEMENT_TYPE_HOLE:
                 {
                     ULONG varNum;
                     // Skip variable number
@@ -1261,6 +1263,12 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
         }
 #endif // FEATURE_PREJIT
 
+        case ELEMENT_TYPE_HOLE:
+        {
+            // Holes are handled in generic instantiations
+            THROW_BAD_FORMAT(BFA_BAD_COMPLUS_SIG, pOrigModule);
+        }
+
         case ELEMENT_TYPE_VAR:
         {
             if ((pSubst != NULL) && !pSubst->GetInst().IsNull())
@@ -1352,6 +1360,9 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 ThrowHR(COR_E_OVERFLOW);
 
             TypeHandle *thisinst = (TypeHandle*) _alloca(dwAllocaSize);
+            DWORD *thisholes = (DWORD*) _alloca(ntypars * sizeof(DWORD));
+
+            BOOL typeHasHoles = false;
 
             // Finally we gather up the type arguments themselves, loading at the level specified for generic arguments
             for (unsigned i = 0; i < ntypars; i++)
@@ -1360,66 +1371,80 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 TypeHandle typeHnd = TypeHandle();
                 BOOL argDrop = FALSE;
 
-                if (dropGenericArgumentLevel)
+                CorElementType elemType = ELEMENT_TYPE_END;
+                IfFailThrowBF(tempsig.GetElemType(&elemType), BFA_BAD_SIGNATURE, pOrigModule);
+                if (elemType == (CorElementType) ELEMENT_TYPE_HOLE)
                 {
-                    if (level == CLASS_LOAD_APPROXPARENTS)
+                    DWORD index;
+                    IfFailThrow(psig.GetData(&index));
+                    thisholes[i] = index;
+                    typeHasHoles = true;
+                }
+                else 
+                {
+                    thisholes[i] = i;
+                    if (dropGenericArgumentLevel)
                     {
-                        SigPointer tempsig = psig;
-
-                        CorElementType elemType = ELEMENT_TYPE_END;
-                        IfFailThrowBF(tempsig.GetElemType(&elemType), BFA_BAD_SIGNATURE, pOrigModule);
-
-                        if (elemType == (CorElementType) ELEMENT_TYPE_MODULE_ZAPSIG)
+                        if (level == CLASS_LOAD_APPROXPARENTS)
                         {
-                            // Skip over the module index
-                            IfFailThrowBF(tempsig.GetData(NULL), BFA_BAD_SIGNATURE, pModule);
-                            // Read the next elemType
-                            IfFailThrowBF(tempsig.GetElemType(&elemType), BFA_BAD_SIGNATURE, pModule);
-                        }
+                            SigPointer tempsig = psig;
 
-                        if (elemType == ELEMENT_TYPE_GENERICINST)
-                        {
-                            CorElementType tmpEType = ELEMENT_TYPE_END;
-                            IfFailThrowBF(tempsig.PeekElemType(&tmpEType), BFA_BAD_SIGNATURE, pOrigModule);
+                            CorElementType elemType = ELEMENT_TYPE_END;
+                            IfFailThrowBF(tempsig.GetElemType(&elemType), BFA_BAD_SIGNATURE, pOrigModule);
 
-                            if (tmpEType == ELEMENT_TYPE_CLASS)
+                            if (elemType == (CorElementType) ELEMENT_TYPE_MODULE_ZAPSIG)
+                            {
+                                // Skip over the module index
+                                IfFailThrowBF(tempsig.GetData(NULL), BFA_BAD_SIGNATURE, pModule);
+                                // Read the next elemType
+                                IfFailThrowBF(tempsig.GetElemType(&elemType), BFA_BAD_SIGNATURE, pModule);
+                            }
+
+                            if (elemType == ELEMENT_TYPE_GENERICINST)
+                            {
+                                CorElementType tmpEType = ELEMENT_TYPE_END;
+                                IfFailThrowBF(tempsig.PeekElemType(&tmpEType), BFA_BAD_SIGNATURE, pOrigModule);
+
+                                if (tmpEType == ELEMENT_TYPE_CLASS)
+                                    typeHnd = TypeHandle(g_pCanonMethodTableClass);
+                            }
+                            else if ((elemType == (CorElementType) ELEMENT_TYPE_CANON_ZAPSIG) ||
+                                    (CorTypeInfo::GetGCType_NoThrow(elemType) == TYPE_GC_REF))
+                            {
                                 typeHnd = TypeHandle(g_pCanonMethodTableClass);
+                            }
+
+                            argDrop = TRUE;
                         }
-                        else if ((elemType == (CorElementType) ELEMENT_TYPE_CANON_ZAPSIG) ||
-                                 (CorTypeInfo::GetGCType_NoThrow(elemType) == TYPE_GC_REF))
+                        else
+                        // We need to make sure that typekey is always restored. Otherwise, we may run into unrestored typehandles while using
+                        // the typekey for lookups. It is safe to not drop the levels for initial NGen-specific loading levels since there cannot
+                        // be cycles in typekeys.
+                        if (level > CLASS_LOAD_APPROXPARENTS)
                         {
-                            typeHnd = TypeHandle(g_pCanonMethodTableClass);
+                            argLevel = (ClassLoadLevel) (level-1);
                         }
-
-                        argDrop = TRUE;
                     }
-                    else
-                    // We need to make sure that typekey is always restored. Otherwise, we may run into unrestored typehandles while using
-                    // the typekey for lookups. It is safe to not drop the levels for initial NGen-specific loading levels since there cannot
-                    // be cycles in typekeys.
-                    if (level > CLASS_LOAD_APPROXPARENTS)
+
+                    if (typeHnd.IsNull())
                     {
-                        argLevel = (ClassLoadLevel) (level-1);
+                        typeHnd = psig.GetTypeHandleThrowing(pOrigModule, 
+                                                            pTypeContext, 
+                                                            fLoadTypes, 
+                                                            argLevel,
+                                                            argDrop,
+                                                            pSubst, 
+                                                            pZapSigContext,
+                                                            TRUE);
+                        if (typeHnd.IsNull()) 
+                        {
+                            // Indicate failure by setting thisinst to NULL
+                            thisinst = NULL;
+                            break;
+                        }
                     }
                 }
 
-                if (typeHnd.IsNull())
-                {
-                    typeHnd = psig.GetTypeHandleThrowing(pOrigModule, 
-                                                         pTypeContext, 
-                                                         fLoadTypes, 
-                                                         argLevel,
-                                                         argDrop,
-                                                         pSubst, 
-                                                         pZapSigContext,
-                                                         TRUE);
-                    if (typeHnd.IsNull()) 
-                    {
-                        // Indicate failure by setting thisinst to NULL
-                        thisinst = NULL;
-                        break;
-                    }
-                }
                 thisinst[i] = typeHnd;
                 IfFailThrowBF(psig.SkipExactlyOne(), BFA_BAD_SIGNATURE, pOrigModule);
             }
@@ -3826,6 +3851,7 @@ MetaSig::CompareElementType(
 
         case ELEMENT_TYPE_VAR:
         case ELEMENT_TYPE_MVAR:
+        case ELEMENT_TYPE_HOLE:
         {
             DWORD varNum1;
             IfFailThrow(CorSigUncompressData_EndPtr(pSig1, pEndSig1, &varNum1));
@@ -4577,6 +4603,7 @@ MetaSig::CompareElementTypeToToken(
 
         case ELEMENT_TYPE_VAR:
         case ELEMENT_TYPE_MVAR:
+        case ELEMENT_TYPE_HOLE:
         {
            return FALSE;
         }
