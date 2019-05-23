@@ -6,7 +6,7 @@
 {
 }
 
-.assembly partialApplication
+.assembly typeHoles
 {
 }
 
