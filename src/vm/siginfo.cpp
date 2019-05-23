@@ -1368,12 +1368,14 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 TypeHandle typeHnd = TypeHandle();
                 BOOL argDrop = FALSE;
 
+                SigPointer tempsig = psig;
+
                 CorElementType elemType = ELEMENT_TYPE_END;
                 IfFailThrowBF(tempsig.GetElemType(&elemType), BFA_BAD_SIGNATURE, pOrigModule);
                 if (elemType == (CorElementType) ELEMENT_TYPE_HOLE)
                 {
                     DWORD index;
-                    IfFailThrow(psig.GetData(&index));
+                    IfFailThrow(tempsig.GetData(&index));
                     typeHnd = pTypeContext->m_classInst[index];
                 }
                 else 
@@ -1382,7 +1384,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                     {
                         if (level == CLASS_LOAD_APPROXPARENTS)
                         {
-                            SigPointer tempsig = psig;
+                            tempsig = psig;
 
                             CorElementType elemType = ELEMENT_TYPE_END;
                             IfFailThrowBF(tempsig.GetElemType(&elemType), BFA_BAD_SIGNATURE, pOrigModule);
