@@ -1360,9 +1360,6 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 ThrowHR(COR_E_OVERFLOW);
 
             TypeHandle *thisinst = (TypeHandle*) _alloca(dwAllocaSize);
-            DWORD *thisholes = (DWORD*) _alloca(ntypars * sizeof(DWORD));
-
-            BOOL typeHasHoles = false;
 
             // Finally we gather up the type arguments themselves, loading at the level specified for generic arguments
             for (unsigned i = 0; i < ntypars; i++)
@@ -1377,12 +1374,10 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 {
                     DWORD index;
                     IfFailThrow(psig.GetData(&index));
-                    thisholes[i] = index;
-                    typeHasHoles = true;
+                    typeHnd = pTypeContext->m_classInst[index];
                 }
                 else 
                 {
-                    thisholes[i] = i;
                     if (dropGenericArgumentLevel)
                     {
                         if (level == CLASS_LOAD_APPROXPARENTS)
