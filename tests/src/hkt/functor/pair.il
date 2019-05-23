@@ -1,0 +1,62 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+// See the LICENSE file in the project root for more information.
+
+.assembly extern mscorlib
+{
+}
+
+.assembly typeHoles
+{
+}
+
+.class KindedClass`1<T<A>>
+{
+  .field public !T<int32> int_thing
+}
+
+.class Pair`1<T<A,B>>
+{
+  .method public specialname rtspecialname instance void .ctor () cil managed
+  {
+    .maxstack 8
+
+    ldarg.0
+    call instance void [mscorlib]System.Object::.ctor()
+    ret
+  }
+
+  .field public !T<int32, float32> int_float_thing;
+}
+
+.method private static void PrintPair<.ctor T<A, B>>() cil managed 
+{
+  .maxstack 8
+  .locals init (
+    [0] !!T pair
+  )
+
+  call !!0 [mscorlib]System.Activator::CreateInstance<!!T<int32, float32>>()
+  stloc.0
+  ldloca.s pair
+  callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+  ret
+}
+
+.method private hidebysig static int32 Main() cil managed
+{
+  .entrypoint
+  .maxstack  8
+  .locals init (
+    [0] class [mscorlib]System.Type typClass,
+    [1] class [mscorlib]System.Reflection.FieldInfo fThing
+  )
+
+  // Load and print a two param type
+  call void PrintPair<class Pair`1>()
+  
+  ldc.i4     100
+  ret
+}
