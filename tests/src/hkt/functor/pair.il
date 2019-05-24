@@ -10,9 +10,18 @@
 {
 }
 
-.class KindedClass`1<T<A>>
+.class Single`1<A>
 {
-  .field public !T<int32> int_thing
+  .method public specialname rtspecialname instance void .ctor () cil managed
+  {
+    .maxstack 8
+
+    ldarg.0
+    call instance void [mscorlib]System.Object::.ctor()
+    ret
+  }
+
+  .field public !A a_thing
 }
 
 .class Pair`2<A,B>
@@ -30,6 +39,26 @@
   .field public !B b_thing;
 }
 
+
+.method private static void PrintSingle<.ctor T<A>>() cil managed 
+{
+  .maxstack 8
+  .locals init (
+    [0] !!T pair
+  )
+
+  ldstr "PrintSingle"
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  call !!0 [mscorlib]System.Activator::CreateInstance<!!T<int32>>()
+  stloc.0
+  ldloca.s pair
+  callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+  ret
+}
+
 .method private static void PrintPair<.ctor T<A, B>>() cil managed 
 {
   .maxstack 8
@@ -37,7 +66,7 @@
     [0] !!T pair
   )
 
-  ldstr "got here"
+  ldstr "PrintPair"
   call void [mscorlib]System.Console::WriteLine(string)
 
   call !!0 [mscorlib]System.Activator::CreateInstance<!!T<int32, float32>>()
@@ -57,6 +86,8 @@
     [0] class [mscorlib]System.Type typClass,
     [1] class [mscorlib]System.Reflection.FieldInfo fThing
   )
+
+  call void PrintSingle<class Single`1>()
 
   // Load and print a two param type
   call void PrintPair<class Pair`2>()
