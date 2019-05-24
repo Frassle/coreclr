@@ -15,7 +15,7 @@
   .field public !T<int32> int_thing
 }
 
-.class Pair`1<T<A,B>>
+.class Pair`2<A,B>
 {
   .method public specialname rtspecialname instance void .ctor () cil managed
   {
@@ -26,7 +26,8 @@
     ret
   }
 
-  .field public !T<int32, float32> int_float_thing;
+  .field public !A a_thing;
+  .field public !B b_thing;
 }
 
 .method private static void PrintPair<.ctor T<A, B>>() cil managed 
@@ -35,6 +36,9 @@
   .locals init (
     [0] !!T pair
   )
+
+  ldstr "got here"
+  call void [mscorlib]System.Console::WriteLine(string)
 
   call !!0 [mscorlib]System.Activator::CreateInstance<!!T<int32, float32>>()
   stloc.0
@@ -55,7 +59,7 @@
   )
 
   // Load and print a two param type
-  call void PrintPair<class Pair`1>()
+  call void PrintPair<class Pair`2>()
   
   ldc.i4     100
   ret
