@@ -6,7 +6,7 @@
 {
 }
 
-.assembly typeHoles
+.assembly pair
 {
 }
 
