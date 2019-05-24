@@ -3065,9 +3065,9 @@ CMiniMdRW::PreSaveFull()
             // Don't disturb the sequence ordering within Owner
             STABLESORTER_WITHREMAP(GenericParamConstraint, Owner);
             IfFailGo(sortGenericParamConstraint.Sort());
-
-            STABLESORTER_WITHREMAP(GenericParamIndirection, Owner);
-            IfFailGo(sortGenericParamIndirection.Sort());
+        
+            // Generic params might be parented to indirections
+            IfFailGo(FixUpTable(TBL_GenericParam));
         }
     }
     // Fixup the custom attribute table.  After this, do not sort any table

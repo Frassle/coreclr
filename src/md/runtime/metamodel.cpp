@@ -1060,37 +1060,25 @@ CMiniMdBase::FindGenericParamIndirectionFor(
     void   *pRec;
     RID     rid;
 
-    // If the table is sorted, use binary search.  However we can only trust
-    // the sorted bit if we have verified it (see definition in MetaModel.h)
-    if (IsVerified() && m_Schema.IsSorted(TBL_GenericParamIndirection))
-    {
-        return vSearchTable(TBL_GenericParamIndirection, 
-                            _COLDEF(GenericParamIndirection,Owner),
-                            ridOwner,
-                            pFoundRid);
-    }
-    else
-    {
-        iCount = GetCountRecs(TBL_GenericParamIndirection);
+    iCount = GetCountRecs(TBL_GenericParamIndirection);
 
-        // loop through all
-        for (i = 1; i <= iCount; i++)
+    // loop through all
+    for (i = 1; i <= iCount; i++)
+    {
+        IfFailRet(vGetRow(TBL_GenericParamIndirection, i, &pRec));
+
+        // linear search for indirection record
+        rid = getIX(pRec, _COLDEF(GenericParamIndirection,Owner));
+        if (rid == ridOwner)
         {
-            IfFailRet(vGetRow(TBL_GenericParamIndirection, i, &pRec));
-
-            // linear search for indirection record
-            rid = getIX(pRec, _COLDEF(GenericParamIndirection,Owner));
-            if (rid == ridOwner)
-            {
-                *pFoundRid = i;
-                return S_OK;
-            }
+            *pFoundRid = i;
+            return S_OK;
         }
-
-        *pFoundRid = 0;
-        return S_OK;
     }
 
+    *pFoundRid = 0;
+    return S_OK;
+    
 } // CMiniMdBase::FindGenericIndirectionFor
 
 //*****************************************************************************
