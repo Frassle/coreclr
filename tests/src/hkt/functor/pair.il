@@ -44,14 +44,29 @@
 {
   .maxstack 8
   .locals init (
-    [0] !!T pair
+    [0] class [mscorlib]System.Type typT,
+    [1] !!T<int32> pair
   )
 
   ldstr "PrintSingle"
   call void [mscorlib]System.Console::WriteLine(string)
 
+  ldtoken !!T
+  call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+  stloc typT
+
+  ldloc typT
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldstr "IsGenericType = {0}"
+  ldloc typT
+  callvirt instance bool [mscorlib]System.Type::get_IsGenericType()
+  box bool
+  call void [mscorlib]System.Console::WriteLine(class System.String, class System.Object)
+
   call !!0 [mscorlib]System.Activator::CreateInstance<!!T<int32>>()
-  stloc.0
+  stloc pair
   ldloca.s pair
   callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
   callvirt instance string [mscorlib]System.Object::ToString()
