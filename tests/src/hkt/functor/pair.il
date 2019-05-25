@@ -45,13 +45,13 @@
   .maxstack 8
   .locals init (
     [0] class [mscorlib]System.Type typT,
-    [1] !!T<int32> pair
+    [1] object thing
   )
 
   ldstr "PrintSingle"
   call void [mscorlib]System.Console::WriteLine(string)
 
-  ldtoken !!T
+  ldtoken !!T<int32>
   call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
   stloc typT
 
@@ -59,15 +59,10 @@
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
 
-  ldstr "IsGenericType = {0}"
   ldloc typT
-  callvirt instance bool [mscorlib]System.Type::get_IsGenericType()
-  box bool
-  call void [mscorlib]System.Console::WriteLine(class System.String, class System.Object)
-
-  call !!0 [mscorlib]System.Activator::CreateInstance<!!T<int32>>()
-  stloc pair
-  ldloca.s pair
+  call object [mscorlib]System.Activator::CreateInstance(class [mscorlib]System.Type)
+  stloc thing
+  ldloc thing
   callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
@@ -78,15 +73,26 @@
 {
   .maxstack 8
   .locals init (
-    [0] !!T pair
+    [0] class [mscorlib]System.Type typT,
+    [1] !!T thing
   )
 
   ldstr "PrintPair"
   call void [mscorlib]System.Console::WriteLine(string)
 
-  call !!0 [mscorlib]System.Activator::CreateInstance<!!T<int32, float32>>()
-  stloc.0
-  ldloca.s pair
+
+  ldtoken !!T<int32, float32>
+  call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+  stloc typT
+
+  ldloc typT
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
+  ldloc typT
+  call object [mscorlib]System.Activator::CreateInstance(class [mscorlib]System.Type)
+  stloc thing
+  ldloc thing
   callvirt instance class [mscorlib]System.Type [mscorlib]System.Object::GetType()
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
