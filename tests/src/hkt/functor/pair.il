@@ -112,6 +112,9 @@
 
   // Load and print a two param type
   call void PrintPair<class Pair`2>()
+
+
+  call void PrintSingle<class Single`1<%0>>()
   
   ldc.i4     100
   ret
