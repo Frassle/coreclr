@@ -1360,6 +1360,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 ThrowHR(COR_E_OVERFLOW);
 
             TypeHandle *thisinst = (TypeHandle*) _alloca(dwAllocaSize);
+            DWORD *thisholes = (DWORD*) _alloca(ntypars * sizeof(DWORD));
 
             // Finally we gather up the type arguments themselves, loading at the level specified for generic arguments
             for (unsigned i = 0; i < ntypars; i++)
@@ -1376,7 +1377,8 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                 {
                     DWORD index;
                     IfFailThrow(tempsig.GetData(&index));
-                    typeHnd = pTypeContext->m_classInst[index];
+                    thisholes[i] = index;
+                    thisinst[i] = TypeHandle();
                 }
                 else 
                 {
@@ -1442,6 +1444,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                     }
                 }
 
+                thisholes[i] = i;
                 thisinst[i] = typeHnd;
                 IfFailThrowBF(psig.SkipExactlyOne(), BFA_BAD_SIGNATURE, pOrigModule);
             }
@@ -1463,7 +1466,7 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
             // When we know it was correctly computed at NGen time, we ask the class loader to skip that check.
             thRet = (ClassLoader::LoadGenericInstantiationThrowing(pGenericTypeModule,
                                                                    tkGenericType,
-                                                                   Instantiation(thisinst, ntypars),
+                                                                   Instantiation(thisinst, thisholes, ntypars),
                                                                    fLoadTypes, level,
                                                                    &instContext,
                                                                    pZapSigContext && pZapSigContext->externalTokens == ZapSig::NormalTokens));

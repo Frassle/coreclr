@@ -734,14 +734,14 @@ class Instantiation
 public:
     // Construct empty instantiation
     Instantiation()
-        : m_pArgs(NULL), m_nArgs(0)
+        : m_pArgs(NULL), m_pHoles(NULL), m_nArgs(0)
     {
         LIMITED_METHOD_DAC_CONTRACT;
     }
 
     // Copy construct
     Instantiation(const Instantiation & inst)
-        : m_pArgs(inst.m_pArgs), m_nArgs(inst.m_nArgs)
+        : m_pArgs(inst.m_pArgs), m_pHoles(inst.m_pHoles), m_nArgs(inst.m_nArgs)
     {
         LIMITED_METHOD_DAC_CONTRACT;
         _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
@@ -749,7 +749,7 @@ public:
 
     // Construct instantiation from array of FixupPointers
     Instantiation(FixupPointer<TypeHandle> * pArgs, DWORD nArgs)
-        : m_pArgs(pArgs), m_nArgs(nArgs)
+        : m_pArgs(pArgs), m_pHoles(NULL), m_nArgs(nArgs)
     {
         LIMITED_METHOD_DAC_CONTRACT;
         _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
@@ -757,12 +757,24 @@ public:
 
     // Construct instantiation from array of TypeHandles
     Instantiation(TypeHandle * pArgs, DWORD nArgs)
+        : m_pHoles(NULL), m_nArgs(nArgs)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+
+        DACCOP_IGNORE(CastOfMarshalledType, "Dual mode DAC problem, but since the size is the same, the cast is safe");
+        m_pArgs = (FixupPointer<TypeHandle> *)pArgs;
+        _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
+    }
+
+    // Construct instantiation from array of TypeHandles and holes
+    Instantiation(TypeHandle * pArgs, DWORD * pHoles, DWORD nArgs)
         : m_nArgs(nArgs)
     {
         LIMITED_METHOD_DAC_CONTRACT;
 
         DACCOP_IGNORE(CastOfMarshalledType, "Dual mode DAC problem, but since the size is the same, the cast is safe");
         m_pArgs = (FixupPointer<TypeHandle> *)pArgs;
+        m_pHoles = (FixupPointer<DWORD> *)pHoles;
         _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
     }
 
@@ -813,6 +825,7 @@ public:
 private:
     // Note that for DAC builds, m_pArgs may be host allocated buffer, not a copy of an object marshalled by DAC.
     FixupPointer<TypeHandle> * m_pArgs;
+    FixupPointer<DWORD> * m_pHoles;
     DWORD m_nArgs;
 };
 
