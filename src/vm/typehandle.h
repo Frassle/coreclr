@@ -774,7 +774,7 @@ public:
 
         DACCOP_IGNORE(CastOfMarshalledType, "Dual mode DAC problem, but since the size is the same, the cast is safe");
         m_pArgs = (FixupPointer<TypeHandle> *)pArgs;
-        m_pHoles = (FixupPointer<DWORD> *)pHoles;
+        m_pHoles = pHoles;
         _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
     }
 
@@ -807,7 +807,7 @@ public:
     {
         LIMITED_METHOD_DAC_CONTRACT;
         _ASSERTE(iArg < m_nArgs);
-        return m_pHoles[iArg].GetValue();
+        return m_pHoles[iArg];
     }
 
     DWORD GetNumArgs() const
@@ -832,7 +832,7 @@ public:
 private:
     // Note that for DAC builds, m_pArgs may be host allocated buffer, not a copy of an object marshalled by DAC.
     FixupPointer<TypeHandle> * m_pArgs;
-    FixupPointer<DWORD> * m_pHoles;
+    DWORD * m_pHoles;
     DWORD m_nArgs;
 };
 
