@@ -413,7 +413,11 @@ BOOL TypeHandle::IsSharedByGenericInstantiations() const
 {
     LIMITED_METHOD_DAC_CONTRACT;
 
-    if (IsTypeDesc())
+    if (IsNull())
+    {
+        return FALSE;
+    }
+    else if (IsTypeDesc())
     {
         // Arrays are the only typedesc in valid generic instantiations (see code:Generics::CheckInstantiation)
 
