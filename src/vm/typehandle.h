@@ -803,6 +803,13 @@ public:
         return m_pArgs[iArg].GetValue();
     }
 
+    DWORD GetHole(DWORD iArg) const
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        _ASSERTE(iArg < m_nArgs);
+        return m_pHoles[iArg].GetValue();
+    }
+
     DWORD GetNumArgs() const
     {
         LIMITED_METHOD_DAC_CONTRACT;
