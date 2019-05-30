@@ -113,9 +113,17 @@
   // Load and print a two param type
   call void PrintPair<class Pair`2>()
 
+  ldstr "PrintSingle"
+  call void [mscorlib]System.Console::WriteLine(string)
 
-  call void PrintSingle<class Single`1<%0>>()
-  
+  ldtoken class Single`1<%0>
+  call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+  stloc typClass
+
+  ldloc typClass
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
   ldc.i4     100
   ret
 }

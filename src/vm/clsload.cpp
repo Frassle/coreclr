@@ -1978,7 +1978,24 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
     // methods in genmeth.cpp.
 
     BOOL isEmptyOrTypical = inst.IsEmpty() || ClassLoader::IsTypicalInstantiation(pModule, typeDefOrGenericParam, inst);
+    BOOL hasHoles = FALSE;
 
+    BOOL holesAreTypical = TRUE;
+    for (DWORD i = 0; i < inst.GetNumArgs(); ++i)
+    {
+        if (inst[i].IsNull()) hasHoles = TRUE;
+
+        if (inst[i].IsNull() && inst.GetHole(i) == i)
+        {
+            // This is still a typical instantiation
+        }
+        else 
+        {
+            holesAreTypical = FALSE;
+        }
+    }
+
+    isEmptyOrTypical |= holesAreTypical;
 
     if (isEmptyOrTypical || !fFromNativeImage)
     {
