@@ -1442,10 +1442,11 @@ TypeHandle SigPointer::GetTypeHandleThrowing(
                             break;
                         }
                     }
+
+                    thisholes[i] = i;
+                    thisinst[i] = typeHnd;
                 }
 
-                thisholes[i] = i;
-                thisinst[i] = typeHnd;
                 IfFailThrowBF(psig.SkipExactlyOne(), BFA_BAD_SIGNATURE, pOrigModule);
             }
 
