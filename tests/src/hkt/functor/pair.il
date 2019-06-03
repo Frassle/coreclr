@@ -124,6 +124,14 @@
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
 
+  ldtoken class Pair`2<%1, %0>
+  call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
+  stloc typClass
+
+  ldloc typClass
+  callvirt instance string [mscorlib]System.Object::ToString()
+  call void [mscorlib]System.Console::WriteLine(string)
+
   ldc.i4     100
   ret
 }
