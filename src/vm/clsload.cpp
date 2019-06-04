@@ -1979,7 +1979,24 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
 
     BOOL isEmptyOrTypical = inst.IsEmpty() || ClassLoader::IsTypicalInstantiation(pModule, typeDefOrGenericParam, inst);
 
-    if (isEmptyOrTypical || !fFromNativeImage)
+    BOOL hasHoles = FALSE;
+    BOOL holesAreIndexAligned = TRUE;
+    for (DWORD i = 0; i < inst.GetNumArgs(); ++i)
+    {
+        if (inst[i].IsNull())
+        {
+            hasHoles = TRUE;
+            if (inst.GetHole(i) != i) {
+                holesAreIndexAligned = FALSE;
+            }
+        } else {
+            holesAreIndexAligned = FALSE;
+        }
+    }
+
+    // If this is a useless hole instantation, it's just <%0, %1, %2...>, we can just return the handle as
+    // if for an empty or typical instance
+    if (holesAreIndexAligned || isEmptyOrTypical || !fFromNativeImage)
     {
         TypeHandle th;
 
@@ -2001,40 +2018,6 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
 
         if (isEmptyOrTypical)
             RETURN th;
-    }
-
-    BOOL hasHoles = FALSE;
-    BOOL holesAreIndexAligned = TRUE;
-    for (DWORD i = 0; i < inst.GetNumArgs(); ++i)
-    {
-        if (inst[i].IsNull())
-        {
-            hasHoles = TRUE;
-            if (inst.GetHole(i) != i) {
-                holesAreIndexAligned = FALSE;
-            }
-        } else {
-            holesAreIndexAligned = FALSE;
-        }
-    }
-
-    // This is a useless hole instantation, it's just <%0, %1, %2...>, if we're building from a typedef we can just return the handle as
-    // if for an empty or typical instance
-    if (holesAreIndexAligned) {
-        if (TypeFromToken(typeDefOrGenericParam) == mdtTypeDef) {
-            return LoadTypeDefThrowing(pModule, typeDefOrGenericParam,
-                                                ThrowIfNotFound,
-                                                PermitUninstDefOrRef,
-                                                fLoadTypes == DontLoadTypes ? tdAllTypes : tdNoTypes,
-                                                level,
-                                                NULL);
-        }
-        else
-        {
-            _ASSERTE(TypeFromToken(typeDefOrGenericParam) == mdtGenericParam);
-
-            _ASSERTE(false && "Not yet handled");
-        }
     }
 
     TypeKey key(pModule, typeDefOrGenericParam, inst);
