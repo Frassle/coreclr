@@ -768,13 +768,12 @@ public:
 
     // Construct instantiation from array of TypeHandles and holes
     Instantiation(TypeHandle * pArgs, DWORD * pHoles, DWORD nArgs)
-        : m_nArgs(nArgs)
+        : m_pHoles(pHoles), m_nArgs(nArgs)
     {
         LIMITED_METHOD_DAC_CONTRACT;
 
         DACCOP_IGNORE(CastOfMarshalledType, "Dual mode DAC problem, but since the size is the same, the cast is safe");
         m_pArgs = (FixupPointer<TypeHandle> *)pArgs;
-        m_pHoles = pHoles;
         _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
     }
 
@@ -827,6 +826,12 @@ public:
     {
         LIMITED_METHOD_DAC_CONTRACT;
         return m_pArgs;
+    }
+
+    DWORD * GetRawHoles() const
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        return m_pHoles;
     }
 
 private:
