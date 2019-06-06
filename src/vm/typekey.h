@@ -39,6 +39,7 @@ class TypeKey
             mdToken        m_token;
             DWORD          m_numGenericArgs; // 0 for non-generic types
             FixupPointer<TypeHandle> * m_pGenericArgs;   // NULL for non-generic types 
+            DWORD *        m_pHoles; // NULL for closed types and non-generic types
             // Note that for DAC builds, m_pGenericArgs is a host allocated buffer (eg. by in SigPointer::GetTypeHandleThrowing), 
             // not a copy of an object marshalled by DAC.
         } asClass;
@@ -100,6 +101,7 @@ public:
         u.asClass.m_token = token;
         u.asClass.m_numGenericArgs = inst.GetNumArgs();
         u.asClass.m_pGenericArgs = inst.GetRawArgs();
+        u.asClass.m_pHoles = NULL;
     }
     
     // Constructor for function pointer type
