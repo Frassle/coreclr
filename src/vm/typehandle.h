@@ -755,6 +755,14 @@ public:
         _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
     }
 
+    // Construct instantiation from array of FixupPointers
+    Instantiation(FixupPointer<TypeHandle> * pArgs, DWORD * pHoles, DWORD nArgs)
+        : m_pArgs(pArgs), m_pHoles(pHoles), m_nArgs(nArgs)
+    {
+        LIMITED_METHOD_DAC_CONTRACT;
+        _ASSERTE(m_nArgs == 0 || m_pArgs != NULL);
+    }
+
     // Construct instantiation from array of TypeHandles
     Instantiation(TypeHandle * pArgs, DWORD nArgs)
         : m_pHoles(NULL), m_nArgs(nArgs)

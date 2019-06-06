@@ -187,7 +187,7 @@ public:
         LIMITED_METHOD_CONTRACT;
         SUPPORTS_DAC;
         PRECONDITION(m_kind == ELEMENT_TYPE_CLASS || m_kind == ELEMENT_TYPE_VAR);
-        return Instantiation(u.asClass.m_pGenericArgs, u.asClass.m_numGenericArgs);
+        return Instantiation(u.asClass.m_pGenericArgs, u.asClass.m_pHoles, u.asClass.m_numGenericArgs);
     }
 
     DWORD GetNumGenericArgs() const
