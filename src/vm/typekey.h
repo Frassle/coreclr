@@ -101,7 +101,7 @@ public:
         u.asClass.m_token = token;
         u.asClass.m_numGenericArgs = inst.GetNumArgs();
         u.asClass.m_pGenericArgs = inst.GetRawArgs();
-        u.asClass.m_pHoles = NULL;
+        u.asClass.m_pHoles = inst.GetRawHoles();
     }
     
     // Constructor for function pointer type
