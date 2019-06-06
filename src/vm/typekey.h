@@ -252,10 +252,24 @@ public:
             {
                 return FALSE;
             }
+
+            if (
+                (pKey1->u.asClass.m_pHoles == NULL && pKey2->u.asClass.m_pHoles != NULL) ||
+                (pKey1->u.asClass.m_pHoles != NULL && pKey2->u.asClass.m_pHoles == NULL))
+            {
+                return FALSE;
+            }
+
             for (DWORD i = 0; i < pKey1->u.asClass.m_numGenericArgs; i++)
             {
                 if (pKey1->u.asClass.m_pGenericArgs[i].GetValue() != pKey2->u.asClass.m_pGenericArgs[i].GetValue())
                     return FALSE;
+                if (pKey1->u.asClass.m_pHoles != NULL)
+                {
+                    _ASSERTE(pKey2->u.asClass.m_pHoles != NULL);
+                    if (pKey1->u.asClass.m_pHoles[i] != pKey2->u.asClass.m_pHoles[i])
+                        return FALSE;
+                }
             }
             return TRUE;
         }
