@@ -1979,11 +1979,13 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
 
     BOOL isEmptyOrTypical = inst.IsEmpty() || ClassLoader::IsTypicalInstantiation(pModule, typeDefOrGenericParam, inst);
 
+    // True if we have any holes
     BOOL hasHoles = FALSE;
+    // True if the whole instantiation is just holes that match their index (i.e. <%0, %1, ...>)
     BOOL holesAreIndexAligned = TRUE;
     for (DWORD i = 0; i < inst.GetNumArgs(); ++i)
     {
-        if (inst[i].IsNull())
+        if (inst[i].IsNull() || inst.GetHole(i) != i)
         {
             hasHoles = TRUE;
             if (inst.GetHole(i) != i) {
@@ -1994,9 +1996,7 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
         }
     }
 
-    // If this is a useless hole instantation, it's just <%0, %1, %2...>, we can just return the handle as
-    // if for an empty or typical instance
-    if (holesAreIndexAligned || isEmptyOrTypical || !fFromNativeImage)
+    if (hasHoles || isEmptyOrTypical || !fFromNativeImage)
     {
         TypeHandle th;
 
@@ -2016,8 +2016,34 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
         }
         _ASSERTE(th.GetNumGenericArgs() == inst.GetNumArgs());
 
-        if (isEmptyOrTypical)
+        // If this is a useless hole instantation, it's just <%0, %1, %2...>, we can just return the handle as
+        // if for an empty or typical instance
+        if (isEmptyOrTypical || holesAreIndexAligned)
             RETURN th;
+
+        // We've got non-trivial holes, we need to fix up the instantiation to keep track that we have holes
+        if (hasHoles)
+        {
+            // Get the instantation of the type passed in (This could be the typical instantiation)
+            Instantiation parent = th.GetInstantiation();
+
+            DWORD dwAllocaSize = 0;
+            if (!ClrSafeInt<DWORD>::multiply(inst.GetNumArgs(), sizeof(TypeHandle), dwAllocaSize))
+                ThrowHR(COR_E_OVERFLOW);
+
+            TypeHandle *resolvedinst = (TypeHandle*) _alloca(dwAllocaSize);
+
+            for (DWORD i = 0; i < inst.GetNumArgs(); ++i)
+            {
+                if (inst[i].IsNull() || inst.GetHole(i) != i) {
+                    resolvedinst[i] = parent[inst.GetHole(i)];
+                } else {
+                    resolvedinst[i] = inst[i];
+                }
+            }
+
+            inst = Instantiation(resolvedinst, inst.GetRawHoles(), inst.GetNumArgs());
+        }
     }
 
     TypeKey key(pModule, typeDefOrGenericParam, inst);

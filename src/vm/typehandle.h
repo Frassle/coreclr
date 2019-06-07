@@ -814,7 +814,11 @@ public:
     {
         LIMITED_METHOD_DAC_CONTRACT;
         _ASSERTE(iArg < m_nArgs);
-        return m_pHoles[iArg];
+        if (m_pHoles == NULL) {
+            return iArg;
+        } else {
+            return m_pHoles[iArg];
+        }
     }
 
     DWORD GetNumArgs() const
