@@ -1996,10 +1996,9 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
         }
     }
 
-    if (hasHoles || isEmptyOrTypical || !fFromNativeImage)
+    TypeHandle th;
+    if (holesAreIndexAligned || isEmptyOrTypical || !fFromNativeImage)
     {
-        TypeHandle th;
-
         if (TypeFromToken(typeDefOrGenericParam) == mdtGenericParam)
         {
             th = TypeHandle(pModule->LookupGenericParam(typeDefOrGenericParam));
@@ -2020,30 +2019,69 @@ TypeHandle ClassLoader::LoadGenericInstantiationThrowing(Module *pModule,
         // if for an empty or typical instance
         if (isEmptyOrTypical || holesAreIndexAligned)
             RETURN th;
+    }
 
-        // We've got non-trivial holes, we need to fix up the instantiation to keep track that we have holes
-        if (hasHoles)
-        {
-            // Get the instantation of the type passed in (This could be the typical instantiation)
-            Instantiation parent = th.GetInstantiation();
-
-            DWORD dwAllocaSize = 0;
-            if (!ClrSafeInt<DWORD>::multiply(inst.GetNumArgs(), sizeof(TypeHandle), dwAllocaSize))
-                ThrowHR(COR_E_OVERFLOW);
-
-            TypeHandle *resolvedinst = (TypeHandle*) _alloca(dwAllocaSize);
-
-            for (DWORD i = 0; i < inst.GetNumArgs(); ++i)
-            {
-                if (inst[i].IsNull() || inst.GetHole(i) != i) {
-                    resolvedinst[i] = parent[inst.GetHole(i)];
-                } else {
-                    resolvedinst[i] = inst[i];
-                }
-            }
-
-            inst = Instantiation(resolvedinst, inst.GetRawHoles(), inst.GetNumArgs());
+    if (TypeFromToken(typeDefOrGenericParam) == mdtGenericParam) {
+        if (th.IsNull()) {
+            th = TypeHandle(pModule->LookupGenericParam(typeDefOrGenericParam));
         }
+
+        // Resolve our instantation aginst the instantition of the generic param
+        // Get the instantation of the type passed in (This could be the typical instantiation)
+        Instantiation parent = th.GetInstantiation();
+
+        DWORD ntypars = inst.GetNumArgs();
+        DWORD dwAllocaSize = 0;
+        if (!ClrSafeInt<DWORD>::multiply(ntypars, sizeof(TypeHandle), dwAllocaSize))
+            ThrowHR(COR_E_OVERFLOW);
+
+        TypeHandle *resolvedinst = (TypeHandle*) _alloca(dwAllocaSize);
+        DWORD *resolvedholes = (DWORD*) _alloca(ntypars * sizeof(DWORD));
+
+        for (DWORD i = 0; i < ntypars; ++i)
+        {
+            resolvedholes[i] = inst.GetHole(i);
+            if (inst[i].IsNull() || inst.GetHole(i) != i) {
+                resolvedinst[i] = parent[inst.GetHole(i)];
+            } else {
+                resolvedinst[i] = inst[i];
+            }
+        }
+
+        inst = Instantiation(resolvedinst, resolvedholes, inst.GetNumArgs());
+    } else if (hasHoles) {
+        _ASSERTE(TypeFromToken(typeDefOrGenericParam) == mdtTypeDef);
+        if (th.IsNull()) {
+            th = LoadTypeDefThrowing(pModule, typeDefOrGenericParam,
+                                                ThrowIfNotFound,
+                                                PermitUninstDefOrRef,
+                                                fLoadTypes == DontLoadTypes ? tdAllTypes : tdNoTypes,
+                                                level,
+                                                fFromNativeImage ? NULL : &inst);
+        }
+        // We have holes, but our parent is a typedef (so it will be the typical inst)
+        // Lets build a new inst with the types resolved
+
+        // Get the instantation of the type passed in (This could be the typical instantiation)
+        Instantiation parent = th.GetInstantiation();
+
+        DWORD ntypars = inst.GetNumArgs();
+        DWORD dwAllocaSize = 0;
+        if (!ClrSafeInt<DWORD>::multiply(ntypars, sizeof(TypeHandle), dwAllocaSize))
+            ThrowHR(COR_E_OVERFLOW);
+
+        TypeHandle *resolvedinst = (TypeHandle*) _alloca(dwAllocaSize);
+
+        for (DWORD i = 0; i < ntypars; ++i)
+        {
+            if (inst[i].IsNull() || inst.GetHole(i) != i) {
+                resolvedinst[i] = parent[inst.GetHole(i)];
+            } else {
+                resolvedinst[i] = inst[i];
+            }
+        }
+
+        inst = Instantiation(resolvedinst, inst.GetRawHoles(), inst.GetNumArgs());
     }
 
     TypeKey key(pModule, typeDefOrGenericParam, inst);
