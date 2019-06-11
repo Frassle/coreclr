@@ -74,12 +74,11 @@
   .maxstack 8
   .locals init (
     [0] class [mscorlib]System.Type typT,
-    [1] !!T thing
+    [1] object thing
   )
 
   ldstr "PrintPair"
   call void [mscorlib]System.Console::WriteLine(string)
-
 
   ldtoken !!T<int32, float32>
   call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
@@ -124,6 +123,9 @@
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
 
+  ldstr "PrintPair flipped"
+  call void [mscorlib]System.Console::WriteLine(string)
+  
   ldtoken class Pair`2<%1, %0>
   call class [mscorlib]System.Type [mscorlib]System.Type::GetTypeFromHandle(valuetype [mscorlib]System.RuntimeTypeHandle)
   stloc typClass
@@ -131,6 +133,10 @@
   ldloc typClass
   callvirt instance string [mscorlib]System.Object::ToString()
   call void [mscorlib]System.Console::WriteLine(string)
+
+  // Load and print a two param type
+  call void PrintPair<class Pair`2<%1, %0>>()
+
 
   ldc.i4     100
   ret
